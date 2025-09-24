@@ -1,0 +1,164 @@
+import { Controller, UseGuards } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { PATTERNS } from '../../contracts';
+import { UserUseCasesImp } from './user.usecase.impl';
+import {
+  ChangeRoleDto,
+  HostProfileDto,
+  HostVerifyDto,
+  UserDto,
+} from './user.entity';
+import { Public } from '../../common/decorator/public.decorator';
+import { IResponse } from '../../common/types';
+import { handleCatch } from '../../common/handleCatch';
+import * as permissionGuard from '../../common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
+
+@Controller()
+export class UserMessageController {
+  constructor(private readonly usecases: UserUseCasesImp) {}
+
+  // @Public()
+  @MessagePattern(PATTERNS.USER_FIND_BY_ID)
+  async findById(@Payload() payload: { id: string }) {
+    try {
+      const user = await this.usecases.getUser(payload.id);
+      return IResponse.success('Fetch user successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  // @Public()
+  @MessagePattern(PATTERNS.USER_FIND_ALL)
+  async findAll(@Payload() data: any) {
+    try {
+      const user = data.user;
+      console.log('Current user:', user);
+
+      const { page = 1, pageSize = 10, search, branchId } = data;
+
+      const result = await this.usecases.getAllUsers(
+        page,
+        pageSize,
+        search,
+        branchId,
+      );
+
+      return IResponse.success(
+        'Users fetched successfully',
+        result.users,
+        result.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.USER_UPDATE)
+  async update(@Payload() payload: { id: string; data: Partial<UserDto> }) {
+    try {
+      const user = await this.usecases.updateUser(payload.id, payload.data);
+      return IResponse.success(' user updated successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('HOST_PROFILE', PermissionActions.UPDATE)
+  @MessagePattern(PATTERNS.USER_UPDATE_HOST_PROFILE)
+  async updateHostProfile(
+    @Payload() payload: { id: string; data: HostProfileDto },
+  ) {
+    try {
+      const user = await this.usecases.updateHostProfile(
+        payload.id,
+        payload.data,
+      );
+      return IResponse.success(' user profile Updated successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.USER_VERIFY_HOST_PROFILE)
+  async verifyHostProfile(
+    @Payload() payload: { id: string; data: HostVerifyDto },
+  ) {
+    try {
+      const user = await this.usecases.verifyHostProfile(
+        payload.id,
+        payload.data.isVerified,
+      );
+      return IResponse.success(' Host is verified  successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+  @MessagePattern(PATTERNS.USER_DELETE)
+  async deleteUser(@Payload() payload: { id: string }) {
+    try {
+      const user = await this.usecases.deleteUser(payload.id);
+      return IResponse.success(' user deleted successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  //Get user by email
+  @Public()
+  @MessagePattern(PATTERNS.USER_FIND_BY_EMAIL)
+  async findByEmail(@Payload() payload: { email: string }) {
+    try {
+      return this.usecases.findUserByEmail(payload.email);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.GUEST_ADD_WISHLIST)
+  async addToWishlist(@Payload() payload: { guestId: string; carId: string }) {
+    try {
+      const res = await this.usecases.addToWishlist(
+        payload.guestId,
+        payload.carId,
+      );
+      return IResponse.success(' car is added to wish list successfully', res);
+    } catch (error) {
+      console.log(error);
+
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.GUEST_REMOVE_WISHLIST)
+  async removeFromWishlist(
+    @Payload() payload: { guestId: string; carId: string },
+  ) {
+    try {
+      const res = await this.usecases.removeFromWishlist(
+        payload.guestId,
+        payload.carId,
+      );
+      return IResponse.success(
+        ' car is removed from wish list successfully',
+        res,
+      );
+    } catch (error) {
+      console.log(error);
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.GUEST_GET_WISHLIST)
+  async getWishlist(@Payload() payload: { guestId: string }) {
+    try {
+      const res = await this.usecases.getWishlist(payload.guestId);
+      return IResponse.success(' wish list fetched successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+}

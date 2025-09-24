@@ -1,0 +1,128 @@
+import { Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { CarUseCasesImp } from './car.usecase.impl';
+import { PATTERNS } from '../../contracts';
+import { CarSearchFilter, CarDto, AddCarInsuranceDto } from './car.entity';
+import { IResponse } from '../../common/types';
+import { handleCatch } from '../../common/handleCatch';
+
+@Controller()
+export class CarMessageController {
+  constructor(private readonly usecases: CarUseCasesImp) {}
+
+  @MessagePattern(PATTERNS.CAR_CREATE)
+  async createCar(
+    @Payload()
+    payload: {
+      hostId: string;
+      carData: CarDto;
+      photos?: string[];
+    },
+  ) {
+    try {
+      const car = await this.usecases.createCar(
+        payload.hostId,
+        payload.carData,
+      );
+      return IResponse.success('Car  added successfully', car);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_UPDATE)
+  async updateCar(
+    @Payload()
+    payload: {
+      carId: string;
+      hostId: string;
+      carData: Partial<CarDto>;
+    },
+  ) {
+    try {
+      const car = await this.usecases.updateCar(
+        payload.carId,
+        payload.hostId,
+        payload.carData,
+      );
+      return IResponse.success('Car updated successfully', car);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_DELETE)
+  async deleteCar(@Payload() payload: { carId: string; hostId: string }) {
+    try {
+      const car = await this.usecases.deleteCar(payload.carId, payload.hostId);
+      return IResponse.success('Car deleted successfully', car);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_FIND_BY_ID)
+  async findByIdCar(@Payload() payload: { carId: string }) {
+    try {
+      const car = await this.usecases.getCarById(payload.carId);
+      return IResponse.success('car fetched successfully', car);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_FIND_ALL)
+  findAllCar() {
+    return this.usecases.listAllCars();
+  }
+
+  @MessagePattern(PATTERNS.CAR_SEARCH)
+  async searchCar(@Payload() payload: { query: CarSearchFilter }) {
+    try {
+      const car = await this.usecases.searchCars(payload.query);
+      return IResponse.success('Car fetched successfully', car);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_INSURANCE_ADD)
+  async addInsurance(@Payload() payload: { data: AddCarInsuranceDto }) {
+    try {
+      const res = await this.usecases.addInsurance(payload.data);
+      return IResponse.success('Car insurance added successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_INSURANCE_UPDATE)
+  async updateInsurance(@Payload() payload: { id: string; data: any }) {
+    try {
+      const res = await this.usecases.updateInsurance(payload.id, payload.data);
+      return IResponse.success('Car insurance updated successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_INSURANCE_DELETE)
+  async deleteInsurance(@Payload() payload: { id: string }) {
+    try {
+      const res = await this.usecases.deleteInsurance(payload.id);
+      return IResponse.success('Car insurance deleted successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_INSURANCE_GET_BY_CAR)
+  async getByCar(@Payload() payload: { carId: string }) {
+    try {
+      const res = await this.usecases.getByCar(payload.carId);
+      return IResponse.success('Car insurance fetched successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+}

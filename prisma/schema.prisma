@@ -1,0 +1,454 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+
+
+///////////////////////////
+// ENUMS
+///////////////////////////
+
+enum UserRole {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+}
+
+enum NotificationType {
+  PROMOTION
+  ALERT
+  MESSAGE
+  SYSTEM
+}
+
+enum InsurancePlan {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  ON_HOLD
+  CONFIRMED
+}
+
+
+enum CarType {
+  SEDAN
+  SUV
+  VAN
+  TRUCK
+  COUPE
+  CONVERTIBLE
+  HATCHBACK
+  WAGON
+  LUXURY
+  SPORTS
+  OTHER
+}
+
+enum EcoFriendly {
+  NONE
+  HYBRID
+  ELECTRIC
+}
+///////////////////////////
+// USER / ACCOUNT ENTITIES
+///////////////////////////
+
+model User {
+  id              String        @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String        @unique
+  phone           String?       @unique
+  password        String
+  profilePhoto    String?       
+  isVerified      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  roleId          String?
+  isSuperAdmin    Boolean?      @default(false)
+  // Relations
+  guestProfile    GuestProfile? 
+  hostProfile     HostProfile?  
+  notifications   Notification[]
+  reviewsGiven    Review[]      @relation("ReviewsGiven")
+  reviewsReceived Review[]      @relation("ReviewsReceived")
+
+  sentMessages    Message[]     @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  adminActions    AdminAction[] @relation("AdminActionsPerformed")
+  role              Role?       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  refreshTokens     RefreshToken[]
+  disputes            Dispute[]  
+  cars         Car[]
+
+  guestBookings Booking[] @relation("GuestBookings")
+  hostBookings  Booking[] @relation("HostBookings")
+
+   payerPayments Payment[] @relation("Payer")
+  recipientPayments  Payment[] @relation("Recipient")
+
+
+
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime @default(dbgenerated("(now() + '7 days'::interval)"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  users           User[]
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+model Permission {
+  id              String           @id @default(cuid())
+  resource        String // e.g., "User", "Order", "Branch"
+  description     String?
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([resource]) // one row per resource
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+
+  // Actions assigned to this role for this permission/resource
+  createAction Boolean @default(false)
+  readAction   Boolean @default(false)
+  updateAction Boolean @default(false)
+  deleteAction Boolean @default(false)
+
+  @@unique([roleId, permissionId]) // prevent duplicates
+}
+
+model GuestProfile {
+  id              String   @id @default(cuid())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String   @unique
+  address         String?
+  driverLicenseId String?   // string URL/path to image
+  nationalId      String?   // string URL/path to image
+  wishlist        Car[]    @relation("Wishlist")
+
+}
+
+model HostProfile {
+  id           String     @id @default(cuid())
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String     @unique
+  payoutMethod String?    
+  earnings     Float      @default(0)
+  isVerified   Boolean    @default(false)
+}
+
+
+///////////////////////////
+// CAR ENTITIES
+///////////////////////////
+
+model CarMake {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relation field
+  models    CarModel[]
+  cars      Car[]     @relation("MakeToCar")
+}
+
+
+model CarModel {
+  id        String   @id @default(cuid())
+  make      CarMake  @relation(fields: [makeId], references: [id])
+  makeId    String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cars Car[] @relation("ModelToCar")
+  
+}
+
+model Car {
+  id                String         @id @default(cuid())
+  host              User    @relation(fields: [hostId], references: [id])
+  hostId            String
+  make              CarMake        @relation("MakeToCar", fields: [makeId], references: [id])
+  makeId            String
+  model             CarModel       @relation("ModelToCar", fields: [modelId], references: [id])
+  modelId           String  
+
+  year              Int
+  color             String
+  licensePlate      String
+  vin               String?
+  transmission      Transmission
+  mileage           Int
+
+  // Pricing & Discounts
+  dailyRate         Float
+  rentalPricePerDay Float
+  longTermDiscount  Float?     // discount for long rentals
+
+  // Capacity & Features
+  seatingCapacity   Int
+  mileageLimit      Int?
+  carType           CarType
+  ecoFriendly       EcoFriendly @default(NONE)
+
+  // Experience & Rules
+  features          String[]
+  safety            String[]
+  rules             String[]
+  description       String?
+  rejectionReason   String?
+
+  // Status
+  average_rating    Int          @default(0)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  photos            String[]
+  reviews           Review[]
+  wishlistUsers     GuestProfile[] @relation("Wishlist")
+  insurancePlans    CarInsurance[]
+  disputes          Dispute[]  
+  bookings Booking[]
+
+}
+model CarInsurance {
+  id          String        @id @default(cuid())
+  car         Car           @relation(fields: [carId], references: [id])
+  carId       String
+  plan        InsurancePlan
+  provider    String        
+  coverageDetails String
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+///////////////////////////
+// REVIEW ENTITIES
+///////////////////////////
+
+enum ReviewType {
+  HOST_TO_GUEST
+  GUEST_TO_HOST
+  GUEST_TO_CAR
+}
+model Review {
+  id          String      @id @default(cuid())
+  reviewer    User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewerId  String
+  reviewee    User?       @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  revieweeId  String?
+
+  car         Car?        @relation(fields: [carId], references: [id])
+  carId       String?
+
+  rating      Int         // 1 to 5
+  comment     String?
+  type        ReviewType
+  createdAt   DateTime    @default(now())
+}
+///////////////////////////
+// PAYMENT ENTITIES
+///////////////////////////
+
+model Payment {
+
+    id             String        @id @default(cuid())
+  booking        Booking?      @relation(fields: [bookingId], references: [id])
+  bookingId      String?        @unique
+  payer          User?         @relation("Payer",fields: [payerId], references: [id])
+  payerId        String?
+  recipient      User?         @relation("Recipient",fields: [recipientId], references: [id])
+  recipientId    String?
+  amount         Float
+  currency       String        @default("ETB")
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  platformFee    Float?
+  hostEarnings   Float?
+  type           PaymentType
+  transactionId  String?       @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+ 
+  disputes            Dispute[]  
+
+
+}
+enum PaymentMethod {
+  CBE
+  TELEBIRR
+}
+enum PaymentType {
+  GUEST_TO_PLATFORM
+  PLATFORM_TO_HOST
+  REFUND
+}
+
+///////////////////////////
+// NOTIFICATIONS ENTITIES
+///////////////////////////
+
+model Notification {
+  id          String           @id @default(cuid())
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+///////////////////////////
+// MESSAGING ENTITIES
+///////////////////////////
+
+model Message {
+  id          String      @id @default(cuid())
+  sender      User        @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    String
+  receiver    User        @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId  String
+  content     String
+  isRead      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+///////////////////////////
+// ADMIN ENTITIES
+///////////////////////////
+
+model AdminAction {
+  id          String      @id @default(cuid())
+  admin       User        @relation("AdminActionsPerformed", fields: [adminId], references: [id])
+  adminId     String
+  actionType  String
+  targetType  String
+  targetId    String
+  notes       String?
+  createdAt   DateTime    @default(now())
+}
+
+///////////////////////////
+// PROMOTIONS & DISCOUNTS
+///////////////////////////
+
+model PromoCode {
+  id            String     @id @default(cuid())
+  code          String     @unique
+  description   String?
+  discount      Float
+  active        Boolean    @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+///////////////////////////
+// SYSTEM SETTINGS
+///////////////////////////
+
+model SystemSetting {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  value       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+
+model Dispute {
+  id          String      @id @default(cuid())
+  payment     Payment?    @relation(fields: [paymentId], references: [id])
+  paymentId   String?
+  car         Car?        @relation(fields: [carId], references: [id])
+  carId       String?
+  user        User        @relation(fields: [userId], references: [id])
+  userId      String
+  reason      String
+  status      String      @default("OPEN") // e.g., OPEN, RESOLVED, REJECTED
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  bookingId String?  @unique
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  car           Car           @relation(fields: [carId], references: [id])
+  carId         String
+  guest         User          @relation("GuestBookings",fields: [guestId], references: [id])
+  guestId       String
+  host          User          @relation("HostBookings",fields: [hostId], references: [id])
+  hostId        String
+ 
+  startDate     DateTime
+  endDate       DateTime
+  totalPrice    Float
+  status        BookingStatus @default(PENDING)
+  pickupLocation String?  //lat+*+long+*+name
+  dropoffLocation String? //lat+*+long+*+name
+  withDriver      Boolean    @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  dispute       Dispute?
+
+  payment       Payment?
+}
+
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED_BY_GUEST
+  CANCELLED_BY_HOST
+  CANCELLED_BY_ADMIN
+  COMPLETED
+}
