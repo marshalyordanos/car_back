@@ -28,14 +28,13 @@ export class CarModelRepository {
     });
   }
 
-  async findAll(payload: ListQueryDto) {
-    console.log(payload);
+  async findAll(filter: ListQueryDto) {
     const feature = new PrismaQueryFeature({
-      search: payload.search,
-      filter: payload.filter,
-      sort: payload.sort,
-      page: payload.page,
-      pageSize: payload.pageSize,
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
       searchableFields: ['name'],
     });
 

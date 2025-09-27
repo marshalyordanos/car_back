@@ -9,9 +9,12 @@ interface QueryOptions {
   searchableFields?: string[];
 }
 
-export class PrismaQueryFeature {
-  private where: Prisma.CarModelWhereInput = {};
-  private orderBy: Prisma.CarModelOrderByWithRelationInput[] = [];
+export class PrismaQueryFeature<
+  TWhere extends Record<string, any>,
+  TOrderBy extends Record<string, any>,
+> {
+  private where: TWhere = {} as TWhere;
+  private orderBy: TOrderBy[] = [];
   private skip: number;
   private take: number;
 
@@ -26,7 +29,7 @@ export class PrismaQueryFeature {
 
   private buildWhere() {
     const { search, filter, searchableFields } = this.options;
-    const where: Prisma.CarModelWhereInput = {};
+    const where: any = {};
 
     // --- SEARCH ---
     if (search && searchableFields?.length) {
@@ -50,12 +53,12 @@ export class PrismaQueryFeature {
         const [key, value] = item.split(':');
         if (key.endsWith('_lte')) {
           const k = key.replace('_lte', '');
-          where[k] = { lte: Number(value) } as any;
+          where[k] = { lte: Number(value) };
         } else if (key.endsWith('_gte')) {
           const k = key.replace('_gte', '');
-          where[k] = { gte: Number(value) } as any;
+          where[k] = { gte: Number(value) };
         } else {
-          where[key] = value as any;
+          where[key] = value;
         }
       });
     }
@@ -71,7 +74,7 @@ export class PrismaQueryFeature {
       const [key, order] = item.split(':');
       return {
         [key]: order === 'desc' ? 'desc' : 'asc',
-      } as Prisma.CarModelOrderByWithRelationInput;
+      } as TOrderBy;
     });
   }
 

@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Car, CarInsurance, CarMake, CarModel } from '@prisma/client';
 import { CarDto, CarSearchFilter } from './car.entity';
 import { RpcException } from '@nestjs/microservices';
+import { ListQueryDto } from '../../common/query/query.dto';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
 @Injectable()
 export class CarRepository {
@@ -144,21 +146,45 @@ export class CarRepository {
     return this.prisma.car.findMany({ where: { hostId } });
   }
 
-  async searchCars(filter: CarSearchFilter): Promise<Car[]> {
-    const where: any = {};
+  async searchCars(filter: ListQueryDto) {
+    // const where: any = {};
 
-    if (filter.makeId) where.makeId = filter.makeId;
-    if (filter.modelId) where.modelId = filter.modelId;
-    if (filter.year) where.year = filter.year;
-    if (filter.carType) where.carType = filter.carType;
-    if (filter.ecoFriendly) where.ecoFriendly = filter.ecoFriendly;
-    if (filter.minPrice || filter.maxPrice) {
-      where.dailyRate = {};
-      if (filter.minPrice) where.dailyRate.gte = filter.minPrice;
-      if (filter.maxPrice) where.dailyRate.lte = filter.maxPrice;
-    }
+    // if (filter.makeId) where.makeId = filter.makeId;
+    // if (filter.modelId) where.modelId = filter.modelId;
+    // if (filter.year) where.year = filter.year;
+    // if (filter.carType) where.carType = filter.carType;
+    // if (filter.ecoFriendly) where.ecoFriendly = filter.ecoFriendly;
+    // if (filter.minPrice || filter.maxPrice) {
+    //   where.dailyRate = {};
+    //   if (filter.minPrice) where.dailyRate.gte = filter.minPrice;
+    //   if (filter.maxPrice) where.dailyRate.lte = filter.maxPrice;
+    // }
 
-    return this.prisma.car.findMany({ where });
+    const feature = new PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['name'],
+    });
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
+      this.prisma.car.findMany({
+        ...query,
+        include: { make: true },
+        where: query.where || {},
+      }),
+      this.prisma.car.count({ where: query.where || {} }),
+    ]);
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
   }
 
   async listAllCars(): Promise<Car[]> {

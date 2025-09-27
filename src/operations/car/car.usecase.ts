@@ -1,5 +1,6 @@
 import { Car, CarInsurance, CarMake, CarModel } from '@prisma/client';
 import { CarDto, CarSearchFilter } from './car.entity';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 export interface CarUseCase {
   createCar(
@@ -18,6 +19,6 @@ export interface CarUseCase {
   getCarById(carId: string): Promise<Car | null>;
   listCarsByHost(hostId: string): Promise<Car[]>;
 
-  searchCars(filter: CarSearchFilter): Promise<Car[]>;
+  searchCars(filter: ListQueryDto);
   listAllCars(): Promise<Car[]>;
 }

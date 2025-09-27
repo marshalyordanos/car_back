@@ -5,6 +5,8 @@ import { PATTERNS } from '../../contracts';
 import { CarSearchFilter, CarDto, AddCarInsuranceDto } from './car.entity';
 import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
+import { ListQueryDto } from '../../common/query/query.dto';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class CarMessageController {
@@ -76,11 +78,16 @@ export class CarMessageController {
     return this.usecases.listAllCars();
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_SEARCH)
-  async searchCar(@Payload() payload: { query: CarSearchFilter }) {
+  async searchCar(@Payload() payload: { query: ListQueryDto }) {
     try {
-      const car = await this.usecases.searchCars(payload.query);
-      return IResponse.success('Car fetched successfully', car);
+      const res = await this.usecases.searchCars(payload.query);
+      return IResponse.success(
+        'Car fetched successfully',
+        res.models,
+        res.pagination,
+      );
     } catch (error) {
       handleCatch(error);
     }

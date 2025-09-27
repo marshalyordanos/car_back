@@ -22,6 +22,7 @@ import {
 } from '../operations/car/car.entity';
 import multer from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ListQueryDto } from '../common/query/query.dto';
 
 @Controller('cars')
 export class CarGatewayController {
@@ -146,7 +147,7 @@ export class CarGatewayController {
   }
 
   @Get()
-  searchCars(@Query() query: CarSearchFilter, @Req() req) {
+  searchCars(@Query() query: ListQueryDto, @Req() req) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.carClient.send(PATTERNS.CAR_SEARCH, {

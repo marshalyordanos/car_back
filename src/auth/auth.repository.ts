@@ -208,11 +208,11 @@ export class AuthRepository {
 
     return this.prisma.user.create({
       data: {
-        name: 'Super Admin',
+        firstName: 'Super',
+        lastName: 'Admin',
         email: 'superadmin@gmail.com',
         password: hashedPassword,
         phone: '0000000000',
-        isStaff: true,
         isSuperAdmin: true,
         role: {
           create: {

@@ -10,6 +10,7 @@ import {
 } from './car.entity';
 import { uploadToCloudinary } from '../../config/cloudinary/upload';
 import { RpcException } from '@nestjs/microservices';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
 export class CarUseCasesImp implements CarUseCase {
@@ -78,7 +79,7 @@ export class CarUseCasesImp implements CarUseCase {
     return this.repo.findByHost(hostId);
   }
 
-  async searchCars(filter: CarSearchFilter): Promise<Car[]> {
+  async searchCars(filter: ListQueryDto) {
     return this.repo.searchCars(filter);
   }
 
