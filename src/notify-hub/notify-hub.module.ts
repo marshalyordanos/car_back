@@ -16,6 +16,6 @@ import { ReviewMessageController } from './message/message.controller';
   ],
   controllers: [ReviewMessageController],
   providers: [PrismaService, ReviewUseCasesImpl, ReviewRepository],
-  exports: [, ReviewUseCasesImpl],
+  exports: [ReviewUseCasesImpl],
 })
 export class NotifyHubModule {}

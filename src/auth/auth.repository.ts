@@ -143,30 +143,28 @@ export class AuthRepository {
   async generateResetToken(userId: string): Promise<string> {
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour expiry
-    await this.prisma.passwordReset.create({
-      data: { userId, expiresAt },
-    });
+
     return token;
   }
 
-  async verifyResetToken(token: string): Promise<string | null> {
-    const resetRecord = await this.prisma.passwordReset.findFirst({
-      where: {
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!resetRecord) return null;
-    return resetRecord.userId;
-  }
+  // async verifyResetToken(token: string): Promise<string | null> {
+  //   const resetRecord = await this.prisma.passwordReset.findFirst({
+  //     where: {
+  //       expiresAt: { gt: new Date() },
+  //     },
+  //     orderBy: { createdAt: 'desc' },
+  //   });
+  //   if (!resetRecord) return null;
+  //   return resetRecord.userId;
+  // }
 
-  async invalidateResetToken(token: string): Promise<void> {
-    await this.prisma.passwordReset.deleteMany({
-      where: { expiresAt: { gt: new Date() } },
-    });
-  }
+  // async invalidateResetToken(token: string): Promise<void> {
+  //   await this.prisma.passwordReset.deleteMany({
+  //     where: { expiresAt: { gt: new Date() } },
+  //   });
+  // }
 
-  // ----------------- Email Verification -----------------
+  // // ----------------- Email Verification -----------------
   async sendVerificationEmail(userId: string, email: string): Promise<void> {
     // TODO: Integrate real email sending service
     console.log(`Send verification email to ${email} for user ${userId}`);
@@ -183,13 +181,14 @@ export class AuthRepository {
   }
 
   async markEmailAsVerified(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { emailVerified: true },
-    });
+    // await this.prisma.user.update({
+    //   where: { id: userId },
+    //   data: { emailVerified: true },
+    // });
   }
 
   // ----------------- Reset Password Email -----------------
+
   async sendResetPasswordEmail(email: string, token: string): Promise<void> {
     // TODO: Integrate real email service
     console.log(`Send password reset email to ${email}: token=${token}`);

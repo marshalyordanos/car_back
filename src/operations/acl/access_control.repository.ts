@@ -21,11 +21,7 @@ export class AccessControlRepository {
     });
   }
 
-  async findAllRoles(
-    page: number,
-    pageSize: number,
-    search?: string,
-  ): Promise<{ roles: Partial<RoleDto>[]; pagination: IPagination }> {
+  async findAllRoles(page: number, pageSize: number, search?: string) {
     const skip = (page - 1) * pageSize;
 
     const where: any = {};
@@ -90,14 +86,7 @@ export class AccessControlRepository {
     });
   }
 
-  async findAllPermissions(
-    page: number,
-    pageSize: number,
-    search?: string,
-  ): Promise<{
-    permissions: Partial<PermissionDto>[];
-    pagination: IPagination;
-  }> {
+  async findAllPermissions(page: number, pageSize: number, search?: string) {
     const skip = (page - 1) * pageSize;
 
     const where: any = {};
@@ -159,7 +148,7 @@ export class AccessControlRepository {
       data: {
         rolePermissions: {
           createMany: {
-            data: data.permissions.map((p) => ({
+            data: data.permissions!.map((p) => ({
               permissionId: p.permissionId,
               createAction: p.createAction ?? false,
               readAction: p.readAction ?? false,

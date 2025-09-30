@@ -134,21 +134,4 @@ export class StaffMessageController {
       handleCatch.handleCatch(error);
     }
   }
-
-  @Public()
-  @MessagePattern(PATTERNS.STAFF_ASSIGN_BRANCH)
-  async assignStaffToBranch(@Payload() payload: any) {
-    try {
-      const { staffIds, branchId } = payload;
-      console.log('payload: ', payload);
-      console.log('staffIds: ', staffIds);
-      const result = await this.usecases.assignStaffToBranch(
-        staffIds,
-        branchId,
-      );
-      return IResponse.success('Staffs assigned successfully', result);
-    } catch (error) {
-      handleCatch.handleCatch(error);
-    }
-  }
 }

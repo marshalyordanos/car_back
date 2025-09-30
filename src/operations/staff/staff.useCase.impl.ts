@@ -12,7 +12,7 @@ import { IPagination } from 'src/common/types';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class StaffUseCasesImpl implements StaffUsecase {
+export class StaffUseCasesImpl {
   constructor(private readonly staffRepo: StaffRepository) {}
 
   async createStaff(data: RegisterStaffDto): Promise<User> {
@@ -25,14 +25,7 @@ export class StaffUseCasesImpl implements StaffUsecase {
       }
       data.role = role.id;
     }
-     if (data.branchId) {
-      const branch = await this.staffRepo.findBranchById(data.branchId);
 
-      if (!branch) {
-        throw new RpcException(`Branch not found with id : ${data.branchId}`);
-      }
-      data.branchId = branch.id;
-    }
     const hashedPassword = await bcrypt.hash(data.password, 10);
     data.password = hashedPassword;
 
@@ -51,7 +44,7 @@ export class StaffUseCasesImpl implements StaffUsecase {
     // Check role existence
     const roles = await this.staffRepo.findRoleByName(role);
 
-    if (!role) {
+    if (!roles) {
       throw new RpcException(`Invalid role: ${role}`);
     }
     const roleId = roles.id;
@@ -111,7 +104,7 @@ export class StaffUseCasesImpl implements StaffUsecase {
   }
 
   async changeUserRole(data: ChangeRoleDto): Promise<User> {
-     const user = await this.staffRepo.findStaffById(data.userId);
+    const user = await this.staffRepo.findStaffById(data.userId);
 
     if (!user) {
       throw new RpcException(`User with id ${data.userId} not found`);
@@ -123,7 +116,7 @@ export class StaffUseCasesImpl implements StaffUsecase {
       throw new RpcException(`Role ${data.role} not found`);
     }
 
-    return this.staffRepo.changeUserRole(user,role);
+    return this.staffRepo.changeUserRole(user, role);
   }
 
   async deleteStaff(id: string): Promise<string> {
@@ -133,7 +126,7 @@ export class StaffUseCasesImpl implements StaffUsecase {
     if (!staff) {
       throw new RpcException(`User with id ${id} not found`);
     }
-     await this.staffRepo.deleteStaff(id);
+    await this.staffRepo.deleteStaff(id);
     return 'User deleted successfully with id: ' + id;
   }
   async findStaffById(id: string): Promise<User> {
@@ -185,12 +178,5 @@ export class StaffUseCasesImpl implements StaffUsecase {
         totalPages,
       },
     };
-  }
-
-  async assignStaffToBranch(
-    staffIds: string[],
-    branchId: string,
-  ): Promise<Prisma.BatchPayload> {
-    return this.staffRepo.assignStaffToBranch(staffIds, branchId);
   }
 }

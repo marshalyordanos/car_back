@@ -64,7 +64,7 @@ export class AllExceptions implements ExceptionFilter {
       const response = ctx.getResponse();
       const request = ctx.getRequest();
 
-      const errorResponse = new IResponse(false, message, null, null);
+      const errorResponse = new IResponse(false, message, null);
 
       response.status(status).json(errorResponse);
     }

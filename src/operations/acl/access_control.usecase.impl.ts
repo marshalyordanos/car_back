@@ -12,7 +12,7 @@ import {
 import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
-export class AccessControlUsecaseImpl implements AccessControlUsecase {
+export class AccessControlUsecaseImpl {
   constructor(private readonly repo: AccessControlRepository) {}
 
   // ---------- ROLES ----------
@@ -20,11 +20,7 @@ export class AccessControlUsecaseImpl implements AccessControlUsecase {
     return this.repo.findRoleById(id);
   }
 
-  async getAllRoles(
-    page: number,
-    pageSize: number,
-    search?: string,
-  ): Promise<{ roles: Partial<RoleDto>[]; pagination: IPagination }> {
+  async getAllRoles(page: number, pageSize: number, search?: string) {
     return this.repo.findAllRoles(page, pageSize, search);
   }
 
@@ -45,14 +41,7 @@ export class AccessControlUsecaseImpl implements AccessControlUsecase {
     return this.repo.findPermissionById(id);
   }
 
-  async getAllPermissions(
-    page: number,
-    pageSize: number,
-    search?: string,
-  ): Promise<{
-    permissions: Partial<PermissionDto>[];
-    pagination: IPagination;
-  }> {
+  async getAllPermissions(page: number, pageSize: number, search?: string) {
     return this.repo.findAllPermissions(page, pageSize, search);
   }
 

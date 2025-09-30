@@ -1,6 +1,6 @@
 import { IPagination } from 'src/common/types';
-import { CreateBookingDto, UpdateBookingDto } from './payment.entity';
 import { Booking, User } from '@prisma/client';
+import { CreateBookingDto, UpdateBookingDto } from '../booking/booking.entity';
 
 export interface BookingUseCases {
   createBooking(dto: CreateBookingDto): Promise<Booking | null>;

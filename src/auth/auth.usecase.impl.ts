@@ -22,7 +22,7 @@ import cloudinary from '../config/cloudinary/cloudinary.config';
 import { uploadToCloudinary } from '../config/cloudinary/upload';
 
 @Injectable()
-export class AuthUseCaseImpl implements AuthUseCase {
+export class AuthUseCaseImpl {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
@@ -162,26 +162,26 @@ export class AuthUseCaseImpl implements AuthUseCase {
     // { message: 'Password changed successfully' }; // ✅ return success info
   }
 
-  async forgotPassword(data: AuthForgotPasswordDto): Promise<void> {
-    const user = await this.authRepository.findByEmail(data.email);
-    if (!user) return; // silently ignore
+  // async forgotPassword(data: AuthForgotPasswordDto): Promise<void> {
+  //   const user = await this.authRepository.findByEmail(data.email);
+  //   if (!user) return; // silently ignore
 
-    // Generate password reset token
-    const resetToken = await this.authRepository.generateResetToken(user.id);
+  //   // Generate password reset token
+  //   const resetToken = await this.authRepository.generateResetToken(user.id);
 
-    // Send email
-    await this.authRepository.sendResetPasswordEmail(user.email, resetToken);
-  }
+  //   // Send email
+  //   await this.authRepository.sendResetPasswordEmail(user.email, resetToken);
+  // }
 
-  async resetPassword(data: AuthResetPasswordDto): Promise<void> {
-    const userId = await this.authRepository.verifyResetToken(data.token);
-    if (!userId) throw new RpcException('Invalid or expired token');
+  // async resetPassword(data: AuthResetPasswordDto): Promise<void> {
+  //   const userId = await this.authRepository.verifyResetToken(data.token);
+  //   if (!userId) throw new RpcException('Invalid or expired token');
 
-    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
-    await this.authRepository.updatePassword(userId, hashedPassword);
+  //   const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+  //   await this.authRepository.updatePassword(userId, hashedPassword);
 
-    await this.authRepository.invalidateResetToken(data.token);
-  }
+  //   await this.authRepository.invalidateResetToken(data.token);
+  // }
 
   // ----------------- Email Verification -----------------
   async verifyEmail(data: AuthVerifyEmailDto): Promise<void> {

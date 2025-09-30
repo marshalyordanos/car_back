@@ -251,6 +251,8 @@ model Car {
   insurancePlans    CarInsurance[]
   disputes          Dispute[]  
   bookings Booking[]
+  emailVerified     Boolean  @default(false)
+  phoneVerified     Boolean  @default(false)
 
 }
 model CarInsurance {
