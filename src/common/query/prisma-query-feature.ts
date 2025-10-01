@@ -47,24 +47,47 @@ export class PrismaQueryFeature<
     // }
 
     if (search && searchableFields?.length) {
-      console.log('----------------------------ww::', search);
-
       const searchItems = search.split(',');
       const AND: any[] = [];
 
       searchItems.forEach((item) => {
         const [key, value] = item.split(':');
-        console.log('----------------------------ww::', key);
 
-        if (searchableFields.includes(key)) {
-          // Handle nested search: e.g. "make.name:Toyota"
+        if (key === 'all') {
+          // Search across ALL searchable fields
+          const OR: any[] = [];
+          searchableFields.forEach((field) => {
+            if (field.includes('.')) {
+              // Handle nested fields (e.g. make.name)
+              const parts = field.split('.');
+              let nested: any = {};
+              let current = nested;
+
+              parts.forEach((part, i) => {
+                if (i === parts.length - 1) {
+                  current[part] = { contains: value, mode: 'insensitive' };
+                } else {
+                  current[part] = {};
+                  current = current[part];
+                }
+              });
+
+              OR.push(nested);
+            } else {
+              OR.push({ [field]: { contains: value, mode: 'insensitive' } });
+            }
+          });
+
+          if (OR.length > 0) {
+            AND.push({ OR });
+          }
+        } else if (searchableFields.includes(key)) {
+          // Handle single field (including nested like make.name)
           if (key.includes('.')) {
-            console.log('----------------------------ww::', key);
-            const parts = key.split('.'); // ["make", "name"]
+            const parts = key.split('.');
             let nested: any = {};
             let current = nested;
 
-            // Build nested structure dynamically
             parts.forEach((part, i) => {
               if (i === parts.length - 1) {
                 current[part] = { contains: value, mode: 'insensitive' };
@@ -76,7 +99,6 @@ export class PrismaQueryFeature<
 
             AND.push(nested);
           } else {
-            // Normal top-level search
             AND.push({ [key]: { contains: value, mode: 'insensitive' } });
           }
         }
@@ -84,7 +106,6 @@ export class PrismaQueryFeature<
 
       if (AND.length > 0) where.AND = AND;
     }
-
     // --- FILTER ---
     // if (filter) {
     //   const filterItems = filter.split(',');
