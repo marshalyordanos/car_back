@@ -32,14 +32,53 @@ export class PrismaQueryFeature<
     const where: any = {};
 
     // --- SEARCH ---
+    // if (search && searchableFields?.length) {
+    //   const searchItems = search.split(',');
+    //   const AND: any[] = [];
+
+    //   searchItems.forEach((item) => {
+    //     const [key, value] = item.split(':');
+    //     if (searchableFields.includes(key)) {
+    //       AND.push({ [key]: { contains: value, mode: 'insensitive' } });
+    //     }
+    //   });
+
+    //   if (AND.length > 0) where.AND = AND;
+    // }
+
     if (search && searchableFields?.length) {
+      console.log('----------------------------ww::', search);
+
       const searchItems = search.split(',');
       const AND: any[] = [];
 
       searchItems.forEach((item) => {
         const [key, value] = item.split(':');
+        console.log('----------------------------ww::', key);
+
         if (searchableFields.includes(key)) {
-          AND.push({ [key]: { contains: value, mode: 'insensitive' } });
+          // Handle nested search: e.g. "make.name:Toyota"
+          if (key.includes('.')) {
+            console.log('----------------------------ww::', key);
+            const parts = key.split('.'); // ["make", "name"]
+            let nested: any = {};
+            let current = nested;
+
+            // Build nested structure dynamically
+            parts.forEach((part, i) => {
+              if (i === parts.length - 1) {
+                current[part] = { contains: value, mode: 'insensitive' };
+              } else {
+                current[part] = {};
+                current = current[part];
+              }
+            });
+
+            AND.push(nested);
+          } else {
+            // Normal top-level search
+            AND.push({ [key]: { contains: value, mode: 'insensitive' } });
+          }
         }
       });
 
@@ -47,10 +86,27 @@ export class PrismaQueryFeature<
     }
 
     // --- FILTER ---
+    // if (filter) {
+    //   const filterItems = filter.split(',');
+    //   filterItems.forEach((item) => {
+    //     const [key, value] = item.split(':');
+    //     if (key.endsWith('_lte')) {
+    //       const k = key.replace('_lte', '');
+    //       where[k] = { lte: Number(value) };
+    //     } else if (key.endsWith('_gte')) {
+    //       const k = key.replace('_gte', '');
+    //       where[k] = { gte: Number(value) };
+    //     } else {
+    //       where[key] = value;
+    //     }
+    //   });
+    // }
     if (filter) {
       const filterItems = filter.split(',');
       filterItems.forEach((item) => {
         const [key, value] = item.split(':');
+
+        // Handle lte/gte
         if (key.endsWith('_lte')) {
           const k = key.replace('_lte', '');
           where[k] = { lte: Number(value) };
@@ -58,7 +114,18 @@ export class PrismaQueryFeature<
           const k = key.replace('_gte', '');
           where[k] = { gte: Number(value) };
         } else {
-          where[key] = value;
+          // Handle arrays like modelId:[1,2,3]
+          if (value.startsWith('[') && value.endsWith(']')) {
+            const arr = value
+              .slice(1, -1) // remove brackets
+              .split('|') // <-- or split(',') depending on your preference
+              .map((v) => (isNaN(Number(v)) ? v : Number(v)));
+
+            where[key] = { in: arr };
+          } else {
+            // Single value
+            where[key] = isNaN(Number(value)) ? value : Number(value);
+          }
         }
       });
     }

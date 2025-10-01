@@ -12,7 +12,7 @@
     "dev:operations": "ts-node-dev --respawn --transpile-only src/operations/main.operations.ts",
     "dev:rental-service": "ts-node-dev --respawn --transpile-only src/rental-service/main.rental-service.ts",
     "dev:gateway": "ts-node-dev --respawn --transpile-only src/gateway/main.gateway.ts",
-    "dev": "concurrently -n gateway,auth,user -c green,cyan,magenta \"npm run dev:gateway\" \"npm run dev:auth\" \"npm run dev:user\"",
+    "dev": "concurrently -n gateway,auth,operations,rental-service -c green,cyan,magenta \"npm run dev:gateway\" \"npm run dev:auth\" \"npm run dev:rental-service\" \"npm run dev:operations\"",
     "start:auth": "node dist/auth/main.auth.js",
     "start:operations": "node dist/operations/main.operations.js",
     "start:rental-service": "node dist/rental-service/main.rental-service.js",

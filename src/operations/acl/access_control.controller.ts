@@ -34,6 +34,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('Role', PermissionActions.READ)
   @MessagePattern(PATTERNS.ROLE_FIND_ALL)
   async findAllRoles(@Payload() payload: any) {
     console.log(
@@ -52,6 +54,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('Role', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.ROLE_CREATE)
   async createRole(@Payload() payload: { data: Partial<RoleDto> }) {
     try {
@@ -66,6 +70,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('Role', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ROLE_UPDATE)
   async updateRole(@Payload() payload: { id: string; data: Partial<RoleDto> }) {
     try {
@@ -76,6 +82,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('Role', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.ROLE_DELETE)
   async deleteRole(@Payload() payload: { id: string }) {
     try {

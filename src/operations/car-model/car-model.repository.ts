@@ -35,7 +35,7 @@ export class CarModelRepository {
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['name'],
+      searchableFields: ['name', 'make.name'],
     });
 
     const query = feature.getQuery();
