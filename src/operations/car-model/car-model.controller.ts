@@ -7,11 +7,13 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { ListQueryDto } from 'src/common/query/query.dto';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class CarModelMessageController {
   constructor(private readonly usecases: CarModelUseCasesImp) {}
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_MODEL_FIND_BY_ID)
   async findById(@Payload() payload: { id: string }) {
     try {
@@ -22,6 +24,7 @@ export class CarModelMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_MODEL_FIND_ALL)
   async findAll(data: { query: ListQueryDto }) {
     try {

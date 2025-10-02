@@ -5,11 +5,13 @@ import { CarMakeDto, CarMakeUpdateDto } from './car-make.entity';
 import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class CarMakeMessageController {
   constructor(private readonly usecases: CarMakeUseCasesImp) {}
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_MAKE_FIND_BY_ID)
   async findById(@Payload() payload: { id: string }) {
     try {
@@ -20,6 +22,7 @@ export class CarMakeMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_MAKE_FIND_ALL)
   async findAll(
     @Payload() payload: { page: number; pageSize: number; search?: string },
