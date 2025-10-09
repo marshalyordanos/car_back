@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { HostProfileDto, UserUpdateDto } from './user.entity';
+import { HostProfileDto, UserCreteDto, UserUpdateDto } from './user.entity';
 import { HostProfile, Prisma, Role, User } from '@prisma/client';
+import * as queryDto from '../../common/query/query.dto';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
+
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserRepository {
@@ -16,26 +20,62 @@ export class UserRepository {
     });
   }
 
-  async findAll(skip: number, pageSize: number, where: any) {
-    return await Promise.all([
+  async findAll(filter: queryDto.ListQueryDto) {
+    const feature = new PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: [
+        'firstName',
+        'lastName',
+        'role.name',
+        'phone',
+        'email',
+      ],
+    });
+
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
       this.prisma.user.findMany({
-        skip,
-        take: pageSize,
-        where,
-        select: {
-          email: true,
-          id: true,
-          createdAt: true,
-          firstName: true,
-          lastName: true,
-          phone: true,
-          role: true,
-          hostProfile: true,
-          guestProfile: true,
-        },
+        ...query,
+        include: { role: true },
+        where: query.where || {},
       }),
-      this.prisma.user.count({ where }),
+      this.prisma.user.count({ where: query.where || {} }),
     ]);
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
+  }
+
+  async createUser(
+    data: UserCreteDto,
+    roleId?: string,
+  ): Promise<UserWithRelations> {
+    const { firstName, lastName, email, phone } = data;
+
+    const hashedPassword = await bcrypt.hash('12345678', 10);
+
+    return this.prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        phone,
+        password: hashedPassword,
+        roleId: roleId ?? undefined,
+        isStaff: true,
+      },
+      include: { role: true, guestProfile: true, hostProfile: true },
+    });
   }
 
   async updateUser(
@@ -141,6 +181,9 @@ export class UserRepository {
       where: { id: guestId },
       include: { wishlist: true },
     });
+  }
+  async findRoleByName(name: string) {
+    return this.prisma.role.findUnique({ where: { name: name } });
   }
 }
 

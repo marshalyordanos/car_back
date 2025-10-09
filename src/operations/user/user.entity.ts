@@ -33,6 +33,24 @@ export class UserUpdateDto {
   @IsOptional() nationalIdFile?: Express.Multer.File;
 }
 
+export class UserCreteDto {
+  @IsString()
+  firstName: string;
+
+  @IsString()
+  lastName: string;
+
+  @IsString()
+  email: string;
+
+  @IsString()
+  phone: string;
+
+  @IsOptional()
+  @IsString()
+  roleId?: string;
+}
+
 export class ChangeRoleDto {
   @IsNotEmpty()
   @IsString()

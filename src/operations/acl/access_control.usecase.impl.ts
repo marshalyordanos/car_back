@@ -29,10 +29,33 @@ export class AccessControlUsecaseImpl {
   }
 
   async updateRole(id: string, data: Partial<RoleDto>): Promise<Role> {
+    const role = await this.repo.findRoleById(id);
+    if (!role) {
+      throw new RpcException(`role with ${id} id  is not found!`);
+    }
+    if (
+      role.name == 'GUEST' ||
+      role.name == 'SUPER_ADMIN' ||
+      role.name == 'HOST'
+    ) {
+      throw new RpcException(`This role can not be update!`);
+    }
+
     return this.repo.updateRole(id, data);
   }
 
   async deleteRole(id: string): Promise<Role> {
+    const role = await this.repo.findRoleById(id);
+    if (!role) {
+      throw new RpcException(`role with ${id} id  is not found!`);
+    }
+    if (
+      role.name == 'GUEST' ||
+      role.name == 'SUPER_ADMIN' ||
+      role.name == 'HOST'
+    ) {
+      throw new RpcException(`This role can not be Deleted!`);
+    }
     return this.repo.deleteRole(id);
   }
 

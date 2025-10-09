@@ -1,11 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UserRepository } from './user.repository';
-import { HostProfileDto, UserDto, UserUpdateDto } from './user.entity';
+import {
+  HostProfileDto,
+  UserCreteDto,
+  UserDto,
+  UserUpdateDto,
+} from './user.entity';
 import { User } from '@prisma/client';
 import { IPagination } from 'src/common/types';
 import { UserUsecase } from './user.usecase';
 import { RpcException } from '@nestjs/microservices';
 import { uploadToCloudinary } from '../../config/cloudinary/upload';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
 export class UserUseCasesImp implements UserUsecase {
@@ -19,44 +25,69 @@ export class UserUseCasesImp implements UserUsecase {
     return this.userRepo.findUserById(id);
   }
 
-  async getAllUsers(
-    page: number,
-    pageSize: number,
-    search?: string,
-    branchId?: number,
-  ): Promise<{
-    users: Partial<User>[];
-    pagination: IPagination;
-  }> {
-    const skip = (page - 1) * pageSize;
-
-    // Dynamic filters
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-      ];
+  async getAllUsers(query: ListQueryDto) {
+    if (/isStaff:[^,]*/.test(query.filter || '')) {
+      query.filter = (query.filter || '').replace(
+        /isStaff:[^,]*/,
+        `isStaff:${true}`,
+      );
+    } else {
+      query.filter = query.filter
+        ? query.filter + `,isStaff:${true}`
+        : `isStaff:${true}`;
     }
-
-    if (branchId) {
-      where.branchId = branchId;
-    }
-
-    const [users, total] = await this.userRepo.findAll(skip, pageSize, where);
-
-    const totalPages = Math.ceil(total / pageSize);
+    const res = await this.userRepo.findAll(query);
 
     return {
-      users,
-      pagination: {
-        total,
-        page,
-        pageSize,
-        totalPages,
-      },
+      models: res.models,
+      pagination: res.pagination,
+    };
+  }
+  async getAllCustomers(query: ListQueryDto) {
+    const role = await this.userRepo.findRoleByName('GUEST');
+    if (!role) {
+      throw new RpcException('GUEST role is not found!');
+    }
+
+    if (/roleId:[^,]*/.test(query.filter || '')) {
+      query.filter = (query.filter || '').replace(
+        /roleId:[^,]*/,
+        `roleId:${role.id}`,
+      );
+    } else {
+      query.filter = query.filter
+        ? query.filter + `,roleId:${role.id}`
+        : `roleId:${role.id}`;
+    }
+    const res = await this.userRepo.findAll(query);
+
+    return {
+      models: res.models,
+      pagination: res.pagination,
+    };
+  }
+
+  async getAllHosts(query: ListQueryDto) {
+    const role = await this.userRepo.findRoleByName('HOST');
+    if (!role) {
+      throw new RpcException('RENTAL role is not found!');
+    }
+
+    if (/roleId:[^,]*/.test(query.filter || '')) {
+      query.filter = (query.filter || '').replace(
+        /roleId:[^,]*/,
+        `roleId:${role.id}`,
+      );
+    } else {
+      query.filter = query.filter
+        ? query.filter + `,roleId:${role.id}`
+        : `roleId:${role.id}`;
+    }
+    const res = await this.userRepo.findAll(query);
+
+    return {
+      models: res.models,
+      pagination: res.pagination,
     };
   }
 
@@ -114,5 +145,8 @@ export class UserUseCasesImp implements UserUsecase {
 
   getWishlist(guestId: string) {
     return this.userRepo.getWishlist(guestId);
+  }
+  async createUser(data: UserCreteDto) {
+    return this.userRepo.createUser(data);
   }
 }

@@ -22,12 +22,14 @@ import {
   HostProfileDto,
   HostVerifyDto,
   RemoveFromWishlistDto,
+  UserCreteDto,
   UserDto,
   UserUpdateDto,
 } from '../operations/user/user.entity';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
+import { ListQueryDto } from '../common/query/query.dto';
 
 @Controller('users')
 export class UserGatewayController {
@@ -79,25 +81,34 @@ export class UserGatewayController {
 
   // user
 
-  @Get()
-  async findAll(
-    @Req() req,
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-    @Query('search') search?: string,
-    @Query('branchId') branchId?: string,
-  ) {
+  @Get('staffs')
+  async findAll(@Req() req, @Query() query: ListQueryDto) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.usersClient.send(PATTERNS.USER_FIND_ALL, {
       headers: { authorization: authHeader },
-      page: page ? Number(page) : 1,
-      pageSize: pageSize ? Number(pageSize) : 10,
-      search: search || null,
-      branchId: branchId ? Number(branchId) : null,
+      query,
     });
   }
 
+  @Get('guests')
+  async findAllCustomers(@Req() req, @Query() query: ListQueryDto) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.CUSTOMER_FIND_ALL, {
+      headers: { authorization: authHeader },
+      query,
+    });
+  }
+  @Get('hosts')
+  async findAllHosts(@Req() req, @Query() query: ListQueryDto) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.HOST_FIND_ALL, {
+      headers: { authorization: authHeader },
+      query,
+    });
+  }
   @Patch('host/:id')
   async updateHostProfile(
     @Req() req,
@@ -157,6 +168,16 @@ export class UserGatewayController {
     return this.usersClient.send(PATTERNS.USER_UPDATE, {
       headers: { authorization: authHeader },
       id,
+      data: dto,
+    });
+  }
+
+  @Post()
+  async create(@Req() req, @Body() dto: UserCreteDto) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.USER_CREATE, {
+      headers: { authorization: authHeader },
       data: dto,
     });
   }

@@ -7,6 +7,9 @@ export const PATTERNS = {
   USER_CREATE: 'user.create',
   USER_FIND_BY_ID: 'user.findById',
   USER_FIND_ALL: 'user.findAll',
+  CUSTOMER_FIND_ALL: 'customer.findAll',
+  HOST_FIND_ALL: 'host.findAll',
+
   USER_UPDATE: 'user.update',
   USER_DELETE: 'user.delete',
   USER_FIND_BY_EMAIL: 'user.findByEmail',

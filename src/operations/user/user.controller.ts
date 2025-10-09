@@ -6,6 +6,7 @@ import {
   ChangeRoleDto,
   HostProfileDto,
   HostVerifyDto,
+  UserCreteDto,
   UserDto,
 } from './user.entity';
 import { Public } from '../../common/decorator/public.decorator';
@@ -14,6 +15,7 @@ import { handleCatch } from '../../common/handleCatch';
 import * as permissionGuard from '../../common/permission.guard';
 import { CheckPermission } from '../../common/decorator/check-permission.decorator';
 import { PermissionActions } from '../../contracts/permission-actions.enum';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Controller()
 export class UserMessageController {
@@ -32,23 +34,62 @@ export class UserMessageController {
 
   // @Public()
   @MessagePattern(PATTERNS.USER_FIND_ALL)
-  async findAll(@Payload() data: any) {
+  async findAll(@Payload() data: { query: ListQueryDto }) {
     try {
-      const user = data.user;
-      console.log('Current user:', user);
+      // const user = data.user;
+      // console.log('Current user:', user);
 
-      const { page = 1, pageSize = 10, search, branchId } = data;
-
-      const result = await this.usecases.getAllUsers(
-        page,
-        pageSize,
-        search,
-        branchId,
-      );
+      const result = await this.usecases.getAllUsers(data.query);
 
       return IResponse.success(
         'Users fetched successfully',
-        result.users,
+        result.models,
+        result.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CUSTOMER_FIND_ALL)
+  async findAllCustomers(@Payload() data: { query: ListQueryDto }) {
+    try {
+      // const user = data.user;
+      // console.log('Current user:', user);
+
+      const result = await this.usecases.getAllCustomers(data.query);
+
+      return IResponse.success(
+        'Rentals fetched successfully',
+        result.models,
+        result.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.USER_CREATE)
+  async create(@Payload() payload: { data: UserCreteDto }) {
+    try {
+      const model = await this.usecases.createUser(payload.data);
+      return IResponse.success('User model created successfully', model);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.HOST_FIND_ALL)
+  async findAllHosts(@Payload() data: { query: ListQueryDto }) {
+    try {
+      // const user = data.user;
+      // console.log('Current user:', user);
+
+      const result = await this.usecases.getAllHosts(data.query);
+
+      return IResponse.success(
+        'Hosts fetched successfully',
+        result.models,
         result.pagination,
       );
     } catch (error) {

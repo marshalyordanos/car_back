@@ -123,9 +123,11 @@ export class PrismaQueryFeature<
     //   });
     // }
     if (filter) {
+      console.log('filter::', filter);
       const filterItems = filter.split(',');
       filterItems.forEach((item) => {
         const [key, value] = item.split(':');
+        console.log(key, value);
 
         // Handle lte/gte
         if (key.endsWith('_lte')) {
@@ -135,18 +137,36 @@ export class PrismaQueryFeature<
           const k = key.replace('_gte', '');
           where[k] = { gte: Number(value) };
         } else {
-          // Handle arrays like modelId:[1,2,3]
-          if (value.startsWith('[') && value.endsWith(']')) {
+          console.log('value:::', value);
+          if (value?.startsWith('[') && value?.endsWith(']')) {
+            // Remove brackets and split by comma or pipe
             const arr = value
-              .slice(1, -1) // remove brackets
-              .split('|') // <-- or split(',') depending on your preference
-              .map((v) => (isNaN(Number(v)) ? v : Number(v)));
+              .slice(1, -1)
+              .split('|') // or use ',' depending on your input format
+              .map((v) => v.trim()); // Keep as string, don't convert to number
 
             where[key] = { in: arr };
           } else {
-            // Single value
-            where[key] = isNaN(Number(value)) ? value : Number(value);
+            // Convert "true"/"false" to boolean
+            let parsedValue: any;
+            if (value === 'true') parsedValue = true;
+            else if (value === 'false') parsedValue = false;
+            else parsedValue = value; // leave as string (don't auto convert numbers)
+
+            where[key] = parsedValue;
           }
+          // Handle arrays like modelId:[1,2,3]
+          // if (value.startsWith('[') && value.endsWith(']')) {
+          //   const arr = value
+          //     .slice(1, -1) // remove brackets
+          //     .split('|') // <-- or split(',') depending on your preference
+          //     .map((v) => (isNaN(Number(v)) ? v : Number(v)));
+
+          //   where[key] = { in: arr };
+          // } else {
+          //   // Single value
+          //   where[key] = isNaN(Number(value)) ? value : Number(value);
+          // }
         }
       });
     }
