@@ -56,10 +56,7 @@ export class UserRepository {
     };
   }
 
-  async createUser(
-    data: UserCreteDto,
-    roleId?: string,
-  ): Promise<UserWithRelations> {
+  async createUser(data: UserCreteDto, roleId?: string) {
     const { firstName, lastName, email, phone } = data;
 
     const hashedPassword = await bcrypt.hash('12345678', 10);
@@ -74,7 +71,7 @@ export class UserRepository {
         roleId: roleId ?? undefined,
         isStaff: true,
       },
-      include: { role: true, guestProfile: true, hostProfile: true },
+      // include: { role: true, guestProfile: true, hostProfile: true },
     });
   }
 
