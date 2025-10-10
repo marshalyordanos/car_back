@@ -85,8 +85,7 @@ model User {
   updatedAt       DateTime      @updatedAt
   roleId          String?
   isSuperAdmin    Boolean?      @default(false)
-  isStaff         Boolean?      @default(false)
-
+  isStaff   Boolean  @default(false)
   // Relations
   guestProfile    GuestProfile? 
   hostProfile     HostProfile?  
