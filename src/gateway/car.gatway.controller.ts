@@ -118,6 +118,8 @@ export class CarGatewayController {
       dto.photos = photos; // assign only if there are files
     }
 
+    console.log('--------------- car updated', id);
+
     return this.carClient.send(PATTERNS.CAR_UPDATE, {
       headers: { authorization: authHeader },
       carId: id,

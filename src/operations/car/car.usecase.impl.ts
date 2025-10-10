@@ -46,7 +46,7 @@ export class CarUseCasesImp implements CarUseCase {
     carData: Partial<CarDto>,
   ): Promise<Car> {
     if (Array.isArray(carData?.photos) && carData.photos.length < 2) {
-      throw new RpcException('You must upload at least 4 photos.');
+      throw new RpcException('You must upload at least 2 photos.');
     }
 
     let uploadedFiles: string[] = [];

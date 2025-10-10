@@ -63,6 +63,7 @@ export class CarMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_FIND_BY_ID)
   async findByIdCar(@Payload() payload: { carId: string }) {
     try {
@@ -73,6 +74,7 @@ export class CarMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_FIND_ALL)
   findAllCar() {
     return this.usecases.listAllCars();
@@ -123,6 +125,7 @@ export class CarMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CAR_INSURANCE_GET_BY_CAR)
   async getByCar(@Payload() payload: { carId: string }) {
     try {

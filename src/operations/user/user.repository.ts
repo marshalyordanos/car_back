@@ -69,7 +69,7 @@ export class UserRepository {
         phone,
         password: hashedPassword,
         roleId: roleId ?? undefined,
-        isStaff: true,
+        // isStaff: true,
       },
       // include: { role: true, guestProfile: true, hostProfile: true },
     });

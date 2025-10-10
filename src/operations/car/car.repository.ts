@@ -76,27 +76,12 @@ export class CarRepository {
     photos?: string[],
   ): Promise<Car> {
     // Pick out only scalar fields that exist in the Car model
-    const {
-      year,
-      color,
-      licensePlate,
-      vin,
-      transmission,
-      mileage,
-      dailyRate,
-      rentalPricePerDay,
-      longTermDiscount,
-      seatingCapacity,
-      mileageLimit,
-      carType,
-      ecoFriendly,
-      features,
-      safety,
-      rules,
-      description,
-      rejectionReason,
-    } = data;
+    const existingCar = await this.prisma.car.findUnique({
+      where: { id: carId },
+    });
+    console.log('Existing car:', existingCar);
 
+    console.log('-------------------', carId, data);
     const updatedCar = await this.prisma.car.update({
       where: { id: carId },
       data: {
@@ -125,7 +110,7 @@ export class CarRepository {
         photos: photos ? (photos?.length > 1 ? photos : undefined) : undefined,
 
         // Relations
-        host: { connect: { id: hostId } },
+        // host: { connect: { id: hostId } },
         make: data.makeId ? { connect: { id: data.makeId } } : undefined,
         model: data.modelId ? { connect: { id: data.modelId } } : undefined,
       },

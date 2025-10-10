@@ -35,6 +35,7 @@ export class CarMakeRepository {
     id: string,
     data: Prisma.CarMakeUpdateInput,
   ): Promise<CarMake> {
+    console.log('carudpated');
     return this.prisma.carMake.update({ where: { id }, data });
   }
 
