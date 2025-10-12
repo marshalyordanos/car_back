@@ -1,9 +1,11 @@
 import {
   IsBoolean,
+  IsEmail,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  MinLength,
 } from 'class-validator';
 
 export class UserDto {
@@ -51,6 +53,26 @@ export class UserCreteDto {
   roleId?: string;
 }
 
+export class CreateHostDto {
+  @IsNotEmpty({ message: 'First Name is required' })
+  @IsString({ message: 'First Name must be a string' })
+  firstName: string;
+
+  @IsNotEmpty({ message: 'Last Name is required' })
+  @IsString({ message: 'Last Name must be a string' })
+  lastName: string;
+
+  @IsNotEmpty({ message: 'Email is required' })
+  @IsEmail({}, { message: 'Email must be valid' })
+  email: string;
+
+  @IsNotEmpty({ message: 'Phone is required' })
+  @IsString({ message: 'Phone must be a string' })
+  phone: string;
+
+  // File uploads
+  @IsOptional() profilePhotoFile?: Express.Multer.File;
+}
 export class ChangeRoleDto {
   @IsNotEmpty()
   @IsString()
@@ -75,7 +97,10 @@ export class HostVerifyDto {
   @IsBoolean()
   isVerified: boolean;
 }
-
+export class IsActiveDto {
+  @IsBoolean()
+  isActive: boolean;
+}
 export class AddToWishlistDto {
   @IsNotEmpty()
   @IsString()

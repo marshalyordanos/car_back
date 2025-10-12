@@ -41,7 +41,7 @@ export class UserRepository {
     const results = await Promise.all([
       this.prisma.user.findMany({
         ...query,
-        include: { role: true },
+        include: { role: true, hostProfile: true, guestProfile: true },
         where: query.where || {},
       }),
       this.prisma.user.count({ where: query.where || {} }),
@@ -69,9 +69,34 @@ export class UserRepository {
         phone,
         password: hashedPassword,
         roleId: roleId ?? undefined,
-        // isStaff: true,
+        isStaff: true,
       },
-      // include: { role: true, guestProfile: true, hostProfile: true },
+      include: { role: true, guestProfile: true, hostProfile: true },
+    });
+  }
+
+  async createHostUser(
+    data: UserCreteDto,
+    roleId?: string,
+    files?: {
+      profilePhoto?: string;
+    },
+  ) {
+    const { firstName, lastName, email, phone } = data;
+
+    const hashedPassword = await bcrypt.hash('12345678', 10);
+
+    return this.prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        profilePhoto: files?.profilePhoto,
+        phone,
+        password: hashedPassword,
+        roleId: roleId ?? undefined,
+      },
+      include: { role: true, guestProfile: true, hostProfile: true },
     });
   }
 
@@ -137,6 +162,15 @@ export class UserRepository {
       },
       update: {
         isVerified: isVerified ?? undefined,
+      },
+    });
+  }
+
+  async activeOrDiactiveUser(userId: string, isActive: boolean): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: isActive ?? undefined,
       },
     });
   }

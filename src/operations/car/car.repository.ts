@@ -124,7 +124,10 @@ export class CarRepository {
   }
 
   async findById(carId: string): Promise<Car | null> {
-    return this.prisma.car.findUnique({ where: { id: carId } });
+    return this.prisma.car.findUnique({
+      where: { id: carId },
+      include: { make: true, model: true },
+    });
   }
 
   async findByHost(hostId: string): Promise<Car[]> {

@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import {
+  CreateHostDto,
   HostProfileDto,
   UserCreteDto,
   UserDto,
@@ -132,6 +133,10 @@ export class UserUseCasesImp implements UserUsecase {
     return this.userRepo.verifyHostProfile(userId, isVerified);
   }
 
+  async activeOrDiactiveUser(userId: string, isActive: boolean) {
+    return this.userRepo.activeOrDiactiveUser(userId, isActive);
+  }
+
   async deleteUser(id: string) {
     return this.userRepo.deleteUser(id);
   }
@@ -148,5 +153,29 @@ export class UserUseCasesImp implements UserUsecase {
   }
   async createUser(data: UserCreteDto) {
     return this.userRepo.createUser(data);
+  }
+
+  async createHost(data: CreateHostDto): Promise<any> {
+    const role = await this.userRepo.findRoleByName('HOST');
+    if (!role) {
+      throw new RpcException('RENTAL role is not found!');
+    }
+
+    const uploadedFiles: any = {};
+    try {
+      if (data.profilePhotoFile) {
+        console.log('profilePhotoFile: ', data.profilePhotoFile);
+        uploadedFiles.profilePhoto = await uploadToCloudinary(
+          data.profilePhotoFile,
+          'users/profilePhotos',
+        );
+        console.log('uploadedFiles: ', uploadedFiles);
+      }
+    } catch (err) {
+      throw new RpcException('Error uploading files to Cloudinary');
+    }
+    if (role.name == 'HOST') {
+      return this.userRepo.createHostUser(data, role.id, uploadedFiles);
+    }
   }
 }

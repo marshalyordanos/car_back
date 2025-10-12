@@ -100,6 +100,8 @@ model User {
   refreshTokens     RefreshToken[]
   disputes            Dispute[]  
   cars         Car[]
+  isActive     Boolean     @default(false)
+
 
   guestBookings Booking[] @relation("GuestBookings")
   hostBookings  Booking[] @relation("HostBookings")

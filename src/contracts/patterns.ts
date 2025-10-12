@@ -16,6 +16,8 @@ export const PATTERNS = {
   USER_CHANGE_ROLE: 'user.changeRole',
   USER_UPDATE_HOST_PROFILE: 'user.updateHostProfile',
   USER_VERIFY_HOST_PROFILE: 'user.verifyHostProfile',
+  CREATE_HOST_USER: 'user.host.create',
+  ACTIVE_DISACTIVE_USER: 'user.active.disactive',
 
   GUEST_ADD_WISHLIST: 'guest.addWishlist',
   GUEST_REMOVE_WISHLIST: 'guest.removeWishlist',

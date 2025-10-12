@@ -19,8 +19,10 @@ import { ClientProxy } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   AddToWishlistDto,
+  CreateHostDto,
   HostProfileDto,
   HostVerifyDto,
+  IsActiveDto,
   RemoveFromWishlistDto,
   UserCreteDto,
   UserDto,
@@ -100,6 +102,26 @@ export class UserGatewayController {
       query,
     });
   }
+
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [{ name: 'profilePhotoFile', maxCount: 1 }],
+      { storage: multer.memoryStorage() }, // file stays in memory
+    ),
+  )
+  @Post('hosts')
+  async createHost(
+    @UploadedFiles()
+    files: {
+      profilePhotoFile?: Express.Multer.File[];
+    },
+    @Body() body: CreateHostDto,
+  ) {
+    body.profilePhotoFile = files?.profilePhotoFile?.[0];
+
+    return this.usersClient.send(PATTERNS.CREATE_HOST_USER, body);
+  }
+
   @Get('hosts')
   async findAllHosts(@Req() req, @Query() query: ListQueryDto) {
     const authHeader = req.headers['authorization'] || null;
@@ -132,6 +154,21 @@ export class UserGatewayController {
     const authHeader = req.headers['authorization'] || null;
 
     return this.usersClient.send(PATTERNS.USER_VERIFY_HOST_PROFILE, {
+      headers: { authorization: authHeader },
+      id,
+      data,
+    });
+  }
+
+  @Patch('update-active-satus/:id')
+  async activeOrDiactiveUser(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() data: IsActiveDto,
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.ACTIVE_DISACTIVE_USER, {
       headers: { authorization: authHeader },
       id,
       data,

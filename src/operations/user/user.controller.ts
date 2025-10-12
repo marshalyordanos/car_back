@@ -6,6 +6,7 @@ import {
   ChangeRoleDto,
   HostProfileDto,
   HostVerifyDto,
+  IsActiveDto,
   UserCreteDto,
   UserDto,
 } from './user.entity';
@@ -20,6 +21,17 @@ import { ListQueryDto } from 'src/common/query/query.dto';
 @Controller()
 export class UserMessageController {
   constructor(private readonly usecases: UserUseCasesImp) {}
+
+  @Public()
+  @MessagePattern(PATTERNS.CREATE_HOST_USER)
+  async creatHost(@Payload() dto: any) {
+    try {
+      const user = await this.usecases.createHost(dto);
+      return new IResponse(true, 'User is registered Succuessfuly', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
 
   // @Public()
   @MessagePattern(PATTERNS.USER_FIND_BY_ID)
@@ -138,6 +150,22 @@ export class UserMessageController {
       handleCatch(error);
     }
   }
+
+  @MessagePattern(PATTERNS.ACTIVE_DISACTIVE_USER)
+  async activeOrDiactiveUser(
+    @Payload() payload: { id: string; data: IsActiveDto },
+  ) {
+    try {
+      const user = await this.usecases.activeOrDiactiveUser(
+        payload.id,
+        payload.data.isActive,
+      );
+      return IResponse.success(' Host is verified  successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
   @MessagePattern(PATTERNS.USER_DELETE)
   async deleteUser(@Payload() payload: { id: string }) {
     try {

@@ -4,6 +4,7 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { ReviewUseCasesImpl } from './review.usecase.impl';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class ReviewMessageController {
@@ -19,6 +20,7 @@ export class ReviewMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.REVIEW_GET_BY_ID)
   async getById(@Payload() payload: { id: string }) {
     try {
@@ -29,6 +31,7 @@ export class ReviewMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.REVIEW_GET_BY_CAR)
   async getByCar(@Payload() payload: { carId: string }) {
     try {
@@ -39,6 +42,7 @@ export class ReviewMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.REVIEW_GET_BY_USER)
   async getByUser(@Payload() payload: { userId: string }) {
     try {
