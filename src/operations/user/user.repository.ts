@@ -16,7 +16,7 @@ export class UserRepository {
   ): Promise<(User & { role: Role | null }) | null> {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { role: true },
+      include: { role: true, hostProfile: true, guestProfile: true },
     });
   }
 
