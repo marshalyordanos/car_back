@@ -126,7 +126,7 @@ export class CarRepository {
   async findById(carId: string): Promise<Car | null> {
     return this.prisma.car.findUnique({
       where: { id: carId },
-      include: { make: true, model: true },
+      include: { make: true, model: true, insurancePlans: true, reviews: true },
     });
   }
 
@@ -161,7 +161,7 @@ export class CarRepository {
     const results = await Promise.all([
       this.prisma.car.findMany({
         ...query,
-        include: { make: true },
+        include: { make: true, model: true },
         where: query.where || {},
       }),
       this.prisma.car.count({ where: query.where || {} }),
