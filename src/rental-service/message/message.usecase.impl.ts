@@ -1,0 +1,128 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { MessageRepository } from './message.repository';
+import { SendMessageDto, MarkAsReadDto } from './message.entity';
+import { ListQueryDto } from '../../common/query/query.dto';
+import { NotifyHubGateway } from '../../notify-hub/notify-hub.gateway';
+import { REDIS_CLIENT } from '../../notify-hub/redis/redis.constants';
+import { Redis } from 'ioredis';
+
+@Injectable()
+export class MessageUseCasesImp {
+  constructor(
+    private readonly repo: MessageRepository,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+  ) {}
+
+  // Send a message: only host or guest allowed (business rule)
+  async sendMessage(dto: SendMessageDto) {
+    // // Verify user is part of booking
+    // const isPart = await this.repo.isUserPartOfBooking(
+    //   dto.senderId,
+    //   dto.bookingId,
+    // );
+    // if (!isPart) {
+    //   throw new RpcException({
+    //     statusCode: 403,
+    //     message: 'Sender is not part of this booking',
+    //   });
+    // }
+    // // Verify receiver is the other party
+    // const isReceiverPart = await this.repo.isUserPartOfBooking(
+    //   dto.receiverId,
+    //   dto.bookingId,
+    // );
+    // if (!isReceiverPart) {
+    //   throw new RpcException({
+    //     statusCode: 400,
+    //     message: 'Receiver is not part of this booking',
+    //   });
+    // }
+    // // Prevent sending to self unless you want to allow
+    // if (dto.senderId === dto.receiverId) {
+    //   throw new RpcException({
+    //     statusCode: 400,
+    //     message: 'Sender and receiver must be different',
+    //   });
+    // }
+    // // Create message via repository
+    // const message = await this.repo.createMessage({
+    //   bookingId: dto.bookingId,
+    //   senderId: dto.senderId,
+    //   receiverId: dto.receiverId,
+    //   content: dto.content,
+    //   attachments: dto.attachments,
+    // });
+    // this.gateway.server
+    //   .to(`booking_${dto.bookingId}`)
+    //   .emit('new_message', message);
+    // // Update chat list for both users
+    // this.gateway.server.to(`user_${dto.senderId}`).emit('update_chat_list', {
+    //   bookingId: dto.bookingId,
+    //   lastMessage: dto.content,
+    //   timestamp: message.createdAt,
+    // });
+    // this.gateway.server.to(`user_${dto.receiverId}`).emit('update_chat_list', {
+    //   bookingId: dto.bookingId,
+    //   lastMessage: dto.content,
+    //   timestamp: message.createdAt,
+    // });
+    // redisClient.publish(
+    //   'for_all',
+    //   JSON.stringify({
+    //     event: 'system_announcement',
+    //     payload: { text: 'Server will restart in 5 minutes' },
+    //   }),
+    // );
+    // // return message (controller will emit event)
+    // return message;
+    // await this.gateway.sendToAll('global_alert', {
+    //   text: 'Hello every connected user',
+    // });
+
+    await this.redis.publish(
+      'for_all',
+      JSON.stringify({
+        event: 'global_alert',
+        payload: { text: 'Hi all' },
+      }),
+    );
+  }
+
+  // List messages in booking with pagination
+  async listMessagesByBooking(bookingId: string, query: ListQueryDto) {
+    const page = query.page || 1;
+    const pageSize = query.pageSize || 50;
+    return this.repo.findMessagesByBooking(bookingId, page, pageSize);
+  }
+
+  // Chat list for user
+  async listChatForUser(userId: string, query: ListQueryDto) {
+    const page = query.page || 1;
+    const pageSize = query.pageSize || 20;
+    return this.repo.getChatListForUser(userId, page, pageSize);
+  }
+
+  // Mark as read
+  async markAsRead(dto: MarkAsReadDto) {
+    // user must be part of booking
+    const isPart = await this.repo.isUserPartOfBooking(
+      dto.userId,
+      dto.bookingId,
+    );
+    if (!isPart)
+      throw new RpcException({
+        statusCode: 403,
+        message: 'User not part of booking',
+      });
+
+    const res = await this.repo.markMessagesAsRead(dto.bookingId, dto.userId);
+    return res;
+  }
+
+  // Unread count for a user (across all bookings or a booking)
+  async unreadCount(userId: string, bookingId?: string) {
+    const count = await this.repo.countUnreadForUser(userId, bookingId);
+    return { count };
+  }
+}

@@ -126,7 +126,22 @@ export class CarRepository {
   async findById(carId: string): Promise<Car | null> {
     return this.prisma.car.findUnique({
       where: { id: carId },
-      include: { make: true, model: true, insurancePlans: true, reviews: true },
+      include: {
+        make: true,
+        model: true,
+        insurancePlans: true,
+        reviews: true,
+        bookings: {
+          where: {
+            status: 'PENDING',
+          },
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+      },
     });
   }
 
@@ -135,19 +150,6 @@ export class CarRepository {
   }
 
   async searchCars(filter: ListQueryDto) {
-    // const where: any = {};
-
-    // if (filter.makeId) where.makeId = filter.makeId;
-    // if (filter.modelId) where.modelId = filter.modelId;
-    // if (filter.year) where.year = filter.year;
-    // if (filter.carType) where.carType = filter.carType;
-    // if (filter.ecoFriendly) where.ecoFriendly = filter.ecoFriendly;
-    // if (filter.minPrice || filter.maxPrice) {
-    //   where.dailyRate = {};
-    //   if (filter.minPrice) where.dailyRate.gte = filter.minPrice;
-    //   if (filter.maxPrice) where.dailyRate.lte = filter.maxPrice;
-    // }
-
     const feature = new PrismaQueryFeature({
       search: filter.search,
       filter: filter.filter,
@@ -157,14 +159,55 @@ export class CarRepository {
       searchableFields: ['name'],
     });
     const query = feature.getQuery();
+    const where: any = {
+      ...query.where,
+    };
+
+    if (filter.startDate && filter.endDate) {
+      const startDate = new Date(filter.startDate);
+      const endDate = new Date(filter.endDate);
+
+      where.AND = where.AND || [];
+
+      where.AND.push({
+        bookings: {
+          none: {
+            AND: [
+              {
+                status: {
+                  notIn: [
+                    'CANCELLED_BY_GUEST',
+                    'CANCELLED_BY_HOST',
+                    'CANCELLED_BY_ADMIN',
+                    'COMPLETED',
+                    'REJECTED',
+                  ],
+                },
+              },
+              {
+                OR: [
+                  {
+                    startDate: { lte: endDate },
+                    endDate: { gte: startDate },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      });
+    }
 
     const results = await Promise.all([
       this.prisma.car.findMany({
         ...query,
-        include: { make: true, model: true },
-        where: query.where || {},
+        where,
+        include: {
+          make: true,
+          model: true,
+        },
       }),
-      this.prisma.car.count({ where: query.where || {} }),
+      this.prisma.car.count({ where }),
     ]);
 
     const models = results[0] || [];

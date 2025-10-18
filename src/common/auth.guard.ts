@@ -27,8 +27,9 @@ export class JwtAuthGuard implements CanActivate {
       const data = context.switchToRpc().getData();
       const token =
         data?.headers?.authorization?.replace('Bearer ', '') || null;
-console.log("Token :", data?.headers?.authorization);
+      console.log('Token :', data?.headers?.authorization);
 
+      console.log('-------------: ', token);
       if (!token)
         throw new RpcException({
           statusCode: 401,
@@ -38,7 +39,8 @@ console.log("Token :", data?.headers?.authorization);
       try {
         const payload = await this.jwtService.verifyAsync(token);
         data.user = payload; // attach decoded token
-      } catch {
+      } catch (err) {
+        console.log('88888888888888888888888888:', err);
         throw new RpcException({
           statusCode: 401,
           message: 'Invalid token',

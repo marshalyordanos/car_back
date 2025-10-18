@@ -4,18 +4,20 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { DisputeUseCasesImpl } from './dispute.usecase.impl';
+import { CreateDisputeDto, DisputeResolveDto } from './dispute.entity';
+import { ListQueryDto } from '../../common/query/query.dto';
 
 @Controller()
 export class DisputeMessageController {
   constructor(private readonly usecases: DisputeUseCasesImpl) {}
 
   @MessagePattern(PATTERNS.DISPUTE_CREATE)
-  async create(@Payload() payload) {
+  async create(@Payload() payload: { data: CreateDisputeDto }) {
     try {
-      const res = await this.usecases.createDispute(payload);
-      return IResponse.success('Dispute created successfully', res);
+      const dispute = await this.usecases.createDispute(payload.data);
+      return IResponse.success('Dispute created', dispute);
     } catch (error) {
-      return handleCatch(error);
+      handleCatch(error);
     }
   }
 
@@ -38,40 +40,53 @@ export class DisputeMessageController {
       return handleCatch(error);
     }
   }
-
   @MessagePattern(PATTERNS.DISPUTE_GET_ALL)
-  async getAll() {
+  async findAll(@Payload() payload: ListQueryDto) {
     try {
-      const res = await this.usecases.getAllDisputes();
-      return IResponse.success('All disputes fetched successfully', res);
+      const result = await this.usecases.getAllDisputes(payload);
+      return IResponse.success(
+        'Disputes fetched',
+        result.data,
+        result.pagination,
+      );
     } catch (error) {
-      return handleCatch(error);
+      handleCatch(error);
     }
   }
 
+  // Admin review → mark UNDER_REVIEW
+  @MessagePattern(PATTERNS.DISPUTE_ADMIN_REVIEW)
+  async adminReview(@Payload() payload: { id: string }) {
+    try {
+      const dispute = await this.usecases.markUnderReview(payload.id);
+      return IResponse.success('Dispute marked under review', dispute);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  // Admin resolves with optional refund
   @MessagePattern(PATTERNS.DISPUTE_RESOLVE)
-  async resolve(@Payload() payload: { disputeId: string }) {
+  async resolve(@Payload() payload: { id: string; data: DisputeResolveDto }) {
     try {
-      const res = await this.usecases.updateStatus(
-        payload.disputeId,
-        'RESOLVED',
+      const result = await this.usecases.resolveDispute(
+        payload.id,
+        payload.data,
       );
-      return IResponse.success('Dispute resolved successfully', res);
+      return IResponse.success('Dispute resolved', result);
     } catch (error) {
-      return handleCatch(error);
+      handleCatch(error);
     }
   }
 
+  // Admin rejects dispute
   @MessagePattern(PATTERNS.DISPUTE_REJECT)
-  async reject(@Payload() payload: { disputeId: string }) {
+  async reject(@Payload() payload: { id: string }) {
     try {
-      const res = await this.usecases.updateStatus(
-        payload.disputeId,
-        'REJECTED',
-      );
-      return IResponse.success('Dispute rejected successfully', res);
+      const dispute = await this.usecases.rejectDispute(payload.id);
+      return IResponse.success('Dispute rejected', dispute);
     } catch (error) {
-      return handleCatch(error);
+      handleCatch(error);
     }
   }
 }

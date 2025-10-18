@@ -6,8 +6,10 @@ import {
   IsBoolean,
   IsOptional,
   IsEnum,
+  IsArray,
 } from 'class-validator';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, PaymentMethod } from '@prisma/client';
+import { InspectionType } from '@prisma/client';
 
 export class CreateBookingDto {
   @IsNotEmpty() @IsString() carId: string;
@@ -16,7 +18,7 @@ export class CreateBookingDto {
 
   @IsNotEmpty() startDate: Date;
   @IsNotEmpty() endDate: Date;
-  @IsNotEmpty() @IsNumber() totalPrice: number;
+  // @IsNotEmpty() @IsNumber() totalPrice: number;
   @IsOptional() @IsBoolean() withDriver?: boolean;
 
   @IsNotEmpty() @IsNumber() pickupLat: number;
@@ -26,6 +28,8 @@ export class CreateBookingDto {
   @IsNotEmpty() @IsNumber() dropoffLat: number;
   @IsNotEmpty() @IsNumber() dropoffLng: number;
   @IsNotEmpty() @IsString() dropoffName: string;
+
+  @IsNotEmpty() @IsEnum(PaymentMethod) paymentMethod: PaymentMethod;
 }
 
 export class UpdateBookingDto {
@@ -57,4 +61,49 @@ export class UpdateBookingGustDto {
 }
 export class BookingChangeStatusDto {
   @IsString() status: BookingStatus;
+}
+
+export interface PaymentConfirmDto {
+  bookingId: string;
+  paymentId: string;
+  method: PaymentMethod;
+  transactionId: string;
+  total: number;
+}
+
+export class BookingInspectionDto {
+  @IsString()
+  @IsNotEmpty()
+  bookingId: string;
+
+  @IsEnum(InspectionType)
+  type: InspectionType;
+
+  @IsArray()
+  @IsOptional()
+  photos?: string[];
+
+  @IsNumber()
+  fuelLevel: number;
+
+  @IsNumber()
+  mileage: number;
+}
+
+export class BookingInspectionUpdateDto {
+  @IsOptional()
+  @IsArray()
+  photos?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  fuelLevel?: number;
+
+  @IsOptional()
+  @IsNumber()
+  mileage?: number;
+
+  @IsOptional()
+  @IsEnum(Boolean)
+  approved?: boolean;
 }

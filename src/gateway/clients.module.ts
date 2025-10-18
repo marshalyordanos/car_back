@@ -21,6 +21,11 @@ dotenv.config();
         transport: Transport.TCP,
         options: { host: '127.0.0.1', port: 4003 },
       },
+      {
+        name: 'Notify_SERVICE',
+        transport: Transport.TCP,
+        options: { host: '127.0.0.1', port: 4004 },
+      },
     ]),
   ],
   exports: [ClientsModule],

@@ -15,9 +15,11 @@ import { ClientProxy } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   BookingChangeStatusDto,
+  BookingInspectionDto,
   CreateBookingDto,
   UpdateBookingDto,
 } from '../rental-service/booking/booking.entity';
+import { ListQueryDto } from '..//common/query/query.dto';
 
 @Controller('bookings')
 export class BookingGatewayController {
@@ -132,6 +134,43 @@ export class BookingGatewayController {
       headers: { authorization: authHeader },
       page,
       pageSize,
+    });
+  }
+
+  // .............................................. inceptions ......................................
+  @Get()
+  async findAll(@Req() req, @Query() query: ListQueryDto) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_INSPECTION_FIND_ALL, {
+      headers: { authorization: authHeader },
+      query,
+    });
+  }
+
+  @Get(':id')
+  async findById(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_INSPECTION_FIND_BY_ID, {
+      headers: { authorization: authHeader },
+      id,
+    });
+  }
+
+  @Post()
+  async create(@Req() req, @Body() dto: BookingInspectionDto) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_INSPECTION_CREATE, {
+      headers: { authorization: authHeader },
+      data: dto,
+    });
+  }
+
+  @Patch(':id/approve')
+  async approve(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_INSPECTION_APPROVE, {
+      headers: { authorization: authHeader },
+      id,
     });
   }
 }

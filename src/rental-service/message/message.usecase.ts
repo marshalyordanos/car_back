@@ -1,8 +1,5 @@
 import { Booking, User } from '@prisma/client';
-import {
-  CreateBookingDto,
-  UpdateBookingDto,
-} from '../../rental-service/booking/booking.entity';
+import { CreateBookingDto, UpdateBookingDto } from '../booking/booking.entity';
 
 export interface BookingUseCases {
   createBooking(dto: CreateBookingDto): Promise<Booking | null>;

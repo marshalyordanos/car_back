@@ -52,3 +52,12 @@ export class RefundPaymentDto {
   @IsString()
   reason?: string;
 }
+
+export interface PaymentConfirmDto {
+  bookingId: string;
+  paymentId: string;
+  method: PaymentMethod;
+  Id: string;
+  total: number;
+  transactionId: string;
+}

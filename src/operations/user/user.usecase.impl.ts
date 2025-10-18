@@ -22,7 +22,12 @@ export class UserUseCasesImp implements UserUsecase {
     return this.userRepo.findUserByEmail(email);
   }
 
-  async getUser(id: string) {
+  async getUser(id: string, isMe = false, userId = '') {
+    if (isMe) {
+      if (userId != id) {
+        throw new RpcException('You have not allowed to access!');
+      }
+    }
     return this.userRepo.findUserById(id);
   }
 
@@ -92,7 +97,17 @@ export class UserUseCasesImp implements UserUsecase {
     };
   }
 
-  async updateUser(id: string, data: Partial<UserUpdateDto>) {
+  async updateUser(
+    id: string,
+    data: Partial<UserUpdateDto>,
+    isMe = false,
+    userId = '',
+  ) {
+    if (isMe) {
+      if (userId != id) {
+        throw new RpcException('You have not allowed to access!');
+      }
+    }
     const user = await this.userRepo.findUserById(id);
     if (!user) {
       throw new RpcException(`User not found`);

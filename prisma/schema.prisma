@@ -103,11 +103,19 @@ model User {
   isActive     Boolean     @default(false)
 
 
+
   guestBookings Booking[] @relation("GuestBookings")
   hostBookings  Booking[] @relation("HostBookings")
 
    payerPayments Payment[] @relation("Payer")
   recipientPayments  Payment[] @relation("Recipient")
+
+ // BookingInspection relations
+  submittedInspections BookingInspection[]  @relation("SubmittedInspections")
+  approvedInspections  BookingInspection[]  @relation("ApprovedInspections")
+
+  hostPenalties HostPenalty[]  // back-relation for HostPenalty.host
+
 
 
 
@@ -308,8 +316,10 @@ model Payment {
   recipient      User?         @relation("Recipient",fields: [recipientId], references: [id])
   recipientId    String?
   amount         Float
+  insuranceFee   Float?
+
   currency       String        @default("ETB")
-  method         PaymentMethod
+  method         PaymentMethod?
   status         PaymentStatus @default(PENDING)
   platformFee    Float?
   hostEarnings   Float?
@@ -320,13 +330,35 @@ model Payment {
 
  
   disputes            Dispute[]  
+  transactions   PaymentTransaction[]
 
 
 }
+model PaymentTransaction {
+  id             String    @id @default(cuid())
+  payment        Payment   @relation(fields: [paymentId], references: [id])
+  paymentId      String
+  type           TransactionType // CAPTURE | REFUND | HOLD
+  amount         Float
+  status         PaymentStatus
+  transactionId  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+enum TransactionType {
+  CAPTURE
+  REFUND
+  HOLD
+  GUEST_TO_PLATFORM
+  PLATFORM_TO_HOST
+}
+
 enum PaymentMethod {
   CBE
   TELEBIRR
 }
+
 enum PaymentType {
   GUEST_TO_PLATFORM
   PLATFORM_TO_HOST
@@ -359,6 +391,11 @@ model Message {
   senderId    String
   receiver    User        @relation("ReceivedMessages", fields: [receiverId], references: [id])
   receiverId  String
+  
+  bookingId   String
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+
+
   content     String
   isRead      Boolean     @default(false)
   createdAt   DateTime    @default(now())
@@ -417,7 +454,7 @@ model Dispute {
   user        User        @relation(fields: [userId], references: [id])
   userId      String
   reason      String
-  status      String      @default("OPEN") // e.g., OPEN, RESOLVED, REJECTED
+  status      String      @default("OPEN") // e.g., OPEN, RESOLVED, REJECTED, UNDER_REVIEW
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   booking Booking? @relation(fields: [bookingId], references: [id])
@@ -443,10 +480,76 @@ model Booking {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   dispute       Dispute?
+  
 
+  messages   Message[]
   payment       Payment?
+  inspections       BookingInspection[]
+  hostPenalties HostPenalty[]  // back-relation for HostPenalty.host
+  bookingInsurance BookingInsurance?
 }
 
+model BookingInsurance {
+  id             String         @id @default(cuid())
+  booking        Booking        @relation(fields: [bookingId], references: [id])
+  bookingId      String         @unique
+  plan           InsurancePlan
+  provider       String         @default("Platform Insurance")
+  coverageDetails String?
+  cost           Float
+  isRefundable   Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+
+model BookingInspection {
+  id             String    @id @default(cuid())
+  booking        Booking   @relation(fields: [bookingId], references: [id])
+  bookingId      String
+  type           InspectionType  // PICKUP | DROPOFF
+  photos         String[]        // URLs
+  fuelLevel      Float
+  mileage        Int
+  submittedBy    User      @relation("SubmittedInspections", fields: [submittedById], references: [id])
+  submittedById  String
+  approved       Boolean   @default(false)
+  approvedBy     User?     @relation("ApprovedInspections", fields: [approvedById], references: [id])
+  approvedById   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+
+model CancellationPolicy {
+  id             String   @id @default(cuid())
+  userType       UserRole // GUEST | HOST
+  daysBeforeTrip Int      // number of days before startDate
+  refundPercent  Float    // 0 to 100
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // @@unique([userType, daysBeforeTrip]) // <- add this line
+
+}
+
+
+
+model HostPenalty {
+  id          String   @id @default(cuid())
+  host        User     @relation(fields: [hostId], references: [id])
+  hostId      String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  bookingId   String
+  reason      String
+  amount      Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+enum InspectionType {
+  PICKUP
+  DROPOFF
+}
 
 enum BookingStatus {
   PENDING

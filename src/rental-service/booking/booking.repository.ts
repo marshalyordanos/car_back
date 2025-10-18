@@ -1,29 +1,86 @@
 // booking.repository.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateBookingDto, UpdateBookingDto } from './booking.entity';
-import { BookingStatus } from '@prisma/client';
+import {
+  BookingInspectionDto,
+  CreateBookingDto,
+  PaymentConfirmDto,
+  UpdateBookingDto,
+} from './booking.entity';
+import {
+  AdminAction,
+  BookingInspection,
+  BookingStatus,
+  HostPenalty,
+  PaymentStatus,
+  PaymentTransaction,
+  Prisma,
+  TransactionType,
+} from '@prisma/client';
 
 @Injectable()
 export class BookingRepository {
   constructor(private prisma: PrismaService) {}
 
-  async createBooking(dto: CreateBookingDto) {
-    const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
-    const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
+  async createBooking(
+    dto: CreateBookingDto,
+    totalPrice: number,
+    platformFee: number,
+    hostEarnings: number,
+  ) {
+    // const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
+    // const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
 
-    return this.prisma.booking.create({
-      data: {
-        carId: dto.carId,
-        guestId: dto.guestId,
-        hostId: dto.hostId,
-        startDate: dto.startDate,
-        endDate: dto.endDate,
-        totalPrice: dto.totalPrice,
-        withDriver: dto.withDriver ?? false,
-        pickupLocation,
-        dropoffLocation,
-      },
+    // return this.prisma.booking.create({
+    //   data: {
+    //     carId: dto.carId,
+    //     guestId: dto.guestId,
+    //     hostId: dto.hostId,
+    //     startDate: dto.startDate,
+    //     endDate: dto.endDate,
+    //     totalPrice: totalPrice,
+    //     withDriver: dto.withDriver ?? false,
+    //     pickupLocation,
+    //     dropoffLocation,
+    //   },
+    // });
+
+    return this.prisma.$transaction(async (tx) => {
+      // Create booking
+      const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
+      const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
+
+      const booking = await tx.booking.create({
+        data: {
+          carId: dto.carId,
+          guestId: dto.guestId,
+          hostId: dto.hostId,
+          startDate: dto.startDate,
+          endDate: dto.endDate,
+          totalPrice,
+          withDriver: dto.withDriver ?? false,
+          pickupLocation,
+          dropoffLocation,
+        },
+      });
+
+      // Create corresponding payment
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          payerId: dto.guestId,
+          recipientId: dto.hostId,
+          amount: totalPrice,
+          currency: 'ETB',
+          method: null,
+          status: 'PENDING',
+          type: 'GUEST_TO_PLATFORM',
+          platformFee,
+          hostEarnings,
+        },
+      });
+
+      return booking;
     });
   }
 
@@ -90,5 +147,223 @@ export class BookingRepository {
       where: { id },
       data: { status },
     });
+  }
+  async changeStatusToConfirm(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // Update booking to confirmed
+      const booking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.CONFIRMED },
+      });
+
+      // Optionally, notify the guest
+      // await this.notificationService.notifyGuest(booking.guestId, {
+      //   type: 'BOOKING_CONFIRMED',
+      //   message: `Your booking has been confirmed by the host.`,
+      // });
+
+      return booking;
+    });
+  }
+
+  async changeStatusToReject(id: string, status: BookingStatus) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1️⃣ Update booking status
+      const booking = await tx.booking.update({
+        where: { id },
+        data: { status },
+      });
+
+      // 2️⃣ If rejected → delete pending payments
+      if (status === 'REJECTED')
+        await tx.payment.deleteMany({
+          where: {
+            bookingId: id,
+            status: 'PENDING',
+          },
+        });
+
+      // 3️⃣ Optionally: send notification (pseudo — can integrate with a service)
+      // await this.notificationService.notifyGuest(booking.guestId, {
+      //   type: 'BOOKING_REJECTED',
+      //   message: `Your booking for ${booking.id} has been rejected.`,
+      // });
+
+      // 4️⃣ Return final booking object
+      return booking;
+    });
+  }
+
+  // ....................................... inception .......................................
+  async createInspection(
+    data: BookingInspectionDto,
+    submittedById: string,
+  ): Promise<BookingInspection> {
+    return this.prisma.bookingInspection.create({
+      data: {
+        booking: { connect: { id: data.bookingId } }, // map bookingId to relation
+        submittedBy: { connect: { id: submittedById } }, // map submittedById to relation
+        type: data.type,
+        photos: data.photos,
+        fuelLevel: data.fuelLevel,
+        mileage: data.mileage,
+        approved: false, // default to false
+      },
+    });
+  }
+
+  async findById(id: string): Promise<BookingInspection | null> {
+    return this.prisma.bookingInspection.findUnique({ where: { id } });
+  }
+
+  async findAll(
+    skip: number,
+    take: number,
+  ): Promise<[BookingInspection[], number]> {
+    const [inspections, total] = await Promise.all([
+      this.prisma.bookingInspection.findMany({ skip, take }),
+      this.prisma.bookingInspection.count(),
+    ]);
+    return [inspections, total];
+  }
+
+  async findByBookingId(bookingId: string): Promise<BookingInspection[]> {
+    return this.prisma.bookingInspection.findMany({ where: { bookingId } });
+  }
+
+  async markBookingCompleted(bookingId: string) {
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.COMPLETED },
+    });
+  }
+  async findInspectionByBookingAndType(
+    bookingId: string,
+    type: 'PICKUP' | 'DROPOFF',
+  ): Promise<BookingInspection | null> {
+    return this.prisma.bookingInspection.findFirst({
+      where: { bookingId, type },
+    });
+  }
+
+  async approveInspectionTransaction(
+    inspectionId: string,
+    bookingId: string,
+  ): Promise<BookingInspection> {
+    return this.prisma.$transaction(async (tx) => {
+      // Approve inspection
+      const approvedInspection = await tx.bookingInspection.update({
+        where: { id: inspectionId },
+        data: { approved: true },
+      });
+
+      // Check if both PICKUP and DROPOFF are approved
+      const inspections = await tx.bookingInspection.findMany({
+        where: { bookingId },
+      });
+      const allApproved = inspections.every((i) => i.approved);
+
+      if (allApproved) {
+        // Complete booking
+        const booking = await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: BookingStatus.COMPLETED },
+          include: { payment: true }, // include the related Payment
+        });
+
+        // Calculate host earnings
+        const hostProfile = await tx.hostProfile.findUnique({
+          where: { id: booking.hostId },
+        });
+
+        // Create payment transaction
+        await tx.paymentTransaction.create({
+          data: {
+            paymentId: booking.payment?.id!,
+            type: 'PLATFORM_TO_HOST',
+            amount: booking.payment?.hostEarnings!,
+            status: 'COMPLETED',
+          },
+        });
+
+        // Update host earnings
+        await tx.hostProfile.update({
+          where: { id: booking.hostId },
+          data: {
+            earnings:
+              (hostProfile?.earnings || 0) + booking.payment?.hostEarnings!,
+          },
+        });
+      }
+
+      return approvedInspection;
+    });
+  }
+
+  // ********************************* canclation ************************************
+  // ********************************             *********************************
+
+  async findBookingWithPayment(id: string) {
+    return this.prisma.booking.findUnique({
+      where: { id },
+      include: { payment: true, guest: true, host: true },
+    });
+  }
+
+  async getCancellationPolicy(userType: 'GUEST' | 'HOST') {
+    return this.prisma.cancellationPolicy.findMany({
+      where: { userType },
+      orderBy: { daysBeforeTrip: 'desc' },
+    });
+  }
+
+  async updatePaymentStatus(paymentId: string, status: PaymentStatus) {
+    return this.prisma.payment.update({
+      where: { id: paymentId },
+      data: { status },
+    });
+  }
+
+  async createPaymentTransaction(data: {
+    paymentId: string;
+    type: TransactionType;
+    amount: number;
+    status: PaymentStatus;
+  }): Promise<PaymentTransaction> {
+    return this.prisma.paymentTransaction.create({ data });
+  }
+
+  async createHostPenalty(data: {
+    hostId: string;
+    bookingId: string;
+    amount: number;
+    reason: string;
+  }): Promise<HostPenalty> {
+    return this.prisma.hostPenalty.create({ data });
+  }
+
+  async createAdminAction(data: {
+    adminId: string;
+    targetType: string;
+    targetId: string;
+    actionType: string;
+    notes?: string;
+  }): Promise<AdminAction> {
+    return this.prisma.adminAction.create({ data });
+  }
+
+  async updateHostEarnings(hostId: string, amount: number) {
+    const hostProfile = await this.prisma.hostProfile.findUnique({
+      where: { id: hostId },
+    });
+    if (!hostProfile) return null;
+    return this.prisma.hostProfile.update({
+      where: { id: hostId },
+      data: { earnings: hostProfile.earnings + amount },
+    });
+  }
+
+  async runTransaction(actions: (tx: typeof this.prisma) => Promise<any>) {
+    return this.prisma.$transaction(actions);
   }
 }

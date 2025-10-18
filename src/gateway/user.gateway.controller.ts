@@ -175,6 +175,49 @@ export class UserGatewayController {
     });
   }
 
+  @Get('me/:id')
+  async findMe(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.USER_FIND_ME_BY_ID, {
+      headers: { authorization: authHeader },
+      id,
+    });
+  }
+
+  @Patch('me/:id')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profilePhotoFile', maxCount: 1 },
+        { name: 'driverLicenseFile', maxCount: 1 },
+        { name: 'nationalIdFile', maxCount: 1 },
+      ],
+      { storage: multer.memoryStorage() }, // file stays in memory
+    ),
+  )
+  async updateMe(
+    @UploadedFiles()
+    files: {
+      profilePhotoFile?: Express.Multer.File[];
+      driverLicenseFile?: Express.Multer.File[];
+      nationalIdFile?: Express.Multer.File[];
+    },
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: UserUpdateDto,
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+    dto.profilePhotoFile = files?.profilePhotoFile?.[0];
+    dto.driverLicenseFile = files?.driverLicenseFile?.[0];
+    dto.nationalIdFile = files?.nationalIdFile?.[0];
+    return this.usersClient.send(PATTERNS.USER_UPDATE, {
+      headers: { authorization: authHeader },
+      id,
+      data: dto,
+    });
+  }
+
   @Patch(':id')
   @UseInterceptors(
     FileFieldsInterceptor(

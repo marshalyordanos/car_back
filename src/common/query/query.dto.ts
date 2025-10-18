@@ -25,4 +25,12 @@ export class ListQueryDto {
   @IsOptional()
   @IsString()
   filter?: string; // Example: "price_lte:100,status:approved"
+
+  @IsOptional()
+  @IsString()
+  startDate?: string; // Example: "price_lte:100,status:approved"
+
+  @IsOptional()
+  @IsString()
+  endDate?: string; // Example: "price_lte:100,status:approved"
 }

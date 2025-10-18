@@ -7,13 +7,16 @@ import {
   Req,
   Patch,
   Inject,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   CreateDisputeDto,
+  DisputeResolveDto,
   UpdateDisputeStatusDto,
 } from '../rental-service/dispute/dispute.entity';
+import { ListQueryDto } from '../common/query/query.dto';
 
 @Controller('disputes')
 export class DisputeGatewayController {
@@ -25,7 +28,7 @@ export class DisputeGatewayController {
     const authHeader = req.headers['authorization'] || null;
     return this.disputeClient.send(PATTERNS.DISPUTE_CREATE, {
       headers: { authorization: authHeader },
-      ...dto,
+      data: dto,
     });
   }
 
@@ -48,28 +51,44 @@ export class DisputeGatewayController {
   }
 
   @Get()
-  async getAll(@Req() req) {
+  async getAll(@Req() req, @Query() query: ListQueryDto) {
     const authHeader = req.headers['authorization'] || null;
     return this.disputeClient.send(PATTERNS.DISPUTE_GET_ALL, {
+      query,
       headers: { authorization: authHeader },
     });
   }
 
-  @Patch('resolve')
-  async resolve(@Req() req, @Body() dto: UpdateDisputeStatusDto) {
+  // Admin endpoints for review/resolve/reject
+  @Post(':id/review')
+  async adminReview(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.disputeClient.send(PATTERNS.DISPUTE_ADMIN_REVIEW, {
+      id,
+      headers: { authorization: authHeader },
+    });
+  }
+
+  @Post(':id/resolve')
+  async resolve(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: DisputeResolveDto,
+  ) {
     const authHeader = req.headers['authorization'] || null;
     return this.disputeClient.send(PATTERNS.DISPUTE_RESOLVE, {
+      id,
+      data: dto,
       headers: { authorization: authHeader },
-      ...dto,
     });
   }
 
-  @Patch('reject')
-  async reject(@Req() req, @Body() dto: UpdateDisputeStatusDto) {
+  @Post(':id/reject')
+  async reject(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;
     return this.disputeClient.send(PATTERNS.DISPUTE_REJECT, {
+      id,
       headers: { authorization: authHeader },
-      ...dto,
     });
   }
 }

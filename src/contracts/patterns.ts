@@ -18,6 +18,8 @@ export const PATTERNS = {
   USER_VERIFY_HOST_PROFILE: 'user.verifyHostProfile',
   CREATE_HOST_USER: 'user.host.create',
   ACTIVE_DISACTIVE_USER: 'user.active.disactive',
+  USER_FIND_ME_BY_ID: 'user.find.me',
+  USER_UPDATE_ME: 'user.update.me',
 
   GUEST_ADD_WISHLIST: 'guest.addWishlist',
   GUEST_REMOVE_WISHLIST: 'guest.removeWishlist',
@@ -104,6 +106,7 @@ export const PATTERNS = {
   DISPUTE_RESOLVE: 'DISPUTE_RESOLVE',
   DISPUTE_REJECT: 'DISPUTE_REJECT',
   DISPUTE_CANCEL: 'DISPUTE_CANCEL',
+  DISPUTE_ADMIN_REVIEW: 'dispute.adminReview', // e.g., move to UNDER_REVIEW
 
   PAYMENT_CREATE: 'PAYMENT_CREATE',
   PAYMENT_RELEASE_TO_HOST: 'PAYMENT_RELEASE_TO_HOST',
@@ -112,4 +115,24 @@ export const PATTERNS = {
   PAYMENT_GET_BY_BOOKING: 'PAYMENT_GET_BY_BOOKING',
   PAYMENT_GET_BY_USER: 'PAYMENT_GET_BY_USER',
   PAYMENT_GET_ALL: 'PAYMENT_GET_ALL',
+
+  BOOKING_INSPECTION_CREATE: 'bookingInspection.create',
+  BOOKING_INSPECTION_FIND_BY_ID: 'bookingInspection.findById',
+  BOOKING_INSPECTION_FIND_ALL: 'bookingInspection.findAll',
+  BOOKING_INSPECTION_APPROVE: 'bookingInspection.approve',
+
+  CANCELLATION_POLICY_CREATE: 'cancellationPolicy.create',
+  CANCELLATION_POLICY_FIND_ALL: 'cancellationPolicy.findAll',
+  CANCELLATION_POLICY_FIND_BY_ID: 'cancellationPolicy.findById',
+  CANCELLATION_POLICY_UPDATE: 'cancellationPolicy.update',
+  CANCELLATION_POLICY_DELETE: 'cancellationPolicy.delete',
+  CANCELLATION_POLICY_SEED: 'cancellationPolicy.seed',
+
+  MESSAGE_SEND: 'message.send',
+  MESSAGE_FIND_BY_BOOKING: 'message.findByBooking',
+  MESSAGE_LIST_CHAT_FOR_USER: 'message.listChatForUser',
+  MESSAGE_MARK_AS_READ: 'message.markAsRead',
+  MESSAGE_UNREAD_COUNT: 'message.unreadCount',
+  MESSAGE_FIND_BY_ID: 'message.findById',
+  MESSAGE_NEW_EVENT: 'message.new', // emitted event for PUSH
 } as const;

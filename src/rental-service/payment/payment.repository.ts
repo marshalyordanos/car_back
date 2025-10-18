@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PaymentStatus, PaymentType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreatePaymentDto } from './payment.entity';
+import { CreatePaymentDto, PaymentConfirmDto } from './payment.entity';
 
 @Injectable()
 export class PaymentRepository {
@@ -95,6 +95,34 @@ export class PaymentRepository {
   async findAll() {
     return this.prisma.payment.findMany({
       include: { booking: true, disputes: true },
+    });
+  }
+  async completePayment(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1️⃣ Update the payment record
+      const payment = await tx.payment.update({
+        where: { bookingId: id },
+        data: {
+          status: 'COMPLETED',
+          method: 'CBE',
+          transactionId: Math.random().toString(),
+        },
+      });
+
+      // 2️⃣ Record a new transaction log
+      const paymentTransaction = await tx.paymentTransaction.create({
+        data: {
+          paymentId: payment.id,
+          type: 'CAPTURE',
+          amount: payment.amount,
+          status: 'COMPLETED',
+        },
+      });
+
+      // 4️⃣ Optionally: Notify host
+      // await this.notificationService.notifyHost(booking.hostId, { ... });
+
+      return { payment, paymentTransaction };
     });
   }
 }

@@ -5,7 +5,7 @@ import { PATTERNS } from '../../contracts';
 import { BookingUseCasesImp } from './booking.usecase.impl';
 import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
-import { BookingChangeStatusDto } from './booking.entity';
+import { BookingChangeStatusDto, BookingInspectionDto } from './booking.entity';
 
 @Controller()
 export class BookingMessageController {
@@ -126,8 +126,61 @@ export class BookingMessageController {
     @Payload() payload: { id: string; dto: BookingChangeStatusDto },
   ) {
     try {
-      const res = await this.usecases.cancelByAdmin(payload.id, payload.dto);
+      const res = await this.usecases.cancelByAdmin(
+        payload.id,
+        'payload.dto',
+        123,
+      );
       return IResponse.success('Booking cancelled by admin', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  // ....................................... inception .......................................
+  @MessagePattern(PATTERNS.BOOKING_INSPECTION_FIND_BY_ID)
+  async findById(@Payload() payload: { id: string }) {
+    try {
+      const inspection = await this.usecases.getInspection(payload.id);
+      return IResponse.success('Inspection fetched successfully', inspection);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.BOOKING_INSPECTION_FIND_ALL)
+  async findAll(@Payload() payload: { page: number; pageSize: number }) {
+    try {
+      const { page = 1, pageSize = 10 } = payload;
+      const result = await this.usecases.getAllInspections(page, pageSize);
+      return IResponse.success(
+        'Inspections fetched successfully',
+        result.inspections,
+        result.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.BOOKING_INSPECTION_CREATE)
+  async create(@Payload() payload: { data: BookingInspectionDto; user: any }) {
+    try {
+      const inspection = await this.usecases.createInspection(
+        payload.data,
+        payload.user.sub,
+      );
+      return IResponse.success('Inspection created successfully', inspection);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.BOOKING_INSPECTION_APPROVE)
+  async approve(@Payload() payload: { id: string }) {
+    try {
+      const inspection = await this.usecases.approveInspection(payload.id);
+      return IResponse.success('Inspection approved successfully', inspection);
     } catch (error) {
       handleCatch(error);
     }

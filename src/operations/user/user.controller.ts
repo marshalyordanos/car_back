@@ -119,6 +119,39 @@ export class UserMessageController {
     }
   }
 
+  // @Public()
+  @MessagePattern(PATTERNS.USER_FIND_ME_BY_ID)
+  async findMeById(@Payload() payload: { id: string; user: any }) {
+    try {
+      console.log('abababadshj:', payload.user);
+      const user = await this.usecases.getUser(
+        payload.id,
+        true,
+        payload.user?.sub,
+      );
+      return IResponse.success('Fetch user successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.USER_UPDATE_ME)
+  async updateMe(
+    @Payload() payload: { id: string; data: Partial<UserDto>; user: any },
+  ) {
+    try {
+      const user = await this.usecases.updateUser(
+        payload.id,
+        payload.data,
+        true,
+        payload.user?.sub,
+      );
+      return IResponse.success(' user updated successfully', user);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
   @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('HOST_PROFILE', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.USER_UPDATE_HOST_PROFILE)
