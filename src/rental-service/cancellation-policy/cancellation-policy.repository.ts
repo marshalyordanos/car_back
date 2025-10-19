@@ -49,7 +49,7 @@ export class CancellationPolicyRepository {
 
   async seedPolicies(policies: Prisma.CancellationPolicyCreateInput[]) {
     return this.prisma.$transaction(async (tx) => {
-      const results = [];
+      const results: CancellationPolicy[] = []; // ✅ correct row type
 
       for (const policy of policies) {
         const existing = await tx.cancellationPolicy.findFirst({
