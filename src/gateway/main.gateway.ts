@@ -16,11 +16,11 @@ async function bootstrap() {
   //   .setDescription('API Gateway exposing all microservices endpoints')
   //   .setVersion('1.0')
   //   .build();
-  // app.enableCors({
-  //   origin: '*',
-  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  //   credentials: false,
-  // });
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: false,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Gateway API')
