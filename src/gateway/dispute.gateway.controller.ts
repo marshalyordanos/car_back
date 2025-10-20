@@ -17,7 +17,10 @@ import {
   UpdateDisputeStatusDto,
 } from '../rental-service/dispute/dispute.entity';
 import { ListQueryDto } from '../common/query/query.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Disputes')
+@ApiBearerAuth('access-token')
 @Controller('disputes')
 export class DisputeGatewayController {
   constructor(

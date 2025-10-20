@@ -14,7 +14,10 @@ import {
   RefundPaymentDto,
   ReleasePaymentDto,
 } from '../rental-service/payment/payment.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Payments')
+@ApiBearerAuth('access-token')
 @Controller('payments')
 export class PaymentGatewayController {
   constructor(

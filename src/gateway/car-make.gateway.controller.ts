@@ -16,7 +16,10 @@ import {
   CarMakeDto,
   CarMakeUpdateDto,
 } from '../operations/car-make/car-make.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Car-makes')
+@ApiBearerAuth('access-token')
 @Controller('car-makes')
 export class CarMakeGatewayController {
   constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}

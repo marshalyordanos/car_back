@@ -23,7 +23,10 @@ import {
 import multer from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ListQueryDto } from '../common/query/query.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Cars')
+@ApiBearerAuth('access-token')
 @Controller('cars')
 export class CarGatewayController {
   constructor(

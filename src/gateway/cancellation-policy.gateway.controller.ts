@@ -17,7 +17,10 @@ import {
   CancellationPolicyDto,
   CancellationPolicyUpdateDto,
 } from '../rental-service/cancellation-policy/cancellation-policy.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Cancellation-policies')
+@ApiBearerAuth('access-token')
 @Controller('cancellation-policies')
 export class CancellationPolicyGatewayController {
   constructor(@Inject('RENTAL_SERVICE') private readonly client: ClientProxy) {}

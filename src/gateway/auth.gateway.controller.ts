@@ -21,7 +21,10 @@ import {
 } from '../auth/auth.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
+@ApiBearerAuth('access-token')
 @Controller('auth')
 export class AuthGatewayController {
   constructor(

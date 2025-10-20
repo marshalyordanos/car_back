@@ -23,7 +23,6 @@ export class ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Search query string',
-    example: 'name:toyota,brand:toyota',
   })
   @IsOptional()
   @IsString()
@@ -31,7 +30,6 @@ export class ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Sort string',
-    example: 'price:1,name:-1',
   })
   @IsOptional()
   @IsString()
@@ -39,7 +37,6 @@ export class ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Filter string',
-    example: 'price_lte:100,status:approved',
   })
   @IsOptional()
   @IsString()
@@ -47,7 +44,6 @@ export class ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Start date filter',
-    example: '2025-01-01',
   })
   @IsOptional()
   @IsString()
@@ -55,7 +51,6 @@ export class ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'End date filter',
-    example: '2025-01-31',
   })
   @IsOptional()
   @IsString()

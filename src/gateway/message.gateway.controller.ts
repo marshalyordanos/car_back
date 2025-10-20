@@ -15,7 +15,10 @@ import {
   MarkAsReadDto,
   SendMessageDto,
 } from '../rental-service/message/message.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Messages')
+@ApiBearerAuth('access-token')
 @Controller('messages')
 export class MessageGatewayController {
   constructor(@Inject('RENTAL_SERVICE') private readonly client: ClientProxy) {}

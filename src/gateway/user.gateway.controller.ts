@@ -32,7 +32,10 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
 import { ListQueryDto } from '../common/query/query.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Users')
+@ApiBearerAuth('access-token')
 @Controller('users')
 export class UserGatewayController {
   constructor(

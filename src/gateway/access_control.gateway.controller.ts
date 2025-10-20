@@ -19,7 +19,10 @@ import {
   PermissionActionDto,
   AssignUserRoleDto,
 } from '../operations/acl/access_control.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Access-control')
+@ApiBearerAuth('access-token')
 @Controller('access-control')
 export class AccessControlGatewayController {
   constructor(

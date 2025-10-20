@@ -14,7 +14,10 @@ import {
   CreateReviewDto,
   DeleteReviewDto,
 } from '../rental-service/review/review.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Reviews')
+@ApiBearerAuth('access-token')
 @Controller('reviews')
 export class ReviewGatewayController {
   constructor(

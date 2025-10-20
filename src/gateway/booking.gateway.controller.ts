@@ -20,7 +20,10 @@ import {
   UpdateBookingDto,
 } from '../rental-service/booking/booking.entity';
 import { ListQueryDto } from '..//common/query/query.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Bookings')
+@ApiBearerAuth('access-token')
 @Controller('bookings')
 export class BookingGatewayController {
   constructor(@Inject('RENTAL_SERVICE') private readonly client: ClientProxy) {}

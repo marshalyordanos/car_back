@@ -17,7 +17,10 @@ import {
 } from '../operations/car-model/car-model.entity';
 import { PATTERNS } from '../contracts';
 import { ListQueryDto } from '../common/query/query.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Car-models')
+@ApiBearerAuth('access-token')
 @Controller('car-models')
 export class CarModelGatewayController {
   constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}
