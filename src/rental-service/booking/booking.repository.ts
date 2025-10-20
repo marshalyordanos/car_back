@@ -17,6 +17,9 @@ import {
   Prisma,
   TransactionType,
 } from '@prisma/client';
+import { RpcException } from '@nestjs/microservices';
+import * as prismaQueryFeature from '../../common/query/prisma-query-feature';
+import { ListQueryDto } from '../../common/query/query.dto';
 
 @Injectable()
 export class BookingRepository {
@@ -50,6 +53,26 @@ export class BookingRepository {
       const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
       const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
 
+      // 1) CHECK OVERLAP BEFORE INSERT
+
+      const conflict = await tx.booking.findFirst({
+        where: {
+          carId: dto.carId,
+          status: 'PENDING', // only consider pending bookings
+          AND: [
+            { startDate: { lte: dto.endDate } }, // existing.start <= newEnd
+            { endDate: { gte: dto.startDate } }, // existing.end >= newStart
+          ],
+        },
+      });
+
+      console.log(conflict, 'conflict');
+
+      if (conflict) {
+        throw new RpcException(
+          'This car is already booked or pending in that period.',
+        );
+      }
       const booking = await tx.booking.create({
         data: {
           carId: dto.carId,
@@ -107,7 +130,14 @@ export class BookingRepository {
   }
 
   async deleteBooking(id: string) {
-    return this.prisma.booking.delete({ where: { id } });
+    const res = await this.prisma.booking.deleteMany({
+      where: { id, status: 'PENDING' },
+    });
+
+    if (res.count === 0) {
+      throw new RpcException('Booking cannot be deleted (not pending).');
+    }
+    return res;
   }
 
   async getBookingById(id: string) {
@@ -123,23 +153,34 @@ export class BookingRepository {
     });
   }
 
-  async getAllBookings(skip = 0, take = 10) {
-    const [bookings, total] = await Promise.all([
+  async getAllBookings(filter: ListQueryDto) {
+    const feature = new prismaQueryFeature.PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['name', 'make.name'],
+    });
+
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
       this.prisma.booking.findMany({
-        skip,
-        take,
-        include: {
-          car: true,
-          guest: true,
-          host: true,
-          payment: true,
-          dispute: true,
-        },
-        orderBy: { createdAt: 'desc' },
+        ...query,
+        include: { car: true },
+        where: query.where || {},
       }),
-      this.prisma.booking.count(),
+      this.prisma.booking.count({ where: query.where || {} }),
     ]);
-    return { bookings, total };
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
   }
 
   async changeStatus(id: string, status: BookingStatus) {
@@ -216,15 +257,34 @@ export class BookingRepository {
     return this.prisma.bookingInspection.findUnique({ where: { id } });
   }
 
-  async findAll(
-    skip: number,
-    take: number,
-  ): Promise<[BookingInspection[], number]> {
-    const [inspections, total] = await Promise.all([
-      this.prisma.bookingInspection.findMany({ skip, take }),
-      this.prisma.bookingInspection.count(),
+  async findAll(filter: ListQueryDto) {
+    const feature = new prismaQueryFeature.PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['name', 'make.name'],
+    });
+
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
+      this.prisma.bookingInspection.findMany({
+        ...query,
+        include: { approvedBy: true },
+        where: query.where || {},
+      }),
+      this.prisma.bookingInspection.count({ where: query.where || {} }),
     ]);
-    return [inspections, total];
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
   }
 
   async findByBookingId(bookingId: string): Promise<BookingInspection[]> {
@@ -265,6 +325,7 @@ export class BookingRepository {
 
       if (allApproved) {
         // Complete booking
+
         const booking = await tx.booking.update({
           where: { id: bookingId },
           data: { status: BookingStatus.COMPLETED },

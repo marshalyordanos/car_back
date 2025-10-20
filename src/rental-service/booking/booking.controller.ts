@@ -6,6 +6,7 @@ import { BookingUseCasesImp } from './booking.usecase.impl';
 import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
 import { BookingChangeStatusDto, BookingInspectionDto } from './booking.entity';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Controller()
 export class BookingMessageController {
@@ -52,20 +53,14 @@ export class BookingMessageController {
   }
 
   @MessagePattern(PATTERNS.BOOKING_GET_ALL)
-  async getAllBookings(
-    @Payload() payload: { page?: number; pageSize?: number },
-  ) {
+  async getAllBookings(data: { query: ListQueryDto }) {
     try {
-      const skip = ((payload?.page ?? 1) - 1) * (payload?.pageSize ?? 10);
-      const take = payload?.pageSize ?? 10;
-      const { bookings, total } = await this.usecases.getAllBookings(
-        skip,
-        take,
+      const result = await this.usecases.getAllBookings(data.query);
+      return IResponse.success(
+        'Bookings fetched successfully',
+        result.models,
+        result.pagination,
       );
-      return IResponse.success('Bookings fetched successfully', {
-        bookings,
-        total,
-      });
     } catch (error) {
       handleCatch(error);
     }
@@ -149,13 +144,12 @@ export class BookingMessageController {
   }
 
   @MessagePattern(PATTERNS.BOOKING_INSPECTION_FIND_ALL)
-  async findAll(@Payload() payload: { page: number; pageSize: number }) {
+  async findAll(data: { query: ListQueryDto }) {
     try {
-      const { page = 1, pageSize = 10 } = payload;
-      const result = await this.usecases.getAllInspections(page, pageSize);
+      const result = await this.usecases.getAllInspections(data.query);
       return IResponse.success(
         'Inspections fetched successfully',
-        result.inspections,
+        result.models,
         result.pagination,
       );
     } catch (error) {

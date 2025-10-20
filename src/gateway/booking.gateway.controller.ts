@@ -124,21 +124,16 @@ export class BookingGatewayController {
   }
 
   @Get()
-  async getAllBookings(
-    @Req() req,
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
+  async getAllBookings(@Req() req, @Query() query: ListQueryDto) {
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_GET_ALL, {
       headers: { authorization: authHeader },
-      page,
-      pageSize,
+      query,
     });
   }
 
   // .............................................. inceptions ......................................
-  @Get()
+  @Get('inspection')
   async findAll(@Req() req, @Query() query: ListQueryDto) {
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_INSPECTION_FIND_ALL, {
@@ -147,7 +142,7 @@ export class BookingGatewayController {
     });
   }
 
-  @Get(':id')
+  @Get('inspection/:id')
   async findById(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_INSPECTION_FIND_BY_ID, {
@@ -156,7 +151,7 @@ export class BookingGatewayController {
     });
   }
 
-  @Post()
+  @Post('inspection')
   async create(@Req() req, @Body() dto: BookingInspectionDto) {
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_INSPECTION_CREATE, {
@@ -165,7 +160,7 @@ export class BookingGatewayController {
     });
   }
 
-  @Patch(':id/approve')
+  @Patch('inspection/:id/approve')
   async approve(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_INSPECTION_APPROVE, {

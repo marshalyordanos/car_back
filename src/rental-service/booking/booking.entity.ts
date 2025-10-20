@@ -10,57 +10,161 @@ import {
 } from 'class-validator';
 import { BookingStatus, PaymentMethod } from '@prisma/client';
 import { InspectionType } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBookingDto {
-  @IsNotEmpty() @IsString() carId: string;
-  @IsNotEmpty() @IsString() guestId: string;
-  @IsNotEmpty() @IsString() hostId: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  carId: string;
 
-  @IsNotEmpty() startDate: Date;
-  @IsNotEmpty() endDate: Date;
-  // @IsNotEmpty() @IsNumber() totalPrice: number;
-  @IsOptional() @IsBoolean() withDriver?: boolean;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  guestId: string;
 
-  @IsNotEmpty() @IsNumber() pickupLat: number;
-  @IsNotEmpty() @IsNumber() pickupLng: number;
-  @IsNotEmpty() @IsString() pickupName: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  hostId: string;
 
-  @IsNotEmpty() @IsNumber() dropoffLat: number;
-  @IsNotEmpty() @IsNumber() dropoffLng: number;
-  @IsNotEmpty() @IsString() dropoffName: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  startDate: Date;
 
-  @IsNotEmpty() @IsEnum(PaymentMethod) paymentMethod: PaymentMethod;
+  @ApiProperty()
+  @IsNotEmpty()
+  endDate: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  withDriver?: boolean;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  pickupLat: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  pickupLng: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  pickupName: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  dropoffLat: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  dropoffLng: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  dropoffName: string;
 }
 
 export class UpdateBookingDto {
-  @IsOptional() @IsEnum(BookingStatus) status?: BookingStatus;
-  @IsOptional() @IsNotEmpty() startDate: Date;
-  @IsOptional() @IsNotEmpty() endDate: Date;
-  @IsOptional() @IsNumber() totalPrice?: number;
-  @IsOptional() @IsBoolean() withDriver?: boolean;
+  @ApiPropertyOptional({ enum: BookingStatus })
+  @IsOptional()
+  @IsEnum(BookingStatus)
+  status?: BookingStatus;
 
-  @IsOptional() @IsNumber() pickupLat?: number;
-  @IsOptional() @IsNumber() pickupLng?: number;
-  @IsOptional() @IsString() pickupName?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  startDate: Date;
 
-  @IsOptional() @IsNumber() dropoffLat?: number;
-  @IsOptional() @IsNumber() dropoffLng?: number;
-  @IsOptional() @IsString() dropoffName?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  endDate: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  withDriver?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  pickupLat?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  pickupLng?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pickupName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  dropoffLat?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  dropoffLng?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  dropoffName?: string;
 }
 
 export class UpdateBookingGustDto {
-  @IsOptional() @IsBoolean() withDriver?: boolean;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  withDriver?: boolean;
 
-  @IsOptional() @IsNumber() pickupLat?: number;
-  @IsOptional() @IsNumber() pickupLng?: number;
-  @IsOptional() @IsString() pickupName?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  pickupLat?: number;
 
-  @IsOptional() @IsNumber() dropoffLat?: number;
-  @IsOptional() @IsNumber() dropoffLng?: number;
-  @IsOptional() @IsString() dropoffName?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  pickupLng?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pickupName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  dropoffLat?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  dropoffLng?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  dropoffName?: string;
 }
+
 export class BookingChangeStatusDto {
-  @IsString() status: BookingStatus;
+  @ApiProperty({ enum: BookingStatus })
+  @IsString()
+  status: BookingStatus;
 }
 
 export interface PaymentConfirmDto {
@@ -72,37 +176,46 @@ export interface PaymentConfirmDto {
 }
 
 export class BookingInspectionDto {
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   bookingId: string;
 
+  @ApiProperty({ enum: InspectionType })
   @IsEnum(InspectionType)
   type: InspectionType;
 
+  @ApiPropertyOptional({ type: [String] })
   @IsArray()
   @IsOptional()
   photos?: string[];
 
+  @ApiProperty()
   @IsNumber()
   fuelLevel: number;
 
+  @ApiProperty()
   @IsNumber()
   mileage: number;
 }
 
 export class BookingInspectionUpdateDto {
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
   photos?: string[];
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   fuelLevel?: number;
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   mileage?: number;
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsEnum(Boolean)
   approved?: boolean;

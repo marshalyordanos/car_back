@@ -11,9 +11,10 @@ import { BookingUseCases } from './booking.usecase';
 import { BookingInspection, BookingStatus } from '@prisma/client';
 import { CarRepository } from '../../operations/car/car.repository';
 import { RpcException } from '@nestjs/microservices';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
-export class BookingUseCasesImp implements BookingUseCases {
+export class BookingUseCasesImp {
   constructor(
     private readonly repo: BookingRepository,
     private readonly carRepo: CarRepository,
@@ -51,8 +52,12 @@ export class BookingUseCasesImp implements BookingUseCases {
     return this.repo.getBookingById(id);
   }
 
-  async getAllBookings(skip?: number, take?: number) {
-    return this.repo.getAllBookings(skip, take);
+  async getAllBookings(query: ListQueryDto) {
+    const res = await this.repo.getAllBookings(query);
+    return {
+      models: res.models,
+      pagination: res.pagination,
+    };
   }
 
   confirmByHost(id: string) {
@@ -113,17 +118,11 @@ export class BookingUseCasesImp implements BookingUseCases {
     return this.repo.findById(id);
   }
 
-  async getAllInspections(page: number, pageSize: number) {
-    const skip = (page - 1) * pageSize;
-    const [inspections, total] = await this.repo.findAll(skip, pageSize);
+  async getAllInspections(query: ListQueryDto) {
+    const res = await this.repo.findAll(query);
     return {
-      inspections,
-      pagination: {
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-      },
+      models: res.models,
+      pagination: res.pagination,
     };
   }
 
