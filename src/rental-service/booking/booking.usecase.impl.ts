@@ -4,6 +4,7 @@ import { BookingRepository } from './booking.repository';
 import {
   BookingChangeStatusDto,
   BookingInspectionDto,
+  BookingInspectionUpdateDto,
   CreateBookingDto,
   UpdateBookingDto,
 } from './booking.entity';
@@ -110,10 +111,51 @@ export class BookingUseCasesImp {
         });
       }
     }
+    if (data.type === 'PICKUP') {
+      const pickup = await this.repo.findInspectionByBookingAndType(
+        data.bookingId,
+        'PICKUP',
+      );
+      if (pickup) {
+        throw new RpcException({
+          statusCode: 404,
+          message: 'Cannot create pickup already created.',
+        });
+      }
+    }
 
     return this.repo.createInspection(data, userId);
   }
 
+  async updateInspection(
+    data: BookingInspectionUpdateDto,
+    userId: string,
+    id: string,
+  ) {
+    const ins = await this.repo.findById(id);
+
+    if (!ins) {
+      throw new RpcException({
+        statusCode: 404,
+        message: "can't find inspection",
+      });
+    }
+
+    if (ins.approved) {
+      throw new RpcException({
+        statusCode: 404,
+        message: "can't update inspection",
+      });
+    }
+
+    if (ins.submittedById !== userId) {
+      throw new RpcException({
+        statusCode: 404,
+        message: "can't update inspection",
+      });
+    }
+    return this.repo.updateInspection(data, userId, id);
+  }
   async getInspection(id: string): Promise<BookingInspection | null> {
     return this.repo.findById(id);
   }
@@ -128,6 +170,7 @@ export class BookingUseCasesImp {
 
   async approveInspection(id: string): Promise<BookingInspection> {
     // Get the inspection to approve
+    console.log('approveInspection: ', id);
     const inspection = await this.repo.findById(id);
     if (!inspection) {
       throw new RpcException({
@@ -137,21 +180,27 @@ export class BookingUseCasesImp {
     }
 
     // Check if this is DROP OFF and already exists approved
-    if (inspection.type === 'DROPOFF') {
-      const existingDropoff = await this.repo.findInspectionByBookingAndType(
-        inspection.bookingId,
-        'DROPOFF',
-      );
-      if (
-        existingDropoff &&
-        existingDropoff.approved &&
-        existingDropoff.id !== id
-      ) {
-        throw new RpcException({
-          statusCode: 400,
-          message: 'Dropoff inspection already exists for this booking',
-        });
-      }
+    // if (inspection.type === 'DROPOFF') {
+    //   const existingDropoff = await this.repo.findInspectionByBookingAndType(
+    //     inspection.bookingId,
+    //     'DROPOFF',
+    //   );
+    //   if (
+    //     existingDropoff &&
+    //     existingDropoff.approved &&
+    //     existingDropoff.id !== id
+    //   ) {
+    //     throw new RpcException({
+    //       statusCode: 400,
+    //       message: 'Dropoff inspection already exists for this booking',
+    //     });
+    //   }
+    // }
+    if (inspection.approved) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Already approved!',
+      });
     }
 
     // Transaction: approve inspection, complete booking, create payment, update host earnings

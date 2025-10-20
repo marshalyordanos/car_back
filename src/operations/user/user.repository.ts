@@ -95,6 +95,13 @@ export class UserRepository {
         phone,
         password: hashedPassword,
         roleId: roleId ?? undefined,
+        hostProfile: {
+          create: {
+            payoutMethod: null,
+            earnings: 0,
+            isVerified: false,
+          },
+        },
       },
       include: { role: true, guestProfile: true, hostProfile: true },
     });

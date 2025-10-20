@@ -5,7 +5,11 @@ import { PATTERNS } from '../../contracts';
 import { BookingUseCasesImp } from './booking.usecase.impl';
 import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
-import { BookingChangeStatusDto, BookingInspectionDto } from './booking.entity';
+import {
+  BookingChangeStatusDto,
+  BookingInspectionDto,
+  BookingInspectionUpdateDto,
+} from './booking.entity';
 import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Controller()
@@ -146,6 +150,7 @@ export class BookingMessageController {
   @MessagePattern(PATTERNS.BOOKING_INSPECTION_FIND_ALL)
   async findAll(data: { query: ListQueryDto }) {
     try {
+      console.log('inseptionsss');
       const result = await this.usecases.getAllInspections(data.query);
       return IResponse.success(
         'Inspections fetched successfully',
@@ -165,6 +170,27 @@ export class BookingMessageController {
         payload.user.sub,
       );
       return IResponse.success('Inspection created successfully', inspection);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.BOOKING_INSPECTION_UPDATE)
+  async updatedInspection(
+    @Payload()
+    payload: {
+      data: BookingInspectionUpdateDto;
+      user: any;
+      id: string;
+    },
+  ) {
+    try {
+      const inspection = await this.usecases.updateInspection(
+        payload.data,
+        payload.user.sub,
+        payload.id,
+      );
+      return IResponse.success('Inspection Updated successfully', inspection);
     } catch (error) {
       handleCatch(error);
     }

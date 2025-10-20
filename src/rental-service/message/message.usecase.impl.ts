@@ -16,77 +16,67 @@ export class MessageUseCasesImp {
 
   // Send a message: only host or guest allowed (business rule)
   async sendMessage(dto: SendMessageDto) {
-    // // Verify user is part of booking
-    // const isPart = await this.repo.isUserPartOfBooking(
-    //   dto.senderId,
-    //   dto.bookingId,
-    // );
-    // if (!isPart) {
-    //   throw new RpcException({
-    //     statusCode: 403,
-    //     message: 'Sender is not part of this booking',
-    //   });
-    // }
-    // // Verify receiver is the other party
-    // const isReceiverPart = await this.repo.isUserPartOfBooking(
-    //   dto.receiverId,
-    //   dto.bookingId,
-    // );
-    // if (!isReceiverPart) {
-    //   throw new RpcException({
-    //     statusCode: 400,
-    //     message: 'Receiver is not part of this booking',
-    //   });
-    // }
-    // // Prevent sending to self unless you want to allow
-    // if (dto.senderId === dto.receiverId) {
-    //   throw new RpcException({
-    //     statusCode: 400,
-    //     message: 'Sender and receiver must be different',
-    //   });
-    // }
-    // // Create message via repository
-    // const message = await this.repo.createMessage({
-    //   bookingId: dto.bookingId,
-    //   senderId: dto.senderId,
-    //   receiverId: dto.receiverId,
-    //   content: dto.content,
-    //   attachments: dto.attachments,
-    // });
-    // this.gateway.server
-    //   .to(`booking_${dto.bookingId}`)
-    //   .emit('new_message', message);
-    // // Update chat list for both users
-    // this.gateway.server.to(`user_${dto.senderId}`).emit('update_chat_list', {
-    //   bookingId: dto.bookingId,
-    //   lastMessage: dto.content,
-    //   timestamp: message.createdAt,
-    // });
-    // this.gateway.server.to(`user_${dto.receiverId}`).emit('update_chat_list', {
-    //   bookingId: dto.bookingId,
-    //   lastMessage: dto.content,
-    //   timestamp: message.createdAt,
-    // });
-    // redisClient.publish(
+    const status = await this.repo.getBookingStatus(dto.bookingId);
+    if (!status) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Booking not found',
+      });
+    }
+    if (status !== 'CONFIRMED') {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Messages allowed only on confirmed bookings',
+      });
+    }
+
+    // Verify user is part of booking
+    const isPart = await this.repo.isUserPartOfBooking(
+      dto.senderId,
+      dto.bookingId,
+    );
+    if (!isPart) {
+      throw new RpcException({
+        statusCode: 403,
+        message: 'Sender is not part of this booking',
+      });
+    }
+    // Verify receiver is the other party
+    const isReceiverPart = await this.repo.isUserPartOfBooking(
+      dto.receiverId,
+      dto.bookingId,
+    );
+    if (!isReceiverPart) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Receiver is not part of this booking',
+      });
+    }
+    // Prevent sending to self unless you want to allow
+    if (dto.senderId === dto.receiverId) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Sender and receiver must be different',
+      });
+    }
+    // Create message via repository
+    const message = await this.repo.createMessage({
+      bookingId: dto.bookingId,
+      senderId: dto.senderId,
+      receiverId: dto.receiverId,
+      content: dto.content,
+    });
+
+    // return message (controller will emit event)
+
+    // await this.redis.publish(
     //   'for_all',
     //   JSON.stringify({
-    //     event: 'system_announcement',
-    //     payload: { text: 'Server will restart in 5 minutes' },
+    //     event: 'global_alert',
+    //     payload: { text: 'Hi all' },
     //   }),
     // );
-    // // return message (controller will emit event)
-    // return message;
-    // await this.gateway.sendToAll('global_alert', {
-    //   text: 'Hello every connected user',
-    // });
-
-    await this.redis.publish(
-      'for_all',
-      JSON.stringify({
-        event: 'global_alert',
-        payload: { text: 'Hi all' },
-      }),
-    );
+    return message;
   }
 
   // List messages in booking with pagination

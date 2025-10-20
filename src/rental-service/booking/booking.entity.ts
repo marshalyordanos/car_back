@@ -185,10 +185,10 @@ export class BookingInspectionDto {
   @IsEnum(InspectionType)
   type: InspectionType;
 
-  @ApiPropertyOptional({ type: [String] })
-  @IsArray()
-  @IsOptional()
-  photos?: string[];
+  // @ApiPropertyOptional({ type: [String] })
+  // @IsArray()
+  // @IsOptional()
+  // photos?: string[];
 
   @ApiProperty()
   @IsNumber()
@@ -200,10 +200,10 @@ export class BookingInspectionDto {
 }
 
 export class BookingInspectionUpdateDto {
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsArray()
-  photos?: string[];
+  // @ApiPropertyOptional({ type: [String] })
+  // @IsOptional()
+  // @IsArray()
+  // photos?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -214,9 +214,4 @@ export class BookingInspectionUpdateDto {
   @IsOptional()
   @IsNumber()
   mileage?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsEnum(Boolean)
-  approved?: boolean;
 }

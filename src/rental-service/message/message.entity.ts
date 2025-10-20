@@ -22,10 +22,10 @@ export class SendMessageDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiPropertyOptional({ type: [String] })
-  @IsArray()
-  @IsOptional()
-  attachments?: string[]; // optional, if you want to support photos/urls
+  // @ApiPropertyOptional({ type: [String] })
+  // @IsArray()
+  // @IsOptional()
+  // attachments?: string[]; // optional, if you want to support photos/urls
 }
 
 export class ListMessagesQueryDto {

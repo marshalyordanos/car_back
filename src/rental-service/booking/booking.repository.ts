@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BookingInspectionDto,
+  BookingInspectionUpdateDto,
   CreateBookingDto,
   PaymentConfirmDto,
   UpdateBookingDto,
@@ -245,11 +246,22 @@ export class BookingRepository {
         booking: { connect: { id: data.bookingId } }, // map bookingId to relation
         submittedBy: { connect: { id: submittedById } }, // map submittedById to relation
         type: data.type,
-        photos: data.photos,
+        // photos: data.photos,
         fuelLevel: data.fuelLevel,
         mileage: data.mileage,
         approved: false, // default to false
       },
+    });
+  }
+
+  async updateInspection(
+    data: BookingInspectionUpdateDto,
+    submittedById: string,
+    id: string,
+  ): Promise<BookingInspection> {
+    return this.prisma.bookingInspection.update({
+      where: { id: id },
+      data: { fuelLevel: data.fuelLevel, mileage: data.mileage },
     });
   }
 
@@ -333,9 +345,11 @@ export class BookingRepository {
         });
 
         // Calculate host earnings
+        console.log('booking.hostId : ', booking.hostId);
         const hostProfile = await tx.hostProfile.findUnique({
-          where: { id: booking.hostId },
+          where: { userId: booking.hostId },
         });
+        console.log('booking.hostId22 : ', hostProfile);
 
         // Create payment transaction
         await tx.paymentTransaction.create({
@@ -349,7 +363,7 @@ export class BookingRepository {
 
         // Update host earnings
         await tx.hostProfile.update({
-          where: { id: booking.hostId },
+          where: { userId: booking.hostId },
           data: {
             earnings:
               (hostProfile?.earnings || 0) + booking.payment?.hostEarnings!,

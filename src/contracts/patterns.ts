@@ -120,6 +120,7 @@ export const PATTERNS = {
   BOOKING_INSPECTION_FIND_BY_ID: 'bookingInspection.findById',
   BOOKING_INSPECTION_FIND_ALL: 'bookingInspection.findAll',
   BOOKING_INSPECTION_APPROVE: 'bookingInspection.approve',
+  BOOKING_INSPECTION_UPDATE: 'bookingInspection.updated',
 
   CANCELLATION_POLICY_CREATE: 'cancellationPolicy.create',
   CANCELLATION_POLICY_FIND_ALL: 'cancellationPolicy.findAll',
