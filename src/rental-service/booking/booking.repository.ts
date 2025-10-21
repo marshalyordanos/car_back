@@ -145,11 +145,12 @@ export class BookingRepository {
     return this.prisma.booking.findUnique({
       where: { id },
       include: {
-        car: true,
+        car: { include: { make: true, model: true } },
         guest: true,
         host: true,
         payment: true,
         dispute: true,
+        inspections: true,
       },
     });
   }

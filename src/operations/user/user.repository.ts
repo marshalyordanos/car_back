@@ -11,9 +11,7 @@ import * as bcrypt from 'bcrypt';
 export class UserRepository {
   constructor(private prisma: PrismaService) {}
 
-  async findUserById(
-    id: string,
-  ): Promise<(User & { role: Role | null }) | null> {
+  async findUserById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
       include: { role: true, hostProfile: true, guestProfile: true },
@@ -217,7 +215,9 @@ export class UserRepository {
   async getWishlist(guestId: string) {
     return this.prisma.guestProfile.findUnique({
       where: { id: guestId },
-      include: { wishlist: true },
+      include: {
+        wishlist: { include: { make: true, model: true, host: true } },
+      },
     });
   }
   async findRoleByName(name: string) {

@@ -42,45 +42,34 @@ export class UserGatewayController {
     @Inject('USER_SERVICE') private readonly usersClient: ClientProxy,
   ) {}
 
-  @Post('wish-list/:guestId')
-  async addToWishlist(
-    @Req() req,
-    @Param('guestId') guestId: string,
-    @Body() dto: AddToWishlistDto,
-  ) {
+  @Post('wish-list')
+  async addToWishlist(@Req() req, @Body() dto: AddToWishlistDto) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.usersClient.send(PATTERNS.GUEST_ADD_WISHLIST, {
       headers: { authorization: authHeader },
 
-      guestId,
       carId: dto.carId,
     });
   }
 
-  @Delete('wish-list/:guestId')
-  async removeFromWishlist(
-    @Req() req,
-    @Param('guestId') guestId: string,
-    @Body() dto: RemoveFromWishlistDto,
-  ) {
+  @Delete('wish-list/:carId')
+  async removeFromWishlist(@Req() req, @Param('carId') carId: string) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.usersClient.send(PATTERNS.GUEST_REMOVE_WISHLIST, {
       headers: { authorization: authHeader },
 
-      guestId,
-      carId: dto.carId,
+      carId: carId,
     });
   }
 
-  @Get('wish-list/:guestId')
+  @Get('wish-list')
   async getWishlist(@Req() req, @Param('guestId') guestId: string) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.usersClient.send(PATTERNS.GUEST_GET_WISHLIST, {
       headers: { authorization: authHeader },
-      guestId,
     });
   }
 

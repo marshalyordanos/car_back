@@ -221,10 +221,12 @@ export class UserMessageController {
   }
 
   @MessagePattern(PATTERNS.GUEST_ADD_WISHLIST)
-  async addToWishlist(@Payload() payload: { guestId: string; carId: string }) {
+  async addToWishlist(@Payload() payload: { user: any; carId: string }) {
     try {
+      console.log('wishshshshshshs', payload.user);
+
       const res = await this.usecases.addToWishlist(
-        payload.guestId,
+        payload.user.sub,
         payload.carId,
       );
       return IResponse.success(' car is added to wish list successfully', res);
@@ -236,12 +238,10 @@ export class UserMessageController {
   }
 
   @MessagePattern(PATTERNS.GUEST_REMOVE_WISHLIST)
-  async removeFromWishlist(
-    @Payload() payload: { guestId: string; carId: string },
-  ) {
+  async removeFromWishlist(@Payload() payload: { user: any; carId: string }) {
     try {
       const res = await this.usecases.removeFromWishlist(
-        payload.guestId,
+        payload.user.sub,
         payload.carId,
       );
       return IResponse.success(
@@ -255,9 +255,9 @@ export class UserMessageController {
   }
 
   @MessagePattern(PATTERNS.GUEST_GET_WISHLIST)
-  async getWishlist(@Payload() payload: { guestId: string }) {
+  async getWishlist(@Payload() payload: { user: any }) {
     try {
-      const res = await this.usecases.getWishlist(payload.guestId);
+      const res = await this.usecases.getWishlist(payload.user.sub);
       return IResponse.success(' wish list fetched successfully', res);
     } catch (error) {
       handleCatch(error);

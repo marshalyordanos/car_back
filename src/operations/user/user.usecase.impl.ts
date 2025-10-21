@@ -156,15 +156,35 @@ export class UserUseCasesImp implements UserUsecase {
     return this.userRepo.deleteUser(id);
   }
 
-  addToWishlist(guestId: string, carId: string) {
-    return this.userRepo.addToWishlist(guestId, carId);
+  async addToWishlist(guestId: string, carId: string) {
+    const user = await this.userRepo.findUserById(guestId);
+    if (!user || !user?.guestProfile?.id) {
+      throw new RpcException(
+        'No "GuestProfile" record was found for a connect on many-to-many relation "Wishlis"',
+      );
+    }
+    return this.userRepo.addToWishlist(user?.guestProfile?.id, carId);
   }
-  removeFromWishlist(guestId: string, carId: string) {
-    return this.userRepo.removeFromWishlist(guestId, carId);
+  async removeFromWishlist(guestId: string, carId: string) {
+    const user = await this.userRepo.findUserById(guestId);
+    console.log('useruseruseruser:', user);
+
+    if (!user || !user?.guestProfile?.id) {
+      throw new RpcException(
+        'No "GuestProfile" record was found for a connect on many-to-many relation "Wishlis"',
+      );
+    }
+    return this.userRepo.removeFromWishlist(user?.guestProfile?.id, carId);
   }
 
-  getWishlist(guestId: string) {
-    return this.userRepo.getWishlist(guestId);
+  async getWishlist(guestId: string) {
+    const user = await this.userRepo.findUserById(guestId);
+    if (!user || !user?.guestProfile?.id) {
+      throw new RpcException(
+        'No "GuestProfile" record was found for a connect on many-to-many relation "Wishlis"',
+      );
+    }
+    return this.userRepo.getWishlist(user.guestProfile.id);
   }
   async createUser(data: UserCreteDto) {
     return this.userRepo.createUser(data);
