@@ -339,11 +339,11 @@ export class BookingRepository {
 
       // Check if both PICKUP and DROPOFF are approved
       const inspections = await tx.bookingInspection.findMany({
-        where: { bookingId },
+        where: { bookingId, type: 'DROPOFF' },
       });
       const allApproved = inspections.every((i) => i.approved);
 
-      if (allApproved) {
+      if (inspections.length > 0 && allApproved) {
         // Complete booking
 
         const booking = await tx.booking.update({
