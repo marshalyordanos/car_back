@@ -12,6 +12,7 @@ import { ReviewGatewayController } from './review.gateway.controller';
 import { DisputeGatewayController } from './dispute.gateway.controller';
 import { CancellationPolicyGatewayController } from './cancellation-policy.gateway.controller';
 import { MessageGatewayController } from './message.gateway.controller';
+import { PaymentGatewayController } from './payment.gateway.controller';
 
 @Module({
   imports: [MicroserviceClientsModule],
@@ -28,6 +29,7 @@ import { MessageGatewayController } from './message.gateway.controller';
     DisputeGatewayController,
     CancellationPolicyGatewayController,
     MessageGatewayController,
+    PaymentGatewayController,
   ],
 })
 export class GatewayModule {}

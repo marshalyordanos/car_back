@@ -170,7 +170,14 @@ export class BookingRepository {
     const results = await Promise.all([
       this.prisma.booking.findMany({
         ...query,
-        include: { car: true },
+        include: {
+          car: { include: { make: true, model: true } },
+          guest: true,
+          host: true,
+          payment: true,
+          dispute: true,
+          inspections: true,
+        },
         where: query.where || {},
       }),
       this.prisma.booking.count({ where: query.where || {} }),
