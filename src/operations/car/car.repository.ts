@@ -131,6 +131,7 @@ export class CarRepository {
         model: true,
         insurancePlans: true,
         reviews: true,
+        host:true,
         bookings: {
           where: {
             status: 'PENDING',
