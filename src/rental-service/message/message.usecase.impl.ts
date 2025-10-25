@@ -11,7 +11,7 @@ import { Redis } from 'ioredis';
 export class MessageUseCasesImp {
   constructor(
     private readonly repo: MessageRepository,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    // @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   // Send a message: only host or guest allowed (business rule)

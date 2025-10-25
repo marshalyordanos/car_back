@@ -55,7 +55,7 @@ import { PaymentRepository } from './payment/payment.repository';
     CancellationPolicyRepository,
     MessageUseCasesImp,
     MessageRepository,
-    redisProvider,
+    // redisProvider,
     PaymentUseCasesImpl,
     PaymentRepository,
   ],
@@ -66,7 +66,7 @@ import { PaymentRepository } from './payment/payment.repository';
     CancellationPolicyUseCasesImp,
     MessageUseCasesImp,
     PaymentUseCasesImpl,
-    redisProvider,
+    // redisProvider,
   ],
 })
 export class RentalServiceModule {}
