@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CancellationPolicy, Prisma } from '@prisma/client';
 import { ListQueryDto } from '../../common/query/query.dto';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
 @Injectable()
 export class CancellationPolicyRepository {
@@ -19,23 +20,34 @@ export class CancellationPolicyRepository {
 
   async findAll(
     query: ListQueryDto,
-  ): Promise<{ data: CancellationPolicy[]; total: number }> {
-    const { page = 1, pageSize = 10, search } = query;
-    const skip = (page - 1) * pageSize;
+  ){
+    const feature = new PrismaQueryFeature({
+      search: query.search,
+      filter: query.filter,
+      sort: query.sort,
+      page: query.page,
+      pageSize: query.pageSize,
+      searchableFields: ['name', 'make.name'],
+    });
 
-    const where: any = {};
-    if (search) {
-      where.OR = [{ userType: { contains: search, mode: 'insensitive' } }];
-    }
+    const query2= feature.getQuery();
 
-    const [data, total] = await Promise.all([
-      this.prisma.cancellationPolicy.findMany({ skip, take: pageSize, where }),
-      this.prisma.cancellationPolicy.count({ where }),
+    const results = await Promise.all([
+      this.prisma.cancellationPolicy.findMany({
+        ...query2,
+        where: query2.where || {},
+      }),
+      this.prisma.cancellationPolicy.count({ where: query2.where || {} }),
     ]);
 
-    return { data, total };
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
   }
-
   async updatePolicy(
     id: string,
     data: Prisma.CancellationPolicyUpdateInput,

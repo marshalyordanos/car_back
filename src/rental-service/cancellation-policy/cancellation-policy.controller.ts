@@ -27,11 +27,14 @@ export class CancellationPolicyMessageController {
 
   @Public()
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_FIND_ALL)
-  async findAll(@Payload() payload: ListQueryDto) {
+  async findAll(@Payload() payload: {query:ListQueryDto}) {
     try {
-      const policies = await this.usecases.getAllPolicies(payload);
-      return IResponse.success('Policies fetched', policies);
+      console.log("----------===========")
+      const result = await this.usecases.getAllPolicies(payload.query);
+      return IResponse.success('Policies fetched',  result.models,
+        result.pagination,);
     } catch (error) {
+      console.log("--------------",error)
       handleCatch(error);
     }
   }

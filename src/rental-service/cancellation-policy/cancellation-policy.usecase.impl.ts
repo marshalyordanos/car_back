@@ -24,11 +24,16 @@ export class CancellationPolicyUseCasesImp {
   }
 
   async getAllPolicies(query: ListQueryDto) {
-    return this.repo.findAll(query);
+    const res = await this.repo.findAll(query);
+    return {
+      models: res.models,
+      pagination: res.pagination,
+    };
   }
 
   async updatePolicy(id: string, dto: CancellationPolicyUpdateDto) {
     return this.repo.updatePolicy(id, dto);
+   
   }
 
   async deletePolicy(id: string) {

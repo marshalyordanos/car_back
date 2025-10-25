@@ -26,14 +26,17 @@ export class CancellationPolicyGatewayController {
   constructor(@Inject('RENTAL_SERVICE') private readonly client: ClientProxy) {}
 
   @Get()
-  async findAll(@Req() req, @Query() query: ListQueryDto) {
+  async findAll(@Query() query: ListQueryDto, @Req() req) {
     const authHeader = req.headers['authorization'] || null;
+
     return this.client.send(PATTERNS.CANCELLATION_POLICY_FIND_ALL, {
-      query,
       headers: { authorization: authHeader },
+      query,
     });
   }
 
+   
+ 
   @Get(':id')
   async findById(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;
