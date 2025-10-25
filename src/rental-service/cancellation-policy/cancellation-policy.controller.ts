@@ -9,6 +9,7 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { PATTERNS } from '../../contracts';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class CancellationPolicyMessageController {
@@ -24,6 +25,7 @@ export class CancellationPolicyMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_FIND_ALL)
   async findAll(@Payload() payload: ListQueryDto) {
     try {
