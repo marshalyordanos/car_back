@@ -6,15 +6,18 @@ import {
   Param,
   Req,
   Inject,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   CreatePaymentDto,
+  PayPaymentDto,
   RefundPaymentDto,
   ReleasePaymentDto,
 } from '../rental-service/payment/payment.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ListQueryDto } from '../common/query/query.dto';
 
 @ApiTags('Payments')
 @ApiBearerAuth('access-token')
@@ -27,6 +30,15 @@ export class PaymentGatewayController {
   async create(@Req() req, @Body() dto: CreatePaymentDto) {
     const authHeader = req.headers['authorization'] || null;
     return this.paymentClient.send(PATTERNS.PAYMENT_CREATE, {
+      headers: { authorization: authHeader },
+      ...dto,
+    });
+  }
+
+  @Post('/pay')
+  async completePayment(@Req() req, @Body() dto: PayPaymentDto) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.paymentClient.send(PATTERNS.PAYMENT_COMPLETE, {
       headers: { authorization: authHeader },
       ...dto,
     });
@@ -50,15 +62,6 @@ export class PaymentGatewayController {
     });
   }
 
-  @Get(':id')
-  async getById(@Req() req, @Param('id') id: string) {
-    const authHeader = req.headers['authorization'] || null;
-    return this.paymentClient.send(PATTERNS.PAYMENT_GET_BY_ID, {
-      headers: { authorization: authHeader },
-      id,
-    });
-  }
-
   @Get('booking/:bookingId')
   async getByBooking(@Req() req, @Param('bookingId') bookingId: string) {
     const authHeader = req.headers['authorization'] || null;
@@ -78,10 +81,23 @@ export class PaymentGatewayController {
   }
 
   @Get()
-  async getAll(@Req() req) {
+  async getAll(@Req() req, @Query() query: ListQueryDto) {
+    console.log(
+      '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++',
+    );
     const authHeader = req.headers['authorization'] || null;
     return this.paymentClient.send(PATTERNS.PAYMENT_GET_ALL, {
       headers: { authorization: authHeader },
+
+      query,
+    });
+  }
+  @Get(':id')
+  async getById(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.paymentClient.send(PATTERNS.PAYMENT_GET_BY_ID, {
+      headers: { authorization: authHeader },
+      id,
     });
   }
 }

@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { PaymentStatus, PaymentType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto, PaymentConfirmDto } from './payment.entity';
+import { ListQueryDto } from '../../common/query/query.dto';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
 @Injectable()
 export class PaymentRepository {
@@ -33,19 +35,34 @@ export class PaymentRepository {
     const platformFee = bookingPayment.amount * 0.1; // 10% fee
     const hostEarnings = bookingPayment.amount - platformFee;
 
-    return this.prisma.payment.create({
-      data: {
-        bookingId,
-        payerId: null,
-        recipientId: hostId,
-        amount: hostEarnings,
-        currency: bookingPayment.currency,
-        method: bookingPayment.method,
-        type: PaymentType.PLATFORM_TO_HOST,
-        platformFee,
-        hostEarnings,
-        status: PaymentStatus.CONFIRMED,
-      },
+    // Create payment transaction
+    return this.prisma.$transaction(async (tx) => {
+      const hostProfile = await tx.hostProfile.findUnique({
+        where: { userId: hostId },
+      });
+      const payment = await tx.payment.update({
+        where: { bookingId: bookingId },
+        data: {
+          status: 'COMPLETED',
+        },
+      });
+      await tx.paymentTransaction.create({
+        data: {
+          paymentId: bookingPayment?.id!,
+          type: 'PLATFORM_TO_HOST',
+          amount: bookingPayment?.hostEarnings!,
+          status: 'COMPLETED',
+        },
+      });
+
+      // Update host earnings
+      await tx.hostProfile.update({
+        where: { userId: hostId },
+        data: {
+          earnings:
+            (hostProfile?.earnings || 0) + bookingPayment?.hostEarnings!,
+        },
+      });
     });
   }
 
@@ -56,25 +73,31 @@ export class PaymentRepository {
 
     if (!bookingPayment) throw new Error('Booking payment not found');
 
-    return this.prisma.payment.create({
-      data: {
-        bookingId,
-        payerId: null,
-        recipientId: bookingPayment.payerId,
-        amount: refundAmount,
-        currency: bookingPayment.currency,
-        method: bookingPayment.method,
-        type: PaymentType.REFUND,
-        status: PaymentStatus.CONFIRMED,
-        transactionId: `refund_${Date.now()}`,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.update({
+        where: { bookingId: bookingId },
+        data: {
+          status: 'REFUNDED',
+          method: 'CBE',
+          type: 'REFUND',
+        },
+      });
+
+      await tx.paymentTransaction.create({
+        data: {
+          paymentId: bookingPayment?.id!,
+          type: 'REFUND',
+          amount: refundAmount,
+          status: 'COMPLETED',
+        },
+      });
     });
   }
 
   async findById(id: string) {
     return this.prisma.payment.findUnique({
       where: { id },
-      include: { disputes: true, booking: true },
+      include: { disputes: true, booking: true, transactions: true },
     });
   }
 
@@ -92,13 +115,40 @@ export class PaymentRepository {
     });
   }
 
-  async findAll() {
-    return this.prisma.payment.findMany({
-      include: { booking: true, disputes: true },
+  async findAll(filter: ListQueryDto) {
+    console.log('filterr: ', filter);
+    const feature = new PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['name', 'make.name'],
     });
+
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
+      this.prisma.payment.findMany({
+        ...query,
+        include: { payer: true, transactions: true },
+        where: query.where || {},
+      }),
+      this.prisma.payment.count({ where: query.where || {} }),
+    ]);
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
   }
   async completePayment(id: string) {
     return this.prisma.$transaction(async (tx) => {
+      // console.log('idididL:', id);
+      // return;
       // 1️⃣ Update the payment record
       const payment = await tx.payment.update({
         where: { bookingId: id },

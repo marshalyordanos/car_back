@@ -49,6 +49,12 @@ export class ReleasePaymentDto {
   hostId: string;
 }
 
+export class PayPaymentDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  bookingId: string;
+}
 export class RefundPaymentDto {
   @ApiProperty()
   @IsNotEmpty()

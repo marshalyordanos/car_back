@@ -4,6 +4,7 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { PaymentUseCasesImpl } from './payment.usecase.impl';
+import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Controller()
 export class PaymentMessageController {
@@ -14,6 +15,16 @@ export class PaymentMessageController {
     try {
       const res = await this.usecases.createPayment(payload);
       return IResponse.success('Payment created successfully', res);
+    } catch (error) {
+      return handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.PAYMENT_COMPLETE)
+  async completePayment(@Payload() payload) {
+    try {
+      const res = await this.usecases.completePayment(payload.bookingId);
+      return IResponse.success(' Complited Sucssuesfully', res);
     } catch (error) {
       return handleCatch(error);
     }
@@ -77,10 +88,14 @@ export class PaymentMessageController {
   }
 
   @MessagePattern(PATTERNS.PAYMENT_GET_ALL)
-  async getAll() {
+  async getAll(data: { query: ListQueryDto }) {
     try {
-      const res = await this.usecases.getAllPayments();
-      return IResponse.success('All payments fetched successfully', res);
+      const result = await this.usecases.getAllPayments(data.query);
+      return IResponse.success(
+        'All payments fetched successfully',
+        result.models,
+        result.pagination,
+      );
     } catch (error) {
       return handleCatch(error);
     }

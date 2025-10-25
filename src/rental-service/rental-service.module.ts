@@ -20,6 +20,9 @@ import { MessageUseCasesImp } from './message/message.usecase.impl';
 import { MessageRepository } from './message/message.repository';
 import { NotifyHubModule } from '../notify-hub/notify-hub.module';
 import { redisProvider } from '../notify-hub/redis/redis.provider';
+import { PaymentMessageController } from './payment/payment.controller';
+import { PaymentUseCasesImpl } from './payment/payment.usecase.impl';
+import { PaymentRepository } from './payment/payment.repository';
 
 @Module({
   imports: [
@@ -36,6 +39,7 @@ import { redisProvider } from '../notify-hub/redis/redis.provider';
     DisputeMessageController,
     CancellationPolicyMessageController,
     MessageMessageController,
+    PaymentMessageController,
   ],
 
   providers: [
@@ -52,6 +56,8 @@ import { redisProvider } from '../notify-hub/redis/redis.provider';
     MessageUseCasesImp,
     MessageRepository,
     redisProvider,
+    PaymentUseCasesImpl,
+    PaymentRepository,
   ],
   exports: [
     BookingUseCasesImp,
@@ -59,6 +65,7 @@ import { redisProvider } from '../notify-hub/redis/redis.provider';
     DisputeUseCasesImpl,
     CancellationPolicyUseCasesImp,
     MessageUseCasesImp,
+    PaymentUseCasesImpl,
     redisProvider,
   ],
 })
