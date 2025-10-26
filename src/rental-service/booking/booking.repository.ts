@@ -89,7 +89,7 @@ export class BookingRepository {
       });
 
       // Create corresponding payment
-      await tx.payment.create({
+     const payment=  await tx.payment.create({
         data: {
           bookingId: booking.id,
           payerId: dto.guestId,
@@ -97,10 +97,19 @@ export class BookingRepository {
           amount: totalPrice,
           currency: 'ETB',
           method: null,
-          status: 'PENDING',
+          status: 'ON_HOLD',
           type: 'GUEST_TO_PLATFORM',
           platformFee,
           hostEarnings,
+        },
+      });
+
+      const paymentTransaction = await tx.paymentTransaction.create({
+        data: {
+          paymentId: payment.id,
+          type: 'CAPTURE',
+          amount: payment.amount,
+          status: 'COMPLETED',
         },
       });
 
