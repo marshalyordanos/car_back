@@ -97,7 +97,13 @@ export class PaymentRepository {
   async findById(id: string) {
     return this.prisma.payment.findUnique({
       where: { id },
-      include: { disputes: true, booking: true, transactions: true },
+      include: {
+        disputes: true,
+        booking: true,
+        transactions: true,
+        payer: true,
+        recipient: true,
+      },
     });
   }
 
@@ -123,7 +129,14 @@ export class PaymentRepository {
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['name', 'make.name'],
+      searchableFields: [
+        'payer.phone',
+        'payer.firstName',
+        'payer.lastName',
+        'recipient.firstName',
+        'recipient.lastName',
+        'recipient.phone',
+      ],
     });
 
     const query = feature.getQuery();
@@ -131,7 +144,7 @@ export class PaymentRepository {
     const results = await Promise.all([
       this.prisma.payment.findMany({
         ...query,
-        include: { payer: true, transactions: true },
+        include: { payer: true, recipient: true },
         where: query.where || {},
       }),
       this.prisma.payment.count({ where: query.where || {} }),

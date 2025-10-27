@@ -19,8 +19,8 @@ import {
   TransactionType,
 } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
-import * as prismaQueryFeature from '../../common/query/prisma-query-feature';
 import { ListQueryDto } from '../../common/query/query.dto';
+import { PrismaQueryFeature } from 'src/common/query/prisma-query-feature';
 
 @Injectable()
 export class BookingRepository {
@@ -89,7 +89,7 @@ export class BookingRepository {
       });
 
       // Create corresponding payment
-     const payment=  await tx.payment.create({
+      const payment = await tx.payment.create({
         data: {
           bookingId: booking.id,
           payerId: dto.guestId,
@@ -165,13 +165,13 @@ export class BookingRepository {
   }
 
   async getAllBookings(filter: ListQueryDto) {
-    const feature = new prismaQueryFeature.PrismaQueryFeature({
+    const feature = new PrismaQueryFeature({
       search: filter.search,
       filter: filter.filter,
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['name', 'make.name'],
+      searchableFields: ['guest.phone', 'host.phone'],
     });
 
     const query = feature.getQuery();
@@ -287,13 +287,13 @@ export class BookingRepository {
   }
 
   async findAll(filter: ListQueryDto) {
-    const feature = new prismaQueryFeature.PrismaQueryFeature({
+    const feature = new PrismaQueryFeature({
       search: filter.search,
       filter: filter.filter,
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['name', 'make.name'],
+      searchableFields: [],
     });
 
     const query = feature.getQuery();

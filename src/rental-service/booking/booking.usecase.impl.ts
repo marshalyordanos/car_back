@@ -26,8 +26,18 @@ export class BookingUseCasesImp {
     if (!car) {
       throw new RpcException('Car is not found!');
     }
+
+    
     const start = new Date(dto.startDate);
     const end = new Date(dto.endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new RpcException('Invalid startDate or endDate');
+    }
+  
+    if (start >= end) {
+      throw new RpcException('startDate must be before endDate');
+    }
     const diffTime = end.getTime() - start.getTime();
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 

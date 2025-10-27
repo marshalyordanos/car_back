@@ -7,6 +7,7 @@ interface QueryOptions {
   page?: number;
   pageSize?: number;
   searchableFields?: string[];
+  dateFields?: string[]; // list of DateTime fields
 }
 
 export class PrismaQueryFeature<
@@ -107,21 +108,7 @@ export class PrismaQueryFeature<
       if (AND.length > 0) where.AND = AND;
     }
     // --- FILTER ---
-    // if (filter) {
-    //   const filterItems = filter.split(',');
-    //   filterItems.forEach((item) => {
-    //     const [key, value] = item.split(':');
-    //     if (key.endsWith('_lte')) {
-    //       const k = key.replace('_lte', '');
-    //       where[k] = { lte: Number(value) };
-    //     } else if (key.endsWith('_gte')) {
-    //       const k = key.replace('_gte', '');
-    //       where[k] = { gte: Number(value) };
-    //     } else {
-    //       where[key] = value;
-    //     }
-    //   });
-    // }
+
     if (filter) {
       console.log('filter::', filter);
       const filterItems = filter.split(',');
@@ -132,10 +119,25 @@ export class PrismaQueryFeature<
         // Handle lte/gte
         if (key.endsWith('_lte')) {
           const k = key.replace('_lte', '');
-          where[k] = { lte: Number(value) };
+          if (this.options.dateFields?.includes(k)) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              where[k] = { lte: date.toISOString() };
+            }
+          } else {
+            where[k] = { lte: Number(value) };
+          }
         } else if (key.endsWith('_gte')) {
           const k = key.replace('_gte', '');
-          where[k] = { gte: Number(value) };
+          if (this.options.dateFields?.includes(k)) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              where[k] = { gte: date.toISOString() };
+            }
+          } else {
+            where[k] = { gte: Number(value) };
+          }
+          // where[k] = { gte: Number(value) };
         } else {
           console.log('value:::', value);
           if (value?.startsWith('[') && value?.endsWith(']')) {
@@ -151,7 +153,10 @@ export class PrismaQueryFeature<
             let parsedValue: any;
             if (value === 'true') parsedValue = true;
             else if (value === 'false') parsedValue = false;
-            else parsedValue = value; // leave as string (don't auto convert numbers)
+            else if (this.options.dateFields?.includes(value)) {
+              const date = new Date(value);
+              parsedValue = date.toISOString();
+            } else parsedValue = value; // leave as string (don't auto convert numbers)
 
             where[key] = parsedValue;
           }

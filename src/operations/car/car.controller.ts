@@ -65,9 +65,15 @@ export class CarMessageController {
 
   @Public()
   @MessagePattern(PATTERNS.CAR_FIND_BY_ID)
-  async findByIdCar(@Payload() payload: { carId: string }) {
+  async findByIdCar(
+    @Payload() payload: { carId: string; startDate: string; endDate: string },
+  ) {
     try {
-      const car = await this.usecases.getCarById(payload.carId);
+      const car = await this.usecases.getCarById(
+        payload.carId,
+        payload.startDate,
+        payload.endDate,
+      );
       return IResponse.success('car fetched successfully', car);
     } catch (error) {
       handleCatch(error);

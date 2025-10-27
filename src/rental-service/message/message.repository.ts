@@ -144,10 +144,91 @@ export class MessageRepository {
 
   //   return { items, total };
   // }
+  // async getChatListForUser(userId: string, page = 1, pageSize = 20) {
+  //   const skip = (page - 1) * pageSize;
+
+  //   // 1) find bookings of this user
+  //   const bookings = await this.prisma.booking.findMany({
+  //     where: { OR: [{ hostId: userId }, { guestId: userId }] },
+  //     orderBy: { updatedAt: 'desc' },
+  //     skip,
+  //     take: pageSize,
+  //     select: {
+  //       id: true,
+  //       hostId: true,
+  //       guestId: true,
+  //       startDate: true,
+  //       endDate: true,
+  //       status: true,
+  //     },
+  //   });
+
+  //   if (!bookings.length) return { items: [], total: 0 };
+
+  //   const bookingIds = bookings.map((b) => b.id);
+
+  //   // 2) find only bookings that have messages
+  //   const messageGroups = await this.prisma.message.groupBy({
+  //     by: ['bookingId'],
+  //     where: { bookingId: { in: bookingIds } },
+  //   });
+
+  //   const validIds = new Set(messageGroups.map((m) => m.bookingId));
+  //   const filtered = bookings.filter((b) => validIds.has(b.id));
+
+  //   if (!filtered.length) return { items: [], total: 0 };
+
+  //   const filteredIds = filtered.map((b) => b.id);
+
+  //   // 3) get last messages for these only (fast)
+  //   const lastMessagesAll = await this.prisma.message.findMany({
+  //     where: { bookingId: { in: filteredIds } },
+  //     orderBy: { createdAt: 'desc' },
+  //   });
+
+  //   const lastMessageMap = new Map<string, Message>();
+  //   for (const m of lastMessagesAll) {
+  //     if (!lastMessageMap.has(m.bookingId)) {
+  //       lastMessageMap.set(m.bookingId, m);
+  //     }
+  //   }
+
+  //   // 4) unread counts aggregated in one query using groupBy
+  //   const unreadCountsRaw = await this.prisma.message.groupBy({
+  //     by: ['bookingId'],
+  //     where: {
+  //       bookingId: { in: filteredIds },
+  //       receiverId: userId,
+  //       isRead: false,
+  //     },
+  //     _count: true,
+  //   });
+
+  //   const unreadMap = Object.fromEntries(
+  //     unreadCountsRaw.map((u) => [u.bookingId, u._count]),
+  //   );
+
+  //   // 5) build response
+  //   const items = filtered.map((b) => {
+  //     const withUserId = b.hostId === userId ? b.guestId : b.hostId;
+  //     return {
+  //       bookingId: b.id,
+  //       lastMessage: lastMessageMap.get(b.id) ?? null,
+  //       unreadCount: unreadMap[b.id] ?? 0,
+  //       withUserId,
+  //       bookingSummary: b,
+  //     };
+  //   });
+
+  //   return {
+  //     items,
+  //     total: items.length, // only conversations, not all bookings
+  //   };
+  // }
+
   async getChatListForUser(userId: string, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize;
 
-    // 1) find bookings of this user
     const bookings = await this.prisma.booking.findMany({
       where: { OR: [{ hostId: userId }, { guestId: userId }] },
       orderBy: { updatedAt: 'desc' },
@@ -167,7 +248,6 @@ export class MessageRepository {
 
     const bookingIds = bookings.map((b) => b.id);
 
-    // 2) find only bookings that have messages
     const messageGroups = await this.prisma.message.groupBy({
       by: ['bookingId'],
       where: { bookingId: { in: bookingIds } },
@@ -177,10 +257,8 @@ export class MessageRepository {
     const filtered = bookings.filter((b) => validIds.has(b.id));
 
     if (!filtered.length) return { items: [], total: 0 };
-
     const filteredIds = filtered.map((b) => b.id);
 
-    // 3) get last messages for these only (fast)
     const lastMessagesAll = await this.prisma.message.findMany({
       where: { bookingId: { in: filteredIds } },
       orderBy: { createdAt: 'desc' },
@@ -188,12 +266,9 @@ export class MessageRepository {
 
     const lastMessageMap = new Map<string, Message>();
     for (const m of lastMessagesAll) {
-      if (!lastMessageMap.has(m.bookingId)) {
-        lastMessageMap.set(m.bookingId, m);
-      }
+      if (!lastMessageMap.has(m.bookingId)) lastMessageMap.set(m.bookingId, m);
     }
 
-    // 4) unread counts aggregated in one query using groupBy
     const unreadCountsRaw = await this.prisma.message.groupBy({
       by: ['bookingId'],
       where: {
@@ -208,21 +283,49 @@ export class MessageRepository {
       unreadCountsRaw.map((u) => [u.bookingId, u._count]),
     );
 
-    // 5) build response
+    // ---- Collect ALL userIds we need ----
+    const userIds = new Set<string>();
+    for (const b of filtered) {
+      userIds.add(b.hostId);
+      userIds.add(b.guestId);
+    }
+
+    // ---- Get userProfiles in one query ----
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: Array.from(userIds) } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        profilePhoto: true,
+      },
+    });
+
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+
+    // ---- Build response ----
     const items = filtered.map((b) => {
       const withUserId = b.hostId === userId ? b.guestId : b.hostId;
+      const withUser = userMap[withUserId];
+
       return {
         bookingId: b.id,
         lastMessage: lastMessageMap.get(b.id) ?? null,
         unreadCount: unreadMap[b.id] ?? 0,
-        withUserId,
+        withUser: withUser
+          ? {
+              id: withUser.id,
+              fullName: `${withUser.firstName} ${withUser.lastName}`,
+              profilePhoto: withUser.profilePhoto,
+            }
+          : null,
         bookingSummary: b,
       };
     });
 
     return {
       items,
-      total: items.length, // only conversations, not all bookings
+      total: items.length,
     };
   }
 

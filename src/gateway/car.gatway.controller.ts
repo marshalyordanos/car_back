@@ -16,6 +16,7 @@ import { Inject } from '@nestjs/common';
 import { PATTERNS } from '../contracts';
 import {
   AddCarInsuranceDto,
+  CarDateDto,
   CarDto,
   CarSearchFilter,
   UpdateCarInsuranceDto,
@@ -142,18 +143,22 @@ export class CarGatewayController {
   }
 
   @Get(':id')
-  getCar(@Param('id') id: string, @Req() req) {
+  getCar(@Param('id') id: string, @Query() query: CarDateDto, @Req() req) {
     const authHeader = req.headers['authorization'] || null;
 
     return this.carClient.send(PATTERNS.CAR_FIND_BY_ID, {
       headers: { authorization: authHeader },
       carId: id,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
   }
 
   @Get()
   searchCars(@Query() query: ListQueryDto, @Req() req) {
     const authHeader = req.headers['authorization'] || null;
+
+    console.log('carparams: ', query);
 
     return this.carClient.send(PATTERNS.CAR_SEARCH, {
       headers: { authorization: authHeader },

@@ -123,27 +123,76 @@ export class CarRepository {
     await this.prisma.car.delete({ where: { id: carId } });
   }
 
-  async findById(carId: string): Promise<Car | null> {
-    return this.prisma.car.findUnique({
+  // async findById(carId: string,startDate:string,endDate:string): Promise<Car | null> {
+  //   return this.prisma.car.findUnique({
+  //     where: { id: carId },
+  //     include: {
+  //       make: true,
+  //       model: true,
+  //       insurancePlans: true,
+  //       reviews: true,
+  //       host: true,
+  //       bookings: {
+  //         where: {
+  //           status: 'PENDING',
+  //         },
+  //         select: {
+  //           id: true,
+  //           startDate: true,
+  //           endDate: true,
+  //         },
+  //       },
+  //     },
+  //   });
+  // }
+  async findById(
+    carId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<any> {
+    const car = await this.prisma.car.findUnique({
       where: { id: carId },
       include: {
         make: true,
         model: true,
         insurancePlans: true,
         reviews: true,
-        host:true,
+        host: true,
         bookings: {
-          where: {
-            status: 'PENDING',
-          },
-          select: {
-            id: true,
-            startDate: true,
-            endDate: true,
-          },
+          where: { status: 'PENDING' },
+          select: { id: true, startDate: true, endDate: true },
         },
       },
     });
+
+    if (!car) return null;
+
+    // --- pricing compute ---
+    let baseTotal = 0;
+    let totalPrice = 0;
+    let days = 0;
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start < end) {
+        const diffTime = end.getTime() - start.getTime();
+        days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        baseTotal = car.rentalPricePerDay * days;
+        const platformFee = baseTotal * 0.1;
+        const tax = baseTotal * 0.15;
+        totalPrice = baseTotal + platformFee + tax;
+      }
+    }
+
+    return {
+      ...car,
+      baseTotal,
+      totalPrice,
+      days,
+    };
   }
 
   async findByHost(hostId: string): Promise<Car[]> {
@@ -157,52 +206,64 @@ export class CarRepository {
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['name'],
+      searchableFields: ['make.name', 'model.name', 'host.phone', 'host.email'],
     });
     const query = feature.getQuery();
-    const where: any = {
-      ...query.where,
-    };
+    const where: any = { ...query.where };
 
+    // Declare with let at top
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    let days = 0;
+
+    console.log(filter);
     if (filter.startDate && filter.endDate) {
-      const startDate = new Date(filter.startDate);
-      const endDate = new Date(filter.endDate);
+      startDate = new Date(filter.startDate);
+      endDate = new Date(filter.endDate);
 
-      where.AND = where.AND || [];
+      if (
+        !isNaN(startDate.getTime()) &&
+        !isNaN(endDate.getTime()) &&
+        startDate < endDate
+      ) {
+        const diffTime = endDate.getTime() - startDate.getTime();
+        console.log('==================: ', startDate, endDate);
+        days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      where.AND.push({
-        bookings: {
-          none: {
-            AND: [
-              {
-                status: {
-                  notIn: [
-                    'CANCELLED_BY_GUEST',
-                    'CANCELLED_BY_HOST',
-                    'CANCELLED_BY_ADMIN',
-                    'COMPLETED',
-                    'REJECTED',
+        where.AND = where.AND || [];
+        where.AND.push({
+          bookings: {
+            none: {
+              AND: [
+                {
+                  status: {
+                    notIn: [
+                      'CANCELLED_BY_GUEST',
+                      'CANCELLED_BY_HOST',
+                      'CANCELLED_BY_ADMIN',
+                      'COMPLETED',
+                      'REJECTED',
+                    ],
+                  },
+                },
+                {
+                  OR: [
+                    {
+                      startDate: { lte: endDate },
+                      endDate: { gte: startDate },
+                    },
                   ],
                 },
-              },
-              {
-                OR: [
-                  {
-                    startDate: { lte: endDate },
-                    endDate: { gte: startDate },
-                  },
-                ],
-              },
-            ],
+              ],
+            },
           },
-        },
-      });
+        });
+      }
     }
 
     const results = await Promise.all([
       this.prisma.car.findMany({
-        ...query,
-        where,
+        ...{ ...query, where },
         include: {
           make: true,
           model: true,
@@ -211,13 +272,119 @@ export class CarRepository {
       this.prisma.car.count({ where }),
     ]);
 
-    const models = results[0] || [];
+    const cars = results[0] || [];
     const total = results[1] || 0;
+
+    console.log('dayesss: ', days);
+    const carsWithPricing = cars.map((car) => {
+      if (days > 0) {
+        const baseTotal = car.rentalPricePerDay * days;
+        const platformFee = baseTotal * 0.1;
+        const tax = baseTotal * 0.15;
+        const totalPrice = baseTotal + platformFee + tax;
+        return { ...car, baseTotal, totalPrice, days };
+      }
+      return { ...car, baseTotal: 0, totalPrice: 0, days: 0 };
+    });
+
     return {
-      models,
+      models: carsWithPricing,
       pagination: feature.getPagination(total),
     };
   }
+
+  // async searchCars(filter: ListQueryDto) {
+  //   const feature = new PrismaQueryFeature({
+  //     search: filter.search,
+  //     filter: filter.filter,
+  //     sort: filter.sort,
+  //     page: filter.page,
+  //     pageSize: filter.pageSize,
+  //     searchableFields: ['name'],
+  //   });
+  //   const query = feature.getQuery();
+  //   const where: any = {
+  //     ...query.where,
+  //   };
+
+  //   console.log(filter);
+  //   // Declare with let at top
+  //   let startDate2: Date | null = null;
+  //   let endDate2: Date | null = null;
+  //   let days = 0;
+
+  //   if (filter.startDate && filter.endDate) {
+  //     startDate2 = new Date(filter.startDate);
+  //     endDate2 = new Date(filter.endDate);
+
+  //     const diffTime = endDate2.getTime() - startDate2.getTime();
+  //     days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  //     const startDate = new Date(filter.startDate);
+  //     const endDate = new Date(filter.endDate);
+
+  //     where.AND = where.AND || [];
+
+  //     where.AND.push({
+  //       bookings: {
+  //         none: {
+  //           AND: [
+  //             {
+  //               status: {
+  //                 notIn: [
+  //                   'CANCELLED_BY_GUEST',
+  //                   'CANCELLED_BY_HOST',
+  //                   'CANCELLED_BY_ADMIN',
+  //                   'COMPLETED',
+  //                   'REJECTED',
+  //                 ],
+  //               },
+  //             },
+  //             {
+  //               OR: [
+  //                 {
+  //                   startDate: { lte: endDate },
+  //                   endDate: { gte: startDate },
+  //                 },
+  //               ],
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     });
+  //   }
+
+  //   console.log(JSON.stringify(where, null, 2));
+
+  //   const results = await Promise.all([
+  //     this.prisma.car.findMany({
+  //       ...{ ...query, where: where },
+
+  //       include: {
+  //         make: true,
+  //         model: true,
+  //       },
+  //     }),
+  //     this.prisma.car.count({ where }),
+  //   ]);
+
+  //   const models = results[0] || [];
+  //   const total = results[1] || 0;
+  //   const carsWithPricing = models.map((car) => {
+  //     if (days > 0) {
+  //       const baseTotal = car.rentalPricePerDay * days;
+  //       const platformFee = baseTotal * 0.1;
+  //       const tax = baseTotal * 0.15;
+  //       const totalPrice = baseTotal + platformFee + tax;
+  //       return { ...car, baseTotal, totalPrice };
+  //     }
+  //     return { ...car, baseTotal: 0, totalPrice: 0 };
+  //   });
+  //   return {
+  //     models,
+  //     pagination: feature.getPagination(total),
+  //   };
+  // }
 
   async listAllCars(): Promise<Car[]> {
     return this.prisma.car.findMany();

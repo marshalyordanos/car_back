@@ -13,7 +13,7 @@ import { RpcException } from '@nestjs/microservices';
 import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
-export class CarUseCasesImp implements CarUseCase {
+export class CarUseCasesImp {
   constructor(private readonly repo: CarRepository) {}
 
   async createCar(hostId: string, carData: CarDto): Promise<Car> {
@@ -71,8 +71,8 @@ export class CarUseCasesImp implements CarUseCase {
     return this.repo.deleteCar(carId, hostId);
   }
 
-  async getCarById(carId: string): Promise<Car | null> {
-    return this.repo.findById(carId);
+  async getCarById(carId: string, startDate: string, endDate: string) {
+    return this.repo.findById(carId, startDate, endDate);
   }
 
   async listCarsByHost(hostId: string): Promise<Car[]> {

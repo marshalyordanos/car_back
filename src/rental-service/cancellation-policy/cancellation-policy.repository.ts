@@ -18,19 +18,17 @@ export class CancellationPolicyRepository {
     return this.prisma.cancellationPolicy.findUnique({ where: { id } });
   }
 
-  async findAll(
-    query: ListQueryDto,
-  ){
+  async findAll(query: ListQueryDto) {
     const feature = new PrismaQueryFeature({
       search: query.search,
       filter: query.filter,
       sort: query.sort,
       page: query.page,
       pageSize: query.pageSize,
-      searchableFields: ['name', 'make.name'],
+      searchableFields: [],
     });
 
-    const query2= feature.getQuery();
+    const query2 = feature.getQuery();
 
     const results = await Promise.all([
       this.prisma.cancellationPolicy.findMany({
