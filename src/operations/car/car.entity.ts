@@ -239,6 +239,19 @@ export class UpdateCarInsuranceDto {
   isActive?: boolean;
 }
 
+export class CarDateDto {
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'End date filter',
+  })
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+}
+
 // import {
 //   IsString,
 //   IsInt,
