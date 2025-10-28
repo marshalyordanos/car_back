@@ -172,6 +172,8 @@ export class CarRepository {
     let totalPrice = 0;
     let days = 0;
 
+    let tax = 0;
+
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -180,10 +182,12 @@ export class CarRepository {
         const diffTime = end.getTime() - start.getTime();
         days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        baseTotal = car.rentalPricePerDay * days;
-        const platformFee = baseTotal * 0.1;
-        const tax = baseTotal * 0.15;
-        totalPrice = baseTotal + platformFee + tax;
+        const carPrice = car.rentalPricePerDay * days;
+
+        const platformFee = carPrice * 0.1;
+        baseTotal = carPrice + platformFee;
+        tax = baseTotal * 0.15;
+        totalPrice = baseTotal + tax;
       }
     }
 
@@ -192,6 +196,7 @@ export class CarRepository {
       baseTotal,
       totalPrice,
       days,
+      tax,
     };
   }
 
@@ -276,12 +281,24 @@ export class CarRepository {
     const total = results[1] || 0;
 
     console.log('dayesss: ', days);
+    console.log('+===================================:', days);
+
     const carsWithPricing = cars.map((car) => {
       if (days > 0) {
-        const baseTotal = car.rentalPricePerDay * days;
-        const platformFee = baseTotal * 0.1;
+        const carPrice = car.rentalPricePerDay * days;
+
+        const platformFee = carPrice * 0.1;
+        const baseTotal = carPrice + platformFee;
         const tax = baseTotal * 0.15;
-        const totalPrice = baseTotal + platformFee + tax;
+        const totalPrice = baseTotal + tax;
+
+        console.log(
+          '+===================================:',
+          platformFee,
+          baseTotal,
+          tax,
+          totalPrice,
+        );
         return { ...car, baseTotal, totalPrice, days };
       }
       return { ...car, baseTotal: 0, totalPrice: 0, days: 0 };

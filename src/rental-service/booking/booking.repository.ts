@@ -20,7 +20,7 @@ import {
 } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { ListQueryDto } from '../../common/query/query.dto';
-import { PrismaQueryFeature } from 'src/common/query/prisma-query-feature';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
 @Injectable()
 export class BookingRepository {
@@ -172,6 +172,7 @@ export class BookingRepository {
       page: filter.page,
       pageSize: filter.pageSize,
       searchableFields: ['guest.phone', 'host.phone'],
+      dateFields: ['startDate', 'endDate', 'createdAt'],
     });
 
     const query = feature.getQuery();
