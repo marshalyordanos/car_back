@@ -171,6 +171,15 @@ export class BookingGatewayController {
     });
   }
 
+  @Get('my')
+  async getMyBookings(@Req() req, @Query() query: ListQueryDto) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_GET_ALL_MY, {
+      headers: { authorization: authHeader },
+      query,
+    });
+  }
+
   @Get(':id')
   async getBookingById(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;

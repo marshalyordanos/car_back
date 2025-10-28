@@ -164,6 +164,44 @@ export class BookingRepository {
     });
   }
 
+  async getMyBookings(filter: ListQueryDto, userId: string) {
+    const feature = new PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['guest.phone', 'host.phone'],
+      dateFields: ['startDate', 'endDate', 'createdAt'],
+    });
+
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
+      this.prisma.booking.findMany({
+        ...query,
+        include: {
+          car: { include: { make: true, model: true } },
+          guest: true,
+          host: true,
+          payment: true,
+          dispute: true,
+          inspections: true,
+        },
+        where: query.where || {},
+      }),
+      this.prisma.booking.count({ where: query.where || {} }),
+    ]);
+
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
+  }
+
   async getAllBookings(filter: ListQueryDto) {
     const feature = new PrismaQueryFeature({
       search: filter.search,
@@ -458,5 +496,11 @@ export class BookingRepository {
 
   async runTransaction(actions: (tx: typeof this.prisma) => Promise<any>) {
     return this.prisma.$transaction(actions);
+  }
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id: id },
+      include: { role: true },
+    });
   }
 }

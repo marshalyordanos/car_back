@@ -56,6 +56,23 @@ export class BookingMessageController {
     }
   }
 
+  @MessagePattern(PATTERNS.BOOKING_GET_ALL_MY)
+  async getMyBookings(data: { query: ListQueryDto; user: any }) {
+    try {
+      const result = await this.usecases.getMyBookings(
+        data.query,
+        data.user?.sub,
+      );
+      return IResponse.success(
+        'Bookings fetched successfully',
+        result.models,
+        result.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
   @MessagePattern(PATTERNS.BOOKING_GET_ALL)
   async getAllBookings(data: { query: ListQueryDto }) {
     try {

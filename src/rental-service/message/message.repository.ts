@@ -227,106 +227,103 @@ export class MessageRepository {
   // }
 
   async getChatListForUser(userId: string, page = 1, pageSize = 20) {
-    const skip = (page - 1) * pageSize;
+    const offset = (page - 1) * pageSize;
 
-    const bookings = await this.prisma.booking.findMany({
-      where: { OR: [{ hostId: userId }, { guestId: userId }] },
-      orderBy: { updatedAt: 'desc' },
-      skip,
-      take: pageSize,
-      select: {
-        id: true,
-        hostId: true,
-        guestId: true,
-        startDate: true,
-        endDate: true,
-        status: true,
-      },
-    });
-
-    if (!bookings.length) return { items: [], total: 0 };
-
-    const bookingIds = bookings.map((b) => b.id);
-
-    const messageGroups = await this.prisma.message.groupBy({
-      by: ['bookingId'],
-      where: { bookingId: { in: bookingIds } },
-    });
-
-    const validIds = new Set(messageGroups.map((m) => m.bookingId));
-    const filtered = bookings.filter((b) => validIds.has(b.id));
-
-    if (!filtered.length) return { items: [], total: 0 };
-    const filteredIds = filtered.map((b) => b.id);
-
-    const lastMessagesAll = await this.prisma.message.findMany({
-      where: { bookingId: { in: filteredIds } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const lastMessageMap = new Map<string, Message>();
-    for (const m of lastMessagesAll) {
-      if (!lastMessageMap.has(m.bookingId)) lastMessageMap.set(m.bookingId, m);
-    }
-
-    const unreadCountsRaw = await this.prisma.message.groupBy({
-      by: ['bookingId'],
-      where: {
-        bookingId: { in: filteredIds },
-        receiverId: userId,
-        isRead: false,
-      },
-      _count: true,
-    });
-
-    const unreadMap = Object.fromEntries(
-      unreadCountsRaw.map((u) => [u.bookingId, u._count]),
+    // STEP 1 — get conversations (booking + last message + unread count)
+    const rows = await this.prisma.$queryRawUnsafe<any[]>(
+      `
+      WITH user_bookings AS (
+        SELECT id
+        FROM "Booking"
+        WHERE "hostId" = $1 OR "guestId" = $1
+      ),
+      last_msg AS (
+        SELECT DISTINCT ON ("bookingId")
+          "bookingId",
+          id          AS "messageId",
+          content,
+          "createdAt",
+          "senderId",
+          "receiverId",
+          "isRead"
+        FROM "Message"
+        WHERE "bookingId" IN (SELECT id FROM user_bookings)
+        ORDER BY "bookingId", "createdAt" DESC
+      ),
+      unread AS (
+        SELECT "bookingId", COUNT(*) AS unread_count
+        FROM "Message"
+        WHERE "receiverId" = $1 AND "isRead" = false
+        GROUP BY "bookingId"
+      )
+      SELECT
+        b.id            AS "bookingId",
+        b."hostId",
+        b."guestId",
+        l."messageId",
+        l.content,
+        l."createdAt"    AS "lastMessageAt",
+        COALESCE(u.unread_count,0) AS "unreadCount"
+      FROM "Booking" b
+      JOIN last_msg l ON l."bookingId" = b.id
+      LEFT JOIN unread u ON u."bookingId" = b.id
+      WHERE b."hostId" = $1 OR b."guestId" = $1
+      ORDER BY l."createdAt" DESC
+      LIMIT $2 OFFSET $3
+    `,
+      userId,
+      pageSize,
+      offset,
     );
 
-    // ---- Collect ALL userIds we need ----
-    const userIds = new Set<string>();
-    for (const b of filtered) {
-      userIds.add(b.hostId);
-      userIds.add(b.guestId);
-    }
+    if (!rows.length) return { items: [], total: 0 };
 
-    // ---- Get userProfiles in one query ----
+    // STEP 2 — fetch needed users in ONE query
+    const userIds = Array.from(
+      new Set(rows.flatMap((r) => [r.hostId, r.guestId])),
+    );
+
     const users = await this.prisma.user.findMany({
-      where: { id: { in: Array.from(userIds) } },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        profilePhoto: true,
-      },
+      where: { id: { in: userIds } },
+      select: { id: true, firstName: true, lastName: true, profilePhoto: true },
     });
 
     const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
 
-    // ---- Build response ----
-    const items = filtered.map((b) => {
-      const withUserId = b.hostId === userId ? b.guestId : b.hostId;
-      const withUser = userMap[withUserId];
+    // STEP 3 — build response
+    const items = rows.map((r) => {
+      const withUserId = r.hostId === userId ? r.guestId : r.hostId;
+      const u = userMap[withUserId];
 
       return {
-        bookingId: b.id,
-        lastMessage: lastMessageMap.get(b.id) ?? null,
-        unreadCount: unreadMap[b.id] ?? 0,
-        withUser: withUser
+        bookingId: r.bookingId,
+        lastMessage: {
+          id: r.messageId,
+          content: r.content,
+          createdAt: r.lastMessageAt,
+        },
+        unreadCount: Number(r.unreadCount),
+        withUser: u
           ? {
-              id: withUser.id,
-              fullName: `${withUser.firstName} ${withUser.lastName}`,
-              profilePhoto: withUser.profilePhoto,
+              id: u.id,
+              fullName: `${u.firstName} ${u.lastName}`,
+              profilePhoto: u.profilePhoto,
             }
           : null,
-        bookingSummary: b,
       };
     });
 
-    return {
-      items,
-      total: items.length,
-    };
+    // STEP 4 — total count of conversations
+    const [{ count }] = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
+      `
+      SELECT COUNT(*)::int AS count
+      FROM "Booking"
+      WHERE "hostId" = $1 OR "guestId" = $1
+    `,
+      userId,
+    );
+
+    return { items, total: Number(count) };
   }
 
   // Utility: verify if user is part of booking (host or guest)

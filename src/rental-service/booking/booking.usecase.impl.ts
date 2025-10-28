@@ -27,14 +27,13 @@ export class BookingUseCasesImp {
       throw new RpcException('Car is not found!');
     }
 
-    
     const start = new Date(dto.startDate);
     const end = new Date(dto.endDate);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       throw new RpcException('Invalid startDate or endDate');
     }
-  
+
     if (start >= end) {
       throw new RpcException('startDate must be before endDate');
     }
@@ -61,6 +60,43 @@ export class BookingUseCasesImp {
 
   async getBookingById(id: string) {
     return this.repo.getBookingById(id);
+  }
+
+  async getMyBookings(query: ListQueryDto, userId: any) {
+    const User = await this.repo.findUserById(userId);
+    if (!User) {
+      throw new RpcException('User is not found!');
+    }
+    if (User.role?.name == 'GUEST') {
+      if (/guestId:[^,]*/.test(query.filter || '')) {
+        query.filter = query.filter?.replace(
+          /guestId:[^,]*/,
+          `guestId:${userId}`,
+        );
+      } else {
+        query.filter = query.filter
+          ? query.filter + `,guestId:${userId}`
+          : `guestId:${userId}`;
+      }
+    } else if (User?.role?.name == 'HOST') {
+      if (/hostId:[^,]*/.test(query.filter || '')) {
+        query.filter = query.filter?.replace(
+          /hostId:[^,]*/,
+          `hostId:${userId}`,
+        );
+      } else {
+        query.filter = query.filter
+          ? query.filter + `,hostId:${userId}`
+          : `hostId:${userId}`;
+      }
+    } else {
+      throw new RpcException('This User Have not permmission!');
+    }
+    const res = await this.repo.getMyBookings(query, userId);
+    return {
+      models: res.models,
+      pagination: res.pagination,
+    };
   }
 
   async getAllBookings(query: ListQueryDto) {

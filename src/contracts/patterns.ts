@@ -85,6 +85,7 @@ export const PATTERNS = {
   BOOKING_DELETE: 'booking.delete',
   BOOKING_GET_BY_ID: 'booking.getById',
   BOOKING_GET_ALL: 'booking.getAll',
+  BOOKING_GET_ALL_MY: 'booking.getAll.my',
 
   BOOKING_CANCEL_BY_GUEST: 'booking.cancelByGuest',
   BOOKING_CONFIRM_BY_HOST: 'booking.confirmByHost',
