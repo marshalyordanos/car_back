@@ -36,7 +36,7 @@ export class CarRepository {
         vin: data.vin ?? null,
         transmission: data.transmission!,
         mileage: data.mileage!,
-        dailyRate: data.dailyRate!,
+        dailyRate: 0,
         rentalPricePerDay: data.rentalPricePerDay!,
         longTermDiscount: data.longTermDiscount ?? null,
         seatingCapacity: data.seatingCapacity!,
@@ -88,7 +88,7 @@ export class CarRepository {
         // Scalars
         year: Number(data.year),
         mileage: Number(data.mileage),
-        dailyRate: Number(data.dailyRate),
+        dailyRate: Number(0),
         rentalPricePerDay: Number(data.rentalPricePerDay),
         longTermDiscount: data.longTermDiscount
           ? Number(data.longTermDiscount)

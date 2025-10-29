@@ -29,14 +29,15 @@ export class AuthUseCaseImpl {
   ) {}
 
   async register(data: AuthRegisterDto): Promise<any> {
-    const roleId = data.role;
-    if (!roleId) {
+    const roleName = data.role;
+    if (!roleName) {
       throw new RpcException(`Invalid role`);
     }
-    const role = await this.authRepository.findRoleById(roleId!);
+    const role = await this.authRepository.findRoleByName(roleName!);
     if (!role) {
       throw new RpcException(`Invalid role`);
     }
+    data.role = role.id;
     const exists = await this.authRepository.findByPhone(data.phone);
     if (exists) {
       throw new RpcException('Phone already in use');
@@ -204,7 +205,7 @@ export class AuthUseCaseImpl {
   private async generateTokens(user: User): Promise<AuthTokens> {
     const payload = { sub: user.id, email: user.email };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '10h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return { accessToken, refreshToken };

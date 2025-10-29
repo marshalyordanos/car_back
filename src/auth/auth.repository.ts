@@ -31,6 +31,9 @@ export class AuthRepository {
   async findRoleById(id: string) {
     return this.prisma.role.findUnique({ where: { id } });
   }
+  async findRoleByName(name: string) {
+    return this.prisma.role.findUnique({ where: { name } });
+  }
   async createGust(
     data: AuthRegisterDto,
     hashedPassword: string,

@@ -58,10 +58,10 @@ export class CarDto {
   @IsInt()
   mileage: number;
 
-  @ApiProperty({ example: 50 })
-  @Type(() => Number)
-  @IsNumber()
-  dailyRate: number;
+  // @ApiProperty({ example: 50 })
+  // @Type(() => Number)
+  // @IsNumber()
+  // dailyRate: number;
 
   @ApiProperty({ example: 45 })
   @Type(() => Number)
