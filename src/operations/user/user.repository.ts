@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HostProfileDto, UserCreteDto, UserUpdateDto } from './user.entity';
-import { HostProfile, Prisma, Role, User } from '@prisma/client';
+import {
+  BookingStatus,
+  HostProfile,
+  PaymentStatus,
+  Prisma,
+  Role,
+  User,
+  UserRole,
+} from '@prisma/client';
 import * as queryDto from '../../common/query/query.dto';
 import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
@@ -222,6 +230,156 @@ export class UserRepository {
   }
   async findRoleByName(name: string) {
     return this.prisma.role.findUnique({ where: { name: name } });
+  }
+
+  async getDashboardSummary() {
+    // Run parallel queries for performance
+    const [
+      bookingGroups,
+      paymentGroups,
+      paymentTotals,
+      carGroups,
+      ecoGroups,
+      totalCars,
+      totalUsers,
+      guestCount,
+      hostCount,
+      adminCount,
+      disputeGroups,
+    ] = await Promise.all([
+      // Booking grouped by status
+      this.prisma.booking.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
+      // Payment grouped by status
+      this.prisma.payment.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
+      // Payment totals
+      this.prisma.payment.aggregate({
+        _sum: {
+          amount: true,
+          insuranceFee: true,
+          platformFee: true,
+          hostEarnings: true,
+        },
+      }),
+      // Cars grouped by type
+      this.prisma.car.groupBy({
+        by: ['carType'],
+        _count: { carType: true },
+      }),
+      // Cars grouped by eco-friendly type
+      this.prisma.car.groupBy({
+        by: ['ecoFriendly'],
+        _count: { ecoFriendly: true },
+      }),
+      // Total cars
+      this.prisma.car.count(),
+      // Total users
+      this.prisma.user.count(),
+      // Guests count
+      this.prisma.user.count({ where: { role: { name: UserRole.GUEST } } }),
+      // Hosts count
+      this.prisma.user.count({ where: { role: { name: UserRole.HOST } } }),
+      // Admins count
+      this.prisma.user.count({ where: { role: { name: UserRole.ADMIN } } }),
+      // Dispute grouped by status
+      this.prisma.dispute.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
+    ]);
+
+    // --- Booking summary ---
+    const bookingSummary = {
+      totalBookings: bookingGroups.reduce((acc, b) => acc + b._count.status, 0),
+      pending:
+        bookingGroups.find((b) => b.status === BookingStatus.PENDING)?._count
+          .status || 0,
+      cancelledByGuest:
+        bookingGroups.find((b) => b.status === BookingStatus.CANCELLED_BY_GUEST)
+          ?._count.status || 0,
+      cancelledByHost:
+        bookingGroups.find((b) => b.status === BookingStatus.CANCELLED_BY_HOST)
+          ?._count.status || 0,
+      cancelledByAdmin:
+        bookingGroups.find((b) => b.status === BookingStatus.CANCELLED_BY_ADMIN)
+          ?._count.status || 0,
+      completed:
+        bookingGroups.find((b) => b.status === BookingStatus.COMPLETED)?._count
+          .status || 0,
+    };
+
+    // --- Payment summary ---
+    const paymentSummary = {
+      totalPayments: paymentGroups.reduce((acc, p) => acc + p._count.status, 0),
+      pending:
+        paymentGroups.find((p) => p.status === PaymentStatus.PENDING)?._count
+          .status || 0,
+      completed:
+        paymentGroups.find((p) => p.status === PaymentStatus.COMPLETED)?._count
+          .status || 0,
+      failed:
+        paymentGroups.find((p) => p.status === PaymentStatus.FAILED)?._count
+          .status || 0,
+      refunded:
+        paymentGroups.find((p) => p.status === PaymentStatus.REFUNDED)?._count
+          .status || 0,
+      totals: {
+        amount: paymentTotals._sum.amount || 0,
+        insuranceFee: paymentTotals._sum.insuranceFee || 0,
+        platformFee: paymentTotals._sum.platformFee || 0,
+        hostEarnings: paymentTotals._sum.hostEarnings || 0,
+      },
+    };
+
+    // --- Car summary ---
+    const carSummary = {
+      totalCars,
+      byType: carGroups.map((c) => ({
+        type: c.carType,
+        count: c._count.carType,
+      })),
+      byEco: ecoGroups.map((c) => ({
+        ecoFriendly: c.ecoFriendly,
+        count: c._count.ecoFriendly,
+      })),
+    };
+
+    // --- User summary ---
+    const userSummary = {
+      totalUsers,
+      totalGuests: guestCount,
+      totalHosts: hostCount,
+      totalAdmins: adminCount,
+    };
+
+    // --- Dispute summary ---
+    const totalDisputes = disputeGroups.reduce(
+      (acc, d) => acc + d._count.status,
+      0,
+    );
+    const disputeSummary = {
+      totalDisputes,
+      byStatus: disputeGroups.reduce(
+        (acc, d) => {
+          acc[d.status] = d._count.status;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+    };
+
+    return {
+      bookingSummary,
+      paymentSummary,
+      carSummary,
+      userSummary,
+      disputeSummary,
+    };
   }
 }
 

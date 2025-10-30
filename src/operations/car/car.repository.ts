@@ -37,6 +37,7 @@ export class CarRepository {
         transmission: data.transmission!,
         mileage: data.mileage!,
         dailyRate: 0,
+        location: data?.location,
         rentalPricePerDay: data.rentalPricePerDay!,
         longTermDiscount: data.longTermDiscount ?? null,
         seatingCapacity: data.seatingCapacity!,
@@ -89,6 +90,7 @@ export class CarRepository {
         year: Number(data.year),
         mileage: Number(data.mileage),
         dailyRate: Number(0),
+        location: data?.location,
         rentalPricePerDay: Number(data.rentalPricePerDay),
         longTermDiscount: data.longTermDiscount
           ? Number(data.longTermDiscount)

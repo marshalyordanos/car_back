@@ -35,6 +35,16 @@ export class DisputeGatewayController {
     });
   }
 
+  @Get()
+  async getAll(@Req() req, @Query() query: ListQueryDto) {
+    const authHeader = req.headers['authorization'] || null;
+    console.log('ddddddddddddddddddddddddddddddddddddddd');
+    return this.disputeClient.send(PATTERNS.DISPUTE_GET_All2, {
+      query,
+      headers: { authorization: authHeader },
+    });
+  }
+
   @Get(':id')
   async getById(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;
@@ -50,15 +60,6 @@ export class DisputeGatewayController {
     return this.disputeClient.send(PATTERNS.DISPUTE_GET_BY_USER, {
       headers: { authorization: authHeader },
       userId,
-    });
-  }
-
-  @Get()
-  async getAll(@Req() req, @Query() query: ListQueryDto) {
-    const authHeader = req.headers['authorization'] || null;
-    return this.disputeClient.send(PATTERNS.DISPUTE_GET_ALL, {
-      query,
-      headers: { authorization: authHeader },
     });
   }
 

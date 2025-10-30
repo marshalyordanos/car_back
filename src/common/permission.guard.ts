@@ -19,6 +19,9 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log(
+      '888888888888888888888888888888888888888888888888888888888888888888888888888888',
+    );
     const required = this.reflector.get<{
       resource: string;
       action: PermissionActions;

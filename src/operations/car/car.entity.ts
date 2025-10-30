@@ -49,6 +49,11 @@ export class CarDto {
   @IsString()
   vin: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  location: string;
+
   @ApiProperty({ enum: Transmission })
   @IsEnum(Transmission)
   transmission: Transmission;

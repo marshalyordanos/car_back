@@ -21,6 +21,24 @@ export class DisputeMessageController {
     }
   }
 
+  @MessagePattern(PATTERNS.DISPUTE_GET_All2)
+  async findAll(@Payload() payload: { query: ListQueryDto }) {
+    try {
+      console.log('ddddddddddddddddddddddddddddddddddddddd');
+
+      const result = await this.usecases.getAllDisputes(payload.query);
+      return IResponse.success(
+        'Disputes fetched',
+        result.models,
+        result.pagination,
+      );
+    } catch (error) {
+      console.log('ddddddddddddddddddddddddddddddddddddddd');
+
+      handleCatch(error);
+    }
+  }
+
   @MessagePattern(PATTERNS.DISPUTE_GET_BY_ID)
   async getById(@Payload() payload: { id: string }) {
     try {
@@ -38,19 +56,6 @@ export class DisputeMessageController {
       return IResponse.success('User disputes fetched successfully', res);
     } catch (error) {
       return handleCatch(error);
-    }
-  }
-  @MessagePattern(PATTERNS.DISPUTE_GET_ALL)
-  async findAll(@Payload() payload: ListQueryDto) {
-    try {
-      const result = await this.usecases.getAllDisputes(payload);
-      return IResponse.success(
-        'Disputes fetched',
-        result.data,
-        result.pagination,
-      );
-    } catch (error) {
-      handleCatch(error);
     }
   }
 

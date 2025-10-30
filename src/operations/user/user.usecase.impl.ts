@@ -213,4 +213,8 @@ export class UserUseCasesImp implements UserUsecase {
       return this.userRepo.createHostUser(data, role.id, uploadedFiles);
     }
   }
+
+  async getFullDashboard() {
+    return this.userRepo.getDashboardSummary();
+  }
 }

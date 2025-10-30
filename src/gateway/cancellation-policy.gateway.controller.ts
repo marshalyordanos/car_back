@@ -35,8 +35,6 @@ export class CancellationPolicyGatewayController {
     });
   }
 
-   
- 
   @Get(':id')
   async findById(@Req() req, @Param('id') id: string) {
     const authHeader = req.headers['authorization'] || null;

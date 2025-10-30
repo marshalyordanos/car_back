@@ -209,7 +209,13 @@ export class BookingRepository {
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['guest.phone', 'host.phone'],
+      searchableFields: [
+        'guest.phone',
+        'host.phone',
+        'host.firstName',
+        'guest.firstName',
+        'car.make.name',
+      ],
       dateFields: ['startDate', 'endDate', 'createdAt'],
     });
 
@@ -502,5 +508,20 @@ export class BookingRepository {
       where: { id: id },
       include: { role: true },
     });
+  }
+  async getBookingSummary() {
+    const totalBookings = await this.prisma.booking.count();
+    const statusCounts = await this.prisma.booking.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    });
+
+    return {
+      totalBookings,
+      ...statusCounts.reduce((acc, item) => {
+        acc[item.status] = item._count.status;
+        return acc;
+      }, {}),
+    };
   }
 }

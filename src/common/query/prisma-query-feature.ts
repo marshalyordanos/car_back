@@ -181,7 +181,11 @@ export class PrismaQueryFeature<
 
   private buildOrderBy() {
     const { sort } = this.options;
-    if (!sort) return;
+    if (!sort) {
+      // Default sort by createdAt
+      this.orderBy = [{ createdAt: 'desc' } as unknown as TOrderBy];
+      return;
+    }
 
     this.orderBy = sort.split(',').map((item) => {
       const [key, order] = item.split(':');

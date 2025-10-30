@@ -22,6 +22,15 @@ import { ListQueryDto } from 'src/common/query/query.dto';
 export class UserMessageController {
   constructor(private readonly usecases: UserUseCasesImp) {}
 
+  @MessagePattern(PATTERNS.DASHBOARD_SUMMARY)
+  async getSummary() {
+    try {
+      const summary = await this.usecases.getFullDashboard();
+      return IResponse.success('Dashboard summary fetched', summary);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
   @Public()
   @MessagePattern(PATTERNS.CREATE_HOST_USER)
   async creatHost(@Payload() dto: any) {

@@ -177,6 +177,14 @@ export class UserGatewayController {
     });
   }
 
+  @Get('summary')
+  async getSummary(@Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.usersClient.send(PATTERNS.DASHBOARD_SUMMARY, {
+      headers: { authorization: authHeader },
+    });
+  }
+
   @Patch('me/:id')
   @UseInterceptors(
     FileFieldsInterceptor(

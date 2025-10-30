@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisputeDto } from './dispute.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { Dispute } from '@prisma/client';
+import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 
 @Injectable()
 export class DisputeRepository {
@@ -42,32 +43,33 @@ export class DisputeRepository {
     return this.prisma.dispute.findFirst({ where: { bookingId } });
   }
 
-  async findAll(query: ListQueryDto) {
-    const { page = 1, pageSize = 10, search } = query;
-    const skip = (page - 1) * pageSize;
-    const where: any = {};
-    if (search) {
-      where.OR = [{ reason: { contains: search, mode: 'insensitive' } }];
-    }
+  async findAll(filter: ListQueryDto) {
+    const feature = new PrismaQueryFeature({
+      search: filter.search,
+      filter: filter.filter,
+      sort: filter.sort,
+      page: filter.page,
+      pageSize: filter.pageSize,
+      searchableFields: ['name', 'make.name'],
+    });
 
-    const [data, total] = await Promise.all([
+    const query = feature.getQuery();
+
+    const results = await Promise.all([
       this.prisma.dispute.findMany({
-        where,
-        skip,
-        take: pageSize,
-        include: { booking: true, user: true },
+        ...query,
+        include: { car: true, booking: true, payment: true },
+        where: query.where || {},
       }),
-      this.prisma.dispute.count({ where }),
+      this.prisma.dispute.count({ where: query.where || {} }),
     ]);
 
+    const models = results[0] || [];
+    const total = results[1] || 0;
+    // console.log(models, feature.getPagination(total));
     return {
-      data,
-      pagination: {
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-      },
+      models,
+      pagination: feature.getPagination(total),
     };
   }
 
