@@ -9,7 +9,13 @@ import { Inject } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from './redis/redis.constants';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway({
+  cors: {
+    origin: '*', // or put your Expo device IP if needed
+    methods: ['GET', 'POST'],
+  },
+  transports: ['websocket'], // force WebSocket only (no polling)
+})
 export class NotifyHubGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -47,6 +53,7 @@ export class NotifyHubGateway
   }
 
   private async initRedisSubscriptions() {
+    console.log(' process.env.REDIS_URL,', process.env.REDIS_URL);
     const subscriber = new Redis(
       process.env.REDIS_URL || 'redis://localhost:6379',
     );
@@ -70,6 +77,7 @@ export class NotifyHubGateway
 
       if (channel === 'chat_list_updates') {
         const { userIds, chatPreview } = parsed;
+        console.log('chat_list_updates: ', userIds, chatPreview);
         userIds.forEach((id: string) =>
           this.server.to(`user_${id}`).emit('update_chat_list', chatPreview),
         );

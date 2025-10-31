@@ -3,10 +3,13 @@ import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor(config: ConfigService) {
     const databaseUrl = config.get<string>('DATABASE_URL');
-    
+
     if (!databaseUrl) {
       throw new Error('DATABASE_URL is missing in .env');
     }
@@ -21,6 +24,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           url: databaseUrl,
         },
       },
+      log: ['query', 'info', 'warn', 'error'], // ✅ enable query logging
     });
   }
 

@@ -388,6 +388,11 @@ model Message {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // ✅ Add Prisma indexes here
+  @@index([bookingId, createdAt(sort: Desc)], name: "idx_message_bookingid_createdat")
+  @@index([receiverId, isRead], name: "idx_message_receiverid_isread")
+  @@index([bookingId, id(sort: Desc)], name: "idx_message_bookingid_id")
 }
 
 ///////////////////////////

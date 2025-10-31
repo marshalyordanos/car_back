@@ -16,49 +16,49 @@ export class MessageUseCasesImp {
 
   // Send a message: only host or guest allowed (business rule)
   async sendMessage(dto: SendMessageDto) {
-    const status = await this.repo.getBookingStatus(dto.bookingId);
-    if (!status) {
-      throw new RpcException({
-        statusCode: 404,
-        message: 'Booking not found',
-      });
-    }
-    if (status !== 'CONFIRMED') {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'Messages allowed only on confirmed bookings',
-      });
-    }
+    // const status = await this.repo.getBookingStatus(dto.bookingId);
+    // if (!status) {
+    //   throw new RpcException({
+    //     statusCode: 404,
+    //     message: 'Booking not found',
+    //   });
+    // }
+    // if (status !== 'CONFIRMED') {
+    //   throw new RpcException({
+    //     statusCode: 400,
+    //     message: 'Messages allowed only on confirmed bookings',
+    //   });
+    // }
 
-    // Verify user is part of booking
-    const isPart = await this.repo.isUserPartOfBooking(
-      dto.senderId,
-      dto.bookingId,
-    );
-    if (!isPart) {
-      throw new RpcException({
-        statusCode: 403,
-        message: 'Sender is not part of this booking',
-      });
-    }
-    // Verify receiver is the other party
-    const isReceiverPart = await this.repo.isUserPartOfBooking(
-      dto.receiverId,
-      dto.bookingId,
-    );
-    if (!isReceiverPart) {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'Receiver is not part of this booking',
-      });
-    }
-    // Prevent sending to self unless you want to allow
-    if (dto.senderId === dto.receiverId) {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'Sender and receiver must be different',
-      });
-    }
+    // // Verify user is part of booking
+    // const isPart = await this.repo.isUserPartOfBooking(
+    //   dto.senderId,
+    //   dto.bookingId,
+    // );
+    // if (!isPart) {
+    //   throw new RpcException({
+    //     statusCode: 403,
+    //     message: 'Sender is not part of this booking',
+    //   });
+    // }
+    // // Verify receiver is the other party
+    // const isReceiverPart = await this.repo.isUserPartOfBooking(
+    //   dto.receiverId,
+    //   dto.bookingId,
+    // );
+    // if (!isReceiverPart) {
+    //   throw new RpcException({
+    //     statusCode: 400,
+    //     message: 'Receiver is not part of this booking',
+    //   });
+    // }
+    // // Prevent sending to self unless you want to allow
+    // if (dto.senderId === dto.receiverId) {
+    //   throw new RpcException({
+    //     statusCode: 400,
+    //     message: 'Sender and receiver must be different',
+    //   });
+    // }
     // Create message via repository
     const message = await this.repo.createMessage({
       bookingId: dto.bookingId,
@@ -89,7 +89,7 @@ export class MessageUseCasesImp {
   // Chat list for user
   async listChatForUser(userId: string, query: ListQueryDto) {
     const page = query.page || 1;
-    const pageSize = query.pageSize || 20;
+    const pageSize = query.pageSize || 3;
     return this.repo.getChatListForUser(userId, page, pageSize);
   }
 
