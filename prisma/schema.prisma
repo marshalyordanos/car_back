@@ -28,6 +28,9 @@ enum NotificationType {
   ALERT
   MESSAGE
   SYSTEM
+  BOOKING
+  DISPUTE
+  PAYMENT
 }
 
 enum InsurancePlan {
@@ -321,6 +324,8 @@ model Payment {
 
   disputes     Dispute[]
   transactions PaymentTransaction[]
+
+  Notifications Notification[]
 }
 
 model PaymentTransaction {
@@ -368,6 +373,16 @@ model Notification {
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+
+  // Optional relations
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  bookingId String?
+
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  paymentId String?
+
+  dispute   Dispute? @relation(fields: [disputeId], references: [id])
+  disputeId String?
 }
 
 ///////////////////////////
@@ -451,6 +466,8 @@ model Dispute {
   updatedAt DateTime @updatedAt
   booking   Booking? @relation(fields: [bookingId], references: [id])
   bookingId String?  @unique
+
+  notifications Notification[]
 }
 
 model Booking {
@@ -478,6 +495,8 @@ model Booking {
   inspections      BookingInspection[]
   hostPenalties    HostPenalty[] // back-relation for HostPenalty.host
   bookingInsurance BookingInsurance?
+  trackingCode     String?             @unique
+  notiffications   Notification[]
 }
 
 model BookingInsurance {

@@ -83,4 +83,47 @@ export class MessageGatewayController {
       headers: { authorization: authHeader },
     });
   }
+
+  @Get('notifications/:userId')
+  async listNotifications(
+    @Req() req,
+    @Param('userId') userId: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send('NOTIFICATION_LIST_FOR_USER', {
+      userId,
+      page,
+      pageSize,
+      headers: { authorization: authHeader },
+    });
+  }
+
+  @Get('notifications/id/:id')
+  async getNotificationById(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send('NOTIFICATION_GET_BY_ID', {
+      id,
+      headers: { authorization: authHeader },
+    });
+  }
+
+  @Post('notifications/mark-as-read/:id')
+  async markNotificationAsRead(@Req() req, @Param('id') id: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send('NOTIFICATION_MARK_AS_READ', {
+      id,
+      headers: { authorization: authHeader },
+    });
+  }
+
+  @Get('notifications/unread-count/:userId')
+  async unreadNotificationCount(@Req() req, @Param('userId') userId: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send('NOTIFICATION_UNREAD_COUNT', {
+      userId,
+      headers: { authorization: authHeader },
+    });
+  }
 }

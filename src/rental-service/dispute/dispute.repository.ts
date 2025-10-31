@@ -1,14 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDisputeDto } from './dispute.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
-import { Dispute } from '@prisma/client';
+import { Dispute, NotificationType } from '@prisma/client';
 import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
+import { Redis } from 'ioredis';
+import { REDIS_CLIENT } from '../../notify-hub/redis/redis.constants';
 
 @Injectable()
 export class DisputeRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
+  ) {}
 
+  private async notifyUser(
+    userId: string,
+    notification: { type: NotificationType; title: string; message: string },
+    disputeId?: string,
+  ) {
+    // Save notification to DB
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        disputeId: disputeId || null,
+      },
+    });
+
+    // Publish for real-time updates via Redis
+    await this.redisClient.publish(
+      'notifications',
+      JSON.stringify({ userId, notification }),
+    );
+  }
   async findById(id: string) {
     return this.prisma.dispute.findUnique({
       where: { id },
@@ -115,6 +142,16 @@ export class DisputeRepository {
         });
       }
 
+      await this.notifyUser(
+        payload.userId,
+        {
+          type: NotificationType.DISPUTE,
+          title: 'Dispute Created',
+          message: `Your dispute has been successfully submitted and is under review.`,
+        },
+        dispute.id,
+      );
+
       return dispute;
     });
   }
@@ -184,12 +221,24 @@ export class DisputeRepository {
         },
       });
 
+      if (dispute.userId) {
+        await this.notifyUser(
+          dispute.userId,
+          {
+            type: NotificationType.DISPUTE,
+            title: 'Dispute Resolved',
+            message: `Your dispute has been resolved by the admin.`,
+          },
+          dispute.id,
+        );
+      }
+
       return updated;
     });
   }
 
   // Reject dispute & release hold (no refund) — transactional
-  async rejectDisputeAndReleasePayment(disputeId: string) {
+  async rejectDisputeAndReleasePayment(disputeId: string, adminId: string) {
     return this.prisma.$transaction(async (tx) => {
       const dispute = await tx.dispute.findUnique({ where: { id: disputeId } });
       if (!dispute) throw new Error('Dispute not found');
@@ -221,13 +270,25 @@ export class DisputeRepository {
       // 3) admin action log - if your flow requires adminId here, you can adjust signature to include adminId
       await tx.adminAction.create({
         data: {
-          adminId: 'system', // consider replacing with real admin id param if needed
+          adminId: adminId,
           targetType: 'Dispute',
           targetId: disputeId,
           actionType: 'REJECTED',
           notes: 'Dispute rejected by admin',
         },
       });
+
+      if (dispute.userId) {
+        await this.notifyUser(
+          dispute.userId,
+          {
+            type: NotificationType.DISPUTE,
+            title: 'Dispute Rejected',
+            message: `Your dispute has been rejected by the admin.`,
+          },
+          dispute.id,
+        );
+      }
 
       return updated;
     });

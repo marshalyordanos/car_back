@@ -97,10 +97,10 @@ export class DisputeUseCasesImpl {
   }
 
   // Admin rejects: mark dispute rejected and unfreeze payment (release hold) without refund
-  async rejectDispute(id: string) {
+  async rejectDispute(id: string, adminId: string) {
     const dispute = await this.repo.findById(id);
     if (!dispute)
       throw new RpcException({ statusCode: 404, message: 'Dispute not found' });
-    return this.repo.rejectDisputeAndReleasePayment(id);
+    return this.repo.rejectDisputeAndReleasePayment(id, adminId);
   }
 }

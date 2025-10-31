@@ -1,5 +1,5 @@
 // booking.repository.ts
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BookingInspectionDto,
@@ -13,6 +13,7 @@ import {
   BookingInspection,
   BookingStatus,
   HostPenalty,
+  NotificationType,
   PaymentStatus,
   PaymentTransaction,
   Prisma,
@@ -21,10 +22,36 @@ import {
 import { RpcException } from '@nestjs/microservices';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
+import { Redis } from 'ioredis';
+import { REDIS_CLIENT } from '../../notify-hub/redis/redis.constants';
 
 @Injectable()
 export class BookingRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
+  ) {}
+
+  // booking.repository.ts (partial)
+  private async notifyUser(
+    userId: string,
+    notification: { type: NotificationType; title: string; message: string },
+    bookingId?: string, // optional
+  ) {
+    // Save to database
+
+    // Publish to Redis for real-time update
+    await this.redisClient.publish(
+      'notifications',
+      JSON.stringify({ userId, notification }),
+    );
+  }
+
+  private generateBookingCode(counter: number) {
+    const year = new Date().getFullYear();
+    const paddedCounter = String(counter).padStart(7, '0');
+    return `BK-${year}-${paddedCounter}`;
+  }
 
   async createBooking(
     dto: CreateBookingDto,
@@ -32,48 +59,40 @@ export class BookingRepository {
     platformFee: number,
     hostEarnings: number,
   ) {
-    // const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
-    // const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
+    // 1️⃣ Perform booking + payment creation in a transaction
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear();
+      const bookingCount = await tx.booking.count({
+        where: {
+          createdAt: {
+            gte: new Date(`${year}-01-01`),
+            lt: new Date(`${year + 1}-01-01`),
+          },
+        },
+      });
 
-    // return this.prisma.booking.create({
-    //   data: {
-    //     carId: dto.carId,
-    //     guestId: dto.guestId,
-    //     hostId: dto.hostId,
-    //     startDate: dto.startDate,
-    //     endDate: dto.endDate,
-    //     totalPrice: totalPrice,
-    //     withDriver: dto.withDriver ?? false,
-    //     pickupLocation,
-    //     dropoffLocation,
-    //   },
-    // });
+      const trackingCode = this.generateBookingCode(bookingCount + 1);
 
-    return this.prisma.$transaction(async (tx) => {
-      // Create booking
       const pickupLocation = `${dto.pickupLat}+*+${dto.pickupLng}+*+${dto.pickupName}`;
       const dropoffLocation = `${dto.dropoffLat}+*+${dto.dropoffLng}+*+${dto.dropoffName}`;
-
-      // 1) CHECK OVERLAP BEFORE INSERT
 
       const conflict = await tx.booking.findFirst({
         where: {
           carId: dto.carId,
-          status: 'PENDING', // only consider pending bookings
+          status: 'PENDING',
           AND: [
-            { startDate: { lte: dto.endDate } }, // existing.start <= newEnd
-            { endDate: { gte: dto.startDate } }, // existing.end >= newStart
+            { startDate: { lte: dto.endDate } },
+            { endDate: { gte: dto.startDate } },
           ],
         },
       });
-
-      console.log(conflict, 'conflict');
 
       if (conflict) {
         throw new RpcException(
           'This car is already booked or pending in that period.',
         );
       }
+
       const booking = await tx.booking.create({
         data: {
           carId: dto.carId,
@@ -85,10 +104,10 @@ export class BookingRepository {
           withDriver: dto.withDriver ?? false,
           pickupLocation,
           dropoffLocation,
+          trackingCode,
         },
       });
 
-      // Create corresponding payment
       const payment = await tx.payment.create({
         data: {
           bookingId: booking.id,
@@ -104,7 +123,7 @@ export class BookingRepository {
         },
       });
 
-      const paymentTransaction = await tx.paymentTransaction.create({
+      await tx.paymentTransaction.create({
         data: {
           paymentId: payment.id,
           type: 'CAPTURE',
@@ -113,8 +132,32 @@ export class BookingRepository {
         },
       });
 
+      await tx.notification.create({
+        data: {
+          userId: booking.hostId,
+          type: NotificationType.BOOKING,
+          title: 'New Booking Request',
+          message: 'You have a new booking request from a guest.',
+          bookingId: booking.id, // associate if needed, but not shown in message
+        },
+      });
+
+      // return booking from transaction
       return booking;
     });
+
+    // 2️⃣ Notify user AFTER transaction success
+    await this.notifyUser(
+      booking.hostId,
+      {
+        type: NotificationType.BOOKING,
+        title: 'New Booking Request',
+        message: `You have a new booking request from a guest.`,
+      },
+      booking.id,
+    );
+
+    return booking;
   }
 
   async updateBooking(id: string, dto: UpdateBookingDto) {
@@ -260,6 +303,25 @@ export class BookingRepository {
         data: { status: BookingStatus.CONFIRMED },
       });
 
+      await tx.notification.create({
+        data: {
+          userId: booking.guestId,
+          type: NotificationType.BOOKING,
+          title: 'Booking Confirmed',
+          message: `Your booking has been confirmed by the host.`,
+          bookingId: booking.id,
+        },
+      });
+
+      await this.notifyUser(
+        booking.guestId,
+        {
+          type: NotificationType.BOOKING,
+          title: 'Booking Confirmed',
+          message: `Your booking has been confirmed by the host.`,
+        },
+        booking.id,
+      );
       // Optionally, notify the guest
       // await this.notificationService.notifyGuest(booking.guestId, {
       //   type: 'BOOKING_CONFIRMED',
@@ -287,6 +349,24 @@ export class BookingRepository {
           },
         });
 
+      await tx.notification.create({
+        data: {
+          userId: booking.guestId,
+          type: NotificationType.BOOKING,
+          title: 'Booking Rejected',
+          message: `Your booking request has been rejected by the host.`,
+          bookingId: booking.id,
+        },
+      });
+      await this.notifyUser(
+        booking.guestId,
+        {
+          type: NotificationType.BOOKING,
+          title: 'Booking Rejected',
+          message: `Your booking request has been rejected by the host.`,
+        },
+        booking.id,
+      );
       // 3️⃣ Optionally: send notification (pseudo — can integrate with a service)
       // await this.notificationService.notifyGuest(booking.guestId, {
       //   type: 'BOOKING_REJECTED',
@@ -384,57 +464,137 @@ export class BookingRepository {
     inspectionId: string,
     bookingId: string,
   ): Promise<BookingInspection> {
-    return this.prisma.$transaction(async (tx) => {
-      // Approve inspection
-      const approvedInspection = await tx.bookingInspection.update({
-        where: { id: inspectionId },
-        data: { approved: true },
-      });
-
-      // Check if both PICKUP and DROPOFF are approved
-      const inspections = await tx.bookingInspection.findMany({
-        where: { bookingId, type: 'DROPOFF' },
-      });
-      const allApproved = inspections.every((i) => i.approved);
-
-      if (inspections.length > 0 && allApproved) {
-        // Complete booking
-
-        const booking = await tx.booking.update({
-          where: { id: bookingId },
-          data: { status: BookingStatus.COMPLETED },
-          include: { payment: true }, // include the related Payment
+    return this.prisma.$transaction(
+      async (tx) => {
+        // Approve inspection
+        const approvedInspection = await tx.bookingInspection.update({
+          where: { id: inspectionId },
+          data: { approved: true },
         });
 
-        // Calculate host earnings
-        console.log('booking.hostId : ', booking.hostId);
-        const hostProfile = await tx.hostProfile.findUnique({
-          where: { userId: booking.hostId },
-        });
-        console.log('booking.hostId22 : ', hostProfile);
+        console.log(
+          '****************************************************************************************1',
+        );
 
-        // Create payment transaction
-        await tx.paymentTransaction.create({
-          data: {
-            paymentId: booking.payment?.id!,
-            type: 'PLATFORM_TO_HOST',
-            amount: booking.payment?.hostEarnings!,
-            status: 'COMPLETED',
-          },
+        // Check if both PICKUP and DROPOFF are approved
+        const inspections = await tx.bookingInspection.findMany({
+          where: { bookingId, type: 'DROPOFF' },
         });
+        const allApproved = inspections.every((i) => i.approved);
 
-        // Update host earnings
-        await tx.hostProfile.update({
-          where: { userId: booking.hostId },
-          data: {
-            earnings:
-              (hostProfile?.earnings || 0) + booking.payment?.hostEarnings!,
-          },
-        });
-      }
+        if (inspections.length > 0 && allApproved) {
+          // Complete booking
 
-      return approvedInspection;
-    });
+          const booking = await tx.booking.update({
+            where: { id: bookingId },
+            data: { status: BookingStatus.COMPLETED },
+            include: { payment: true }, // include the related Payment
+          });
+
+          console.log(
+            '****************************************************************************************2',
+          );
+
+          // Calculate host earnings
+          console.log('booking.hostId : ', booking.hostId);
+          const hostProfile = await tx.hostProfile.findUnique({
+            where: { userId: booking.hostId },
+          });
+          console.log('booking.hostId22 : ', hostProfile);
+
+          console.log(
+            '***************************************************************************************3',
+          );
+
+          // Create payment transaction
+          await tx.paymentTransaction.create({
+            data: {
+              paymentId: booking.payment?.id!,
+              type: 'PLATFORM_TO_HOST',
+              amount: booking.payment?.hostEarnings!,
+              status: 'COMPLETED',
+            },
+          });
+          console.log(
+            '****************************************************************************************4',
+          );
+
+          // Update host earnings
+          await tx.hostProfile.update({
+            where: { userId: booking.hostId },
+            data: {
+              earnings:
+                (hostProfile?.earnings || 0) + booking.payment?.hostEarnings!,
+            },
+          });
+
+          console.log(
+            '****************************************************************************************6',
+          );
+
+          await tx.notification.create({
+            data: {
+              userId: booking.hostId,
+              type: NotificationType.BOOKING,
+              title: 'Booking Completed',
+              message: `Booking has been completed and your earnings have been released.`,
+              bookingId: booking.id,
+            },
+          });
+          console.log(
+            '****************************************************************************************7',
+          );
+
+          await tx.notification.create({
+            data: {
+              userId: booking.guestId,
+              type: NotificationType.BOOKING,
+              title: 'Booking Completed',
+              message: `Your booking is now completed. Thank you for using our service!`,
+              bookingId: booking.id,
+            },
+          });
+          console.log(
+            '****************************************************************************************8',
+          );
+
+          await this.notifyUser(
+            booking.guestId,
+            {
+              type: NotificationType.BOOKING,
+              title: 'Booking Completed',
+              message: `Your booking is now completed. Thank you for using our service!`,
+            },
+            booking.id,
+          );
+          console.log(
+            '****************************************************************************************10',
+          );
+
+          await this.notifyUser(
+            booking.hostId,
+            {
+              type: NotificationType.BOOKING,
+              title: 'Booking Completed',
+              message: `Booking has been completed and your earnings have been released.`,
+            },
+            booking.id,
+          );
+
+          console.log(
+            '****************************************************************************************11',
+          );
+        }
+
+        console.log(
+          '****************************************************************************************12',
+        );
+        return approvedInspection;
+      },
+      {
+        timeout: 20000, // 20 seconds
+      },
+    );
   }
 
   // ********************************* canclation ************************************

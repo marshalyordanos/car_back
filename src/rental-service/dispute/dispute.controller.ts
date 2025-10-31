@@ -86,9 +86,12 @@ export class DisputeMessageController {
 
   // Admin rejects dispute
   @MessagePattern(PATTERNS.DISPUTE_REJECT)
-  async reject(@Payload() payload: { id: string }) {
+  async reject(@Payload() payload: { id: string; user: any }) {
     try {
-      const dispute = await this.usecases.rejectDispute(payload.id);
+      const dispute = await this.usecases.rejectDispute(
+        payload.id,
+        payload.user?.sub,
+      );
       return IResponse.success('Dispute rejected', dispute);
     } catch (error) {
       handleCatch(error);

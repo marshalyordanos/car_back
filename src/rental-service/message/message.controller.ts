@@ -92,4 +92,56 @@ export class MessageMessageController {
       handleCatch(error);
     }
   }
+
+  @MessagePattern('NOTIFICATION_LIST_FOR_USER')
+  async listNotifications(
+    @Payload() payload: { userId: string; page?: number; pageSize?: number },
+  ) {
+    try {
+      const result = await this.usecases.getNotificationsForUser(
+        payload.userId,
+        payload.page || 1,
+        payload.pageSize || 20,
+      );
+      return IResponse.success('Notifications fetched', result.notifications, {
+        total: result.total,
+        page: payload.page || 1,
+        pageSize: payload.pageSize || 20,
+      });
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern('NOTIFICATION_GET_BY_ID')
+  async getNotification(@Payload() payload: { id: string }) {
+    try {
+      const notification = await this.usecases.getNotificationById(payload.id);
+      return IResponse.success('Notification fetched', notification);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern('NOTIFICATION_MARK_AS_READ')
+  async markNotificationRead(@Payload() payload: { id: string }) {
+    try {
+      const notification = await this.usecases.markNotificationAsRead(
+        payload.id,
+      );
+      return IResponse.success('Notification marked as read', notification);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern('NOTIFICATION_UNREAD_COUNT')
+  async unreadNotificationCount(@Payload() payload: { userId: string }) {
+    try {
+      const res = await this.usecases.unreadNotificationCount(payload.userId);
+      return IResponse.success('Unread notification count', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
 }

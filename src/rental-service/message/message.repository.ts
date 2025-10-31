@@ -309,4 +309,52 @@ export class MessageRepository {
     });
     return booking?.status ?? null;
   }
+
+  async getNotificationsForUser(userId: string, page = 1, pageSize = 20) {
+    const skip = (page - 1) * pageSize;
+
+    const [notifications, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.notification.count({ where: { userId } }),
+    ]);
+
+    return { notifications, total };
+  }
+
+  async getNotificationById(id: string) {
+    return this.prisma.notification.findUnique({
+      where: { id },
+      include: {
+        booking: true,
+        payment: true,
+        dispute: true,
+        user: true,
+      },
+    });
+  }
+
+  // async markNotificationAsRead(id: string) {
+  //   return this.prisma.notification.update({
+  //     where: { id },
+  //     data: { isRead: true },
+  //   });
+  // }
+
+  async markNotificationsAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+  }
+
+  async countUnreadNotifications(userId: string) {
+    return this.prisma.notification.count({
+      where: { userId, isRead: false },
+    });
+  }
 }

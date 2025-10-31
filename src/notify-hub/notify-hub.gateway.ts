@@ -64,12 +64,25 @@ export class NotifyHubGateway
 
     subscriber.on('message', (channel, message) => {
       const parsed = JSON.parse(message);
-
       if (channel === 'notifications') {
         const { userId, notification } = parsed;
-        this.server.to(`user_${userId}`).emit('new_notification', notification);
-      }
 
+        // Emit directly to the connected socket room for this user
+        this.server.to(`user_${userId}`).emit('new_notification', notification);
+
+        // Optional: log or handle offline users
+        if (!this.connectedUsers.has(userId)) {
+          console.log(
+            `User ${userId} not connected; notification stored for later.`,
+          );
+          // Here you could also persist it in DB for later retrieval
+        } else {
+          console.log(
+            `Notification sent in real-time to user_${userId}:`,
+            notification,
+          );
+        }
+      }
       if (channel === 'chat_messages') {
         const { bookingId, message: chatMessage } = parsed;
         this.server.to(`booking_${bookingId}`).emit('new_message', chatMessage);

@@ -115,4 +115,22 @@ export class MessageUseCasesImp {
     const count = await this.repo.countUnreadForUser(userId, bookingId);
     return { count };
   }
+
+  async getNotificationsForUser(userId: string, page = 1, pageSize = 20) {
+    return this.repo.getNotificationsForUser(userId, page, pageSize);
+  }
+
+  // Get a single notification by ID
+  async getNotificationById(id: string) {
+    return this.repo.getNotificationById(id);
+  }
+
+  // Mark notification as read
+  async markNotificationAsRead(id: string) {
+    return this.repo.markNotificationsAsRead(id);
+  }
+  async unreadNotificationCount(userId: string) {
+    const count = await this.repo.countUnreadNotifications(userId);
+    return { count };
+  }
 }

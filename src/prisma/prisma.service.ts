@@ -24,7 +24,7 @@ export class PrismaService
           url: databaseUrl,
         },
       },
-      log: ['query', 'info', 'warn', 'error'], // ✅ enable query logging
+      // log: ['query', 'info', 'warn', 'error'], // ✅ enable query logging
     });
   }
 

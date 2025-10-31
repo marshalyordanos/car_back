@@ -1,14 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
-import { PaymentStatus, PaymentType } from '@prisma/client';
+import { NotificationType, PaymentStatus, PaymentType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto, PaymentConfirmDto } from './payment.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
+import { REDIS_CLIENT } from '../../notify-hub/redis/redis.constants';
+import { Redis } from 'ioredis';
 
 @Injectable()
 export class PaymentRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+
+    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
+  ) {}
+
+  private async notifyUser(
+    userId: string,
+    notification: { type: NotificationType; title: string; message: string },
+    paymentId?: string,
+  ) {
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        paymentId: paymentId || null,
+      },
+    });
+
+    await this.redisClient.publish(
+      'notifications',
+      JSON.stringify({ userId, notification }),
+    );
+  }
 
   async create(dto: CreatePaymentDto) {
     return this.prisma.payment.create({
@@ -63,6 +90,17 @@ export class PaymentRepository {
             (hostProfile?.earnings || 0) + bookingPayment?.hostEarnings!,
         },
       });
+
+      await this.notifyUser(
+        hostId,
+        {
+          type: NotificationType.PAYMENT,
+          title: 'Payment Released',
+          message:
+            'Your earnings for the completed booking have been released.',
+        },
+        payment.id,
+      );
     });
   }
 
@@ -91,6 +129,15 @@ export class PaymentRepository {
           status: 'COMPLETED',
         },
       });
+      await this.notifyUser(
+        payment.payerId!,
+        {
+          type: NotificationType.PAYMENT,
+          title: 'Payment Refunded',
+          message: `Your payment has been refunded successfully.`,
+        },
+        payment.id,
+      );
     });
   }
 
@@ -181,6 +228,17 @@ export class PaymentRepository {
           status: 'COMPLETED',
         },
       });
+      if (payment.recipientId) {
+        await this.notifyUser(
+          payment.recipientId,
+          {
+            type: NotificationType.PAYMENT,
+            title: 'Payment Completed',
+            message: 'Payment for the booking has been successfully completed.',
+          },
+          payment.id,
+        );
+      }
 
       // 4️⃣ Optionally: Notify host
       // await this.notificationService.notifyHost(booking.hostId, { ... });
