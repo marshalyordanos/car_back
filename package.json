@@ -19,10 +19,12 @@
     "start:rental-service": "node dist/rental-service/main.rental-service.js",
     "start:gateway": "node dist/gateway/main.gateway.js",
     "start:auth:dev": "nest start --watch --entryFile auth/main.auth",
+    "start:message": "nest start --watch --entryFile notify-hub/main.notify-hub",
+
     "start:user:dev": "nest start --watch --entryFile operations/main.operations",
     "start:gateway:dev": "nest start --watch --entryFile gateway/main.gateway",
     "start:fulfillment:dev": "nest start --watch --entryFile fulfillment/main.fulfillment",
-    "start": "concurrently -n gateway,auth,operations,rental-service -c green,cyan,magenta \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:operations\" \"npm run start:rental-service\"",
+    "start": "concurrently -n gateway,auth,operations,rental-service -c green,cyan,magenta \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:operations\" \"npm run start:rental-service\" \"npm run start:message\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
