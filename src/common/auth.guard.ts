@@ -38,6 +38,7 @@ export class JwtAuthGuard implements CanActivate {
 
       try {
         const payload = await this.jwtService.verifyAsync(token);
+
         data.user = payload; // attach decoded token
       } catch (err) {
         console.log('88888888888888888888888888:', err);

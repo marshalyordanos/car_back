@@ -36,6 +36,7 @@ export class PaymentMessageController {
       const res = await this.usecases.releaseToHost(
         payload.bookingId,
         payload.hostId,
+        payload.user?.sub,
       );
       return IResponse.success('Host payment released', res);
     } catch (error) {
@@ -49,6 +50,7 @@ export class PaymentMessageController {
       const res = await this.usecases.refundGuest(
         payload.bookingId,
         payload.refundAmount,
+        payload.user?.sub,
         payload.reason,
       );
       return IResponse.success('Refund processed successfully', res);
@@ -88,9 +90,12 @@ export class PaymentMessageController {
   }
 
   @MessagePattern(PATTERNS.PAYMENT_GET_ALL)
-  async getAll(data: { query: ListQueryDto }) {
+  async getAll(data: { query: ListQueryDto; user: any }) {
     try {
-      const result = await this.usecases.getAllPayments(data.query);
+      const result = await this.usecases.getAllPayments(
+        data.query,
+        data.user.sub,
+      );
       return IResponse.success(
         'All payments fetched successfully',
         result.models,

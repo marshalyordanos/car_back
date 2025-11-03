@@ -74,7 +74,14 @@ export class DisputeUseCasesImpl {
   }
 
   // Admin marks under review (simple status update)
-  async markUnderReview(id: string) {
+  async markUnderReview(id: string, userId: string) {
+    const user = await this.repo.findUserById(userId);
+    if (!user) {
+      throw new RpcException('User is not found!');
+    }
+    if (user.role?.name == 'GUEST' || user.role?.name == 'HOST') {
+      throw new RpcException('Have not permission!');
+    }
     const dispute = await this.repo.findById(id);
     if (!dispute)
       throw new RpcException({ statusCode: 404, message: 'Dispute not found' });
@@ -82,7 +89,14 @@ export class DisputeUseCasesImpl {
   }
 
   // Admin resolves: refundAmount may be 0 (means resolved in favor of host)
-  async resolveDispute(id: string, dto: DisputeResolveDto) {
+  async resolveDispute(id: string, dto: DisputeResolveDto, userId: string) {
+    const user = await this.repo.findUserById(userId);
+    if (!user) {
+      throw new RpcException('User is not found!');
+    }
+    if (user.role?.name == 'GUEST' || user.role?.name == 'HOST') {
+      throw new RpcException('Have not permission!');
+    }
     const dispute = await this.repo.findById(id);
     if (!dispute)
       throw new RpcException({ statusCode: 404, message: 'Dispute not found' });
@@ -98,6 +112,13 @@ export class DisputeUseCasesImpl {
 
   // Admin rejects: mark dispute rejected and unfreeze payment (release hold) without refund
   async rejectDispute(id: string, adminId: string) {
+    const user = await this.repo.findUserById(adminId);
+    if (!user) {
+      throw new RpcException('User is not found!');
+    }
+    if (user.role?.name == 'GUEST' || user.role?.name == 'HOST') {
+      throw new RpcException('Have not permission!');
+    }
     const dispute = await this.repo.findById(id);
     if (!dispute)
       throw new RpcException({ statusCode: 404, message: 'Dispute not found' });

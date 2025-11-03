@@ -73,6 +73,15 @@ export class AuthChangePasswordDto {
   newPassword: string;
 }
 
+export class PhoneVerifyDto {
+  @ApiProperty()
+  @IsString()
+  otp: string;
+
+  @ApiProperty()
+  @IsString()
+  phone: string;
+}
 export class AuthResetPasswordDto {
   @ApiProperty()
   token: string;

@@ -63,6 +63,11 @@ export class AuthGatewayController {
     return this.authClient.send(PATTERNS.AUTH_LOGIN, dto);
   }
 
+  @Post('login-admin')
+  async loginAdmin(@Body() dto: AuthLoginDto) {
+    return this.authClient.send(PATTERNS.AUTH_LOGIN_ADMIN, dto);
+  }
+
   @Get('refresh')
   async refreshToken(@Req() req: Request) {
     const authHeader = req.headers['authorization'] || null;

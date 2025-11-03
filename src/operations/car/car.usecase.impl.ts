@@ -44,7 +44,14 @@ export class CarUseCasesImp {
     carId: string,
     hostId: string,
     carData: Partial<CarDto>,
+    userId: string,
   ): Promise<Car> {
+    const car = await this.repo.findById(carId);
+
+    if (car?.hostId == userId) {
+      throw new RpcException('You have not a permission to update this car.');
+    }
+
     if (Array.isArray(carData?.photos) && carData.photos.length < 2) {
       throw new RpcException('You must upload at least 2 photos.');
     }
@@ -67,7 +74,16 @@ export class CarUseCasesImp {
     return this.repo.updateCar(carId, hostId, carData, uploadedFiles);
   }
 
-  async deleteCar(carId: string, hostId: string): Promise<void> {
+  async deleteCar(
+    carId: string,
+    hostId: string,
+    userId: string,
+  ): Promise<void> {
+    const car = await this.repo.findById(carId);
+
+    if (car?.hostId == userId) {
+      throw new RpcException('You have not a permission to delete this car.');
+    }
     return this.repo.deleteCar(carId, hostId);
   }
 
@@ -80,6 +96,27 @@ export class CarUseCasesImp {
   }
 
   async searchCars(filter: ListQueryDto) {
+    return this.repo.searchCars(filter);
+  }
+  async searchCarsAdmin(filter: ListQueryDto, userId: string) {
+    const user = await this.repo.findUserById(userId);
+
+    if (user?.role?.name === 'HOST') {
+      // Ensure filter is a string
+      const currentFilter = filter.filter ?? '';
+
+      if (/hostId:[^,]*/.test(currentFilter)) {
+        filter.filter = currentFilter.replace(
+          /hostId:[^,]*/,
+          `hostId:${userId}`,
+        );
+      } else {
+        filter.filter = currentFilter
+          ? currentFilter + `,hostId:${userId}`
+          : `hostId:${userId}`;
+      }
+    }
+
     return this.repo.searchCars(filter);
   }
 

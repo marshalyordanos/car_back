@@ -74,9 +74,12 @@ export class BookingMessageController {
   }
 
   @MessagePattern(PATTERNS.BOOKING_GET_ALL)
-  async getAllBookings(data: { query: ListQueryDto }) {
+  async getAllBookings(data: { query: ListQueryDto; user: any }) {
     try {
-      const result = await this.usecases.getAllBookings(data.query);
+      const result = await this.usecases.getMyBookings(
+        data.query,
+        data.user?.sub,
+      );
       return IResponse.success(
         'Bookings fetched successfully',
         result.models,

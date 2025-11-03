@@ -16,19 +16,24 @@ export class DisputeRepository {
 
   private async notifyUser(
     userId: string,
-    notification: { type: NotificationType; title: string; message: string },
+    notification: {
+      type: NotificationType;
+      title: string;
+      message: string;
+      id: string;
+    },
     disputeId?: string,
   ) {
     // Save notification to DB
-    await this.prisma.notification.create({
-      data: {
-        userId,
-        type: notification.type,
-        title: notification.title,
-        message: notification.message,
-        disputeId: disputeId || null,
-      },
-    });
+    // await this.prisma.notification.create({
+    //   data: {
+    //     userId,
+    //     type: notification.type,
+    //     title: notification.title,
+    //     message: notification.message,
+    //     disputeId: disputeId || null,
+    //   },
+    // });
 
     // Publish for real-time updates via Redis
     await this.redisClient.publish(
@@ -142,9 +147,20 @@ export class DisputeRepository {
         });
       }
 
+      const notification = await tx.notification.create({
+        data: {
+          userId: payload.userId,
+          type: NotificationType.DISPUTE,
+          title: 'Dispute Created',
+          message: `Your dispute has been successfully submitted and is under review.`,
+          paymentId: dispute.id || null,
+        },
+      });
+
       await this.notifyUser(
         payload.userId,
         {
+          id: notification.id,
           type: NotificationType.DISPUTE,
           title: 'Dispute Created',
           message: `Your dispute has been successfully submitted and is under review.`,
@@ -222,9 +238,20 @@ export class DisputeRepository {
       });
 
       if (dispute.userId) {
+        const notification = await tx.notification.create({
+          data: {
+            userId: dispute.userId,
+            type: NotificationType.DISPUTE,
+            title: 'Dispute Resolved',
+            message: `Your dispute has been resolved by the admin.`,
+            paymentId: dispute.id || null,
+          },
+        });
+
         await this.notifyUser(
           dispute.userId,
           {
+            id: notification.id,
             type: NotificationType.DISPUTE,
             title: 'Dispute Resolved',
             message: `Your dispute has been resolved by the admin.`,
@@ -279,9 +306,19 @@ export class DisputeRepository {
       });
 
       if (dispute.userId) {
+        const notification = await tx.notification.create({
+          data: {
+            userId: dispute.userId,
+            type: NotificationType.DISPUTE,
+            title: 'Dispute Rejected',
+            message: `Your dispute has been rejected by the admin.`,
+            paymentId: dispute.id || null,
+          },
+        });
         await this.notifyUser(
           dispute.userId,
           {
+            id: notification.id,
             type: NotificationType.DISPUTE,
             title: 'Dispute Rejected',
             message: `Your dispute has been rejected by the admin.`,
@@ -291,6 +328,13 @@ export class DisputeRepository {
       }
 
       return updated;
+    });
+  }
+
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { role: true },
     });
   }
 }

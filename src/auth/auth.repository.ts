@@ -17,7 +17,7 @@ export class AuthRepository {
       include: { role: true },
     });
   }
-  async findByPhone(phone: string): Promise<User | null> {
+  async findByPhone(phone: string) {
     return this.prisma.user.findUnique({
       where: { phone },
       include: { role: true, guestProfile: true, hostProfile: true },
@@ -42,6 +42,7 @@ export class AuthRepository {
       driverLicenseId?: string;
       nationalId?: string;
     },
+    nums?: string,
   ): Promise<User> {
     const { firstName, lastName, email, phone, role } = data;
 
@@ -51,6 +52,7 @@ export class AuthRepository {
         lastName,
         email,
         phone,
+        otp: nums,
         password: hashedPassword,
         profilePhoto: files?.profilePhoto,
         guestProfile: {
@@ -70,6 +72,7 @@ export class AuthRepository {
     files?: {
       profilePhoto?: string;
     },
+    nums?: string,
   ): Promise<User> {
     const { firstName, lastName, email, phone, role } = data;
 
@@ -78,6 +81,7 @@ export class AuthRepository {
         firstName,
         lastName,
         email,
+        otp: nums,
         phone,
         password: hashedPassword,
         profilePhoto: files?.profilePhoto || undefined,
@@ -168,13 +172,13 @@ export class AuthRepository {
   // }
 
   // // ----------------- Email Verification -----------------
-  async sendVerificationEmail(userId: string, email: string): Promise<void> {
+  async sendVerificationEmail(otp: string, email: string): Promise<void> {
     // TODO: Integrate real email sending service
-    console.log(`Send verification email to ${email} for user ${userId}`);
+    // console.log(`Send verification email to ${email} for user ${userId}`);
   }
-  async sendVerificationPhone(userId: string, email: string): Promise<void> {
+  async verifyPhone(otp: string, phone: string): Promise<void> {
     // TODO: Integrate real email sending service
-    console.log(`Send verification email to ${email} for user ${userId}`);
+    // console.log(`Send verification email to ${emaphoneil} for user ${userId}`);
   }
 
   async verifyEmailToken(token: string): Promise<string | null> {

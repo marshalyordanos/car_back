@@ -1,6 +1,8 @@
 export const PATTERNS = {
   AUTH_REGISTER: 'auth.register',
   AUTH_LOGIN: 'auth.login',
+  AUTH_LOGIN_ADMIN: 'auth.login.admin',
+
   AUTH_REFRESH_TOKEN: 'auth.refresh_token',
   AUTH_CHANGE_PASSWORD: 'auth.change_password',
 
@@ -65,12 +67,20 @@ export const PATTERNS = {
   CAR_MAKE_UPDATE: 'carMake.update',
   CAR_MAKE_DELETE: 'carMake.delete',
 
+  CAR_Type_CREATE: 'carType.create',
+  CAR_Type_FIND_BY_ID: 'carType.findById',
+  CAR_Type_FIND_ALL: 'carType.findAll',
+  CAR_Type_UPDATE: 'carType.update',
+  CAR_Type_DELETE: 'carType.delete',
+
   CAR_CREATE: 'car.create',
   CAR_UPDATE: 'car.update',
   CAR_DELETE: 'car.delete',
   CAR_FIND_BY_ID: 'car.findById',
   CAR_FIND_ALL: 'car.findAll',
+  CAR_SEARCH_ADMIN: 'car.search.admin',
   CAR_SEARCH: 'car.search',
+
   CAR_LIST_BY_HOST: 'car.listByHost',
   CAR_LIST_MAKES: 'car.listMakes',
   CAR_CREATE_MAKE: 'car.createMake',

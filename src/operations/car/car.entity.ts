@@ -31,6 +31,10 @@ export class CarDto {
   @IsString()
   modelId: string;
 
+  @ApiProperty()
+  @IsString()
+  carType: string;
+
   @ApiProperty({ example: 2022 })
   @Type(() => Number)
   @IsInt()
@@ -89,10 +93,6 @@ export class CarDto {
   @IsOptional()
   @IsInt()
   mileageLimit?: number;
-
-  @ApiProperty({ enum: CarType })
-  @IsEnum(CarType)
-  carType: CarType;
 
   @ApiProperty({ enum: EcoFriendly })
   @IsEnum(EcoFriendly)
@@ -174,15 +174,19 @@ export class CarSearchFilter {
   @IsString()
   modelId?: string;
 
+  @ApiProperty()
+  @IsString()
+  carType: string;
+
   @ApiPropertyOptional({ example: 2020 })
   @IsOptional()
   @IsInt()
   year?: number;
 
-  @ApiPropertyOptional({ enum: CarType })
-  @IsOptional()
-  @IsEnum(CarType)
-  carType?: CarType;
+  // @ApiPropertyOptional({ enum: CarType })
+  // @IsOptional()
+  // @IsEnum(CarType)
+  // carType?: CarType;
 
   @ApiPropertyOptional({ enum: EcoFriendly })
   @IsOptional()

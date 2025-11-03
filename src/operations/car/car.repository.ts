@@ -28,6 +28,7 @@ export class CarRepository {
         host: { connect: { id: hostId } },
         make: { connect: { id: data.makeId } },
         model: { connect: { id: data.modelId } },
+        carType: { connect: { id: data.carType } },
 
         // Scalars
         year: data.year!,
@@ -42,7 +43,6 @@ export class CarRepository {
         longTermDiscount: data.longTermDiscount ?? null,
         seatingCapacity: data.seatingCapacity!,
         mileageLimit: data.mileageLimit ?? null,
-        carType: data.carType!,
         ecoFriendly: data.ecoFriendly ?? 'NONE',
         features: data.features ?? [],
         safety: data.safety ?? [],
@@ -101,7 +101,6 @@ export class CarRepository {
         licensePlate: data.licensePlate,
         vin: data.vin,
         transmission: data.transmission,
-        carType: data.carType,
         ecoFriendly: data.ecoFriendly,
         features: data.features ?? [],
         safety: data.safety ?? [],
@@ -111,10 +110,11 @@ export class CarRepository {
 
         photos: photos ? (photos?.length > 1 ? photos : undefined) : undefined,
 
-        // Relations
+        // Relationsa
         // host: { connect: { id: hostId } },
         make: data.makeId ? { connect: { id: data.makeId } } : undefined,
         model: data.modelId ? { connect: { id: data.modelId } } : undefined,
+        carType: data.carType ? { connect: { id: data.carType } } : undefined,
       },
     });
 
@@ -147,11 +147,7 @@ export class CarRepository {
   //     },
   //   });
   // }
-  async findById(
-    carId: string,
-    startDate?: string,
-    endDate?: string,
-  ): Promise<any> {
+  async findById(carId: string, startDate?: string, endDate?: string) {
     const car = await this.prisma.car.findUnique({
       where: { id: carId },
       include: {
@@ -160,6 +156,7 @@ export class CarRepository {
         insurancePlans: true,
         reviews: true,
         host: true,
+        carType: true,
         bookings: {
           where: { status: 'PENDING' },
           select: { id: true, startDate: true, endDate: true },
@@ -274,6 +271,7 @@ export class CarRepository {
         include: {
           make: true,
           model: true,
+          carType: true,
         },
       }),
       this.prisma.car.count({ where }),
@@ -427,6 +425,13 @@ export class CarRepository {
   async getByCar(carId: string) {
     return this.prisma.carInsurance.findMany({
       where: { carId },
+    });
+  }
+
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { role: true },
     });
   }
 }

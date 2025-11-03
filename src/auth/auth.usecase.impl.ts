@@ -20,7 +20,16 @@ import { RpcException } from '@nestjs/microservices';
 import { IResponse } from '../common/types';
 import cloudinary from '../config/cloudinary/cloudinary.config';
 import { uploadToCloudinary } from '../config/cloudinary/upload';
+import { sendSms } from '../utils/sendSms';
+import { randomInt } from 'crypto';
 
+/**
+ * Generate a 6-digit numeric OTP as a string (e.g. "012345")
+ */
+export function generateOtp6(): string {
+  const num = randomInt(0, 1_000_000); // 0..999999
+  return num.toString().padStart(6, '0');
+}
 @Injectable()
 export class AuthUseCaseImpl {
   constructor(
@@ -69,19 +78,29 @@ export class AuthUseCaseImpl {
     } catch (err) {
       throw new RpcException('Error uploading files to Cloudinary');
     }
+    const nums = generateOtp6();
+
+    let user;
+
     if (role.name == 'GUEST') {
-      return this.authRepository.createGust(
+      user = await this.authRepository.createGust(
         data,
         hashedPassword,
         uploadedFiles,
+        nums,
       );
     } else {
-      return this.authRepository.createUser(
+      user = await this.authRepository.createUser(
         data,
         hashedPassword,
         uploadedFiles,
+        nums,
       );
     }
+
+    await sendSms(nums, '+251986680094');
+
+    return user;
   }
 
   async login(data: AuthLoginDto): Promise<{ user: User; tokens: AuthTokens }> {
@@ -96,6 +115,47 @@ export class AuthUseCaseImpl {
 
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
     if (!isPasswordValid) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Invalid credentials',
+      });
+    }
+
+    if (user?.role?.name !== 'GUEST') {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Invalid credentials',
+      });
+    }
+
+    const tokens = await this.generateTokens(user);
+
+    await this.authRepository.saveRefreshToken(user.id, tokens.refreshToken);
+    // delete user.password;
+
+    return { user, tokens };
+  }
+
+  async loginAdmin(
+    data: AuthLoginDto,
+  ): Promise<{ user: User; tokens: AuthTokens }> {
+    const user = await this.authRepository.findByPhone(data.phone);
+
+    if (!user) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Invalid credentials',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(data.password, user.password);
+    if (!isPasswordValid) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Invalid credentials',
+      });
+    }
+    if (user?.role?.name == 'GUEST') {
       throw new RpcException({
         statusCode: 404,
         message: 'Invalid credentials',
@@ -201,12 +261,16 @@ export class AuthUseCaseImpl {
     await this.authRepository.sendVerificationEmail(user.id, email);
   }
 
+  async verifyPhone(otp: string, phone: string): Promise<void> {
+    // TODO: Integrate real email sending service
+    // console.log(`Send verification email to ${emaphoneil} for user ${userId}`);
+  }
   // ----------------- Helper -----------------
   private async generateTokens(user: User): Promise<AuthTokens> {
     const payload = { sub: user.id, email: user.email };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '10h' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1m' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '3m' });
 
     return { accessToken, refreshToken };
   }

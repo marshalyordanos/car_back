@@ -238,7 +238,7 @@ export class UserRepository {
       bookingGroups,
       paymentGroups,
       paymentTotals,
-      carGroups,
+      // carGroups,
       ecoGroups,
       totalCars,
       totalUsers,
@@ -267,10 +267,10 @@ export class UserRepository {
         },
       }),
       // Cars grouped by type
-      this.prisma.car.groupBy({
-        by: ['carType'],
-        _count: { carType: true },
-      }),
+      // this.prisma.car.groupBy({
+      //   by: ['carType'],
+      //   _count: { carType: true },
+      // }),
       // Cars grouped by eco-friendly type
       this.prisma.car.groupBy({
         by: ['ecoFriendly'],
@@ -339,11 +339,8 @@ export class UserRepository {
     // --- Car summary ---
     const carSummary = {
       totalCars,
-      byType: carGroups.map((c) => ({
-        type: c.carType,
-        count: c._count.carType,
-      })),
-      byEco: ecoGroups.map((c) => ({
+
+      byEco: ecoGroups?.map((c) => ({
         ecoFriendly: c.ecoFriendly,
         count: c._count.ecoFriendly,
       })),

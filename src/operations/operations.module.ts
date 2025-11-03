@@ -20,6 +20,9 @@ import { CarMakeRepository } from './car-make/car-make.repository';
 import { CarMessageController } from './car/car.controller';
 import { CarUseCasesImp } from './car/car.usecase.impl';
 import { CarRepository } from './car/car.repository';
+import { CarTypeRepository } from './car-type/car-type.repository';
+import { CarTypeUseCasesImp } from './car-type/car-typeusecase.impl';
+import { CarTypeMessageController } from './car-type/car-type.controller';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { CarRepository } from './car/car.repository';
     CarModelMessageController,
     CarMakeMessageController,
     CarMessageController,
+    CarTypeMessageController,
   ],
   providers: [
     UserUseCasesImp,
@@ -53,6 +57,8 @@ import { CarRepository } from './car/car.repository';
     CarMakeRepository,
     CarUseCasesImp,
     CarRepository,
+    CarTypeRepository,
+    CarTypeUseCasesImp,
   ],
   exports: [
     UserUseCasesImp,
@@ -61,6 +67,7 @@ import { CarRepository } from './car/car.repository';
     CarMakeUseCasesImp,
     CarModelUseCasesImp,
     CarUseCasesImp,
+    CarTypeUseCasesImp,
   ],
 })
 export class OperationsModule {}

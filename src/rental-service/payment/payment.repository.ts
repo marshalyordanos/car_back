@@ -18,19 +18,14 @@ export class PaymentRepository {
 
   private async notifyUser(
     userId: string,
-    notification: { type: NotificationType; title: string; message: string },
+    notification: {
+      type: NotificationType;
+      title: string;
+      message: string;
+      id: string;
+    },
     paymentId?: string,
   ) {
-    await this.prisma.notification.create({
-      data: {
-        userId,
-        type: notification.type,
-        title: notification.title,
-        message: notification.message,
-        paymentId: paymentId || null,
-      },
-    });
-
     await this.redisClient.publish(
       'notifications',
       JSON.stringify({ userId, notification }),
@@ -91,9 +86,20 @@ export class PaymentRepository {
         },
       });
 
+      const notification = await tx.notification.create({
+        data: {
+          userId: hostId,
+          type: NotificationType.PAYMENT,
+          title: 'Payment Released',
+          message:
+            'Your earnings for the completed booking have been released.',
+          paymentId: payment.id || null,
+        },
+      });
       await this.notifyUser(
         hostId,
         {
+          id: notification.id,
           type: NotificationType.PAYMENT,
           title: 'Payment Released',
           message:
@@ -129,9 +135,20 @@ export class PaymentRepository {
           status: 'COMPLETED',
         },
       });
+
+      const notification = await tx.notification.create({
+        data: {
+          userId: payment.payerId!,
+          type: NotificationType.PAYMENT,
+          title: 'Payment Refunded',
+          message: `Your payment has been refunded successfully.`,
+          paymentId: payment.id || null,
+        },
+      });
       await this.notifyUser(
         payment.payerId!,
         {
+          id: notification.id,
           type: NotificationType.PAYMENT,
           title: 'Payment Refunded',
           message: `Your payment has been refunded successfully.`,
@@ -229,9 +246,19 @@ export class PaymentRepository {
         },
       });
       if (payment.recipientId) {
+        const notification = await tx.notification.create({
+          data: {
+            userId: payment.recipientId!,
+            type: NotificationType.PAYMENT,
+            title: 'Payment Completed',
+            message: 'Payment for the booking has been successfully completed.',
+            paymentId: payment.id || null,
+          },
+        });
         await this.notifyUser(
           payment.recipientId,
           {
+            id: notification.id,
             type: NotificationType.PAYMENT,
             title: 'Payment Completed',
             message: 'Payment for the booking has been successfully completed.',
@@ -244,6 +271,12 @@ export class PaymentRepository {
       // await this.notificationService.notifyHost(booking.hostId, { ... });
 
       return { payment, paymentTransaction };
+    });
+  }
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { role: true },
     });
   }
 }

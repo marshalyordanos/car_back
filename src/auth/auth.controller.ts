@@ -6,6 +6,7 @@ import {
   AuthRegisterDto,
   AuthLoginDto,
   AuthChangePasswordDto,
+  PhoneVerifyDto,
 } from './auth.entity';
 import { Public } from '../common/decorator/public.decorator';
 import { IResponse } from '../common/types';
@@ -22,7 +23,7 @@ export class AuthMessageController {
   async register(@Payload() dto: any) {
     try {
       const user = await this.usecases.register(dto);
-      return new IResponse(true, 'User is registered Succuessfuly', user);
+      return new IResponse(true, 'User is registered Succuessfuly', null);
     } catch (error) {
       handleCatch(error);
     }
@@ -41,6 +42,18 @@ export class AuthMessageController {
     }
   }
 
+  @Public()
+  @MessagePattern(PATTERNS.AUTH_LOGIN_ADMIN)
+  async loginAdmin(@Payload() dto: AuthLoginDto) {
+    try {
+      console.log('data: ', dto);
+
+      const data = await this.usecases.loginAdmin(dto);
+      return new IResponse(true, 'User is logged in Succuessfuly', data);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
   // @Public()
   @MessagePattern(PATTERNS.AUTH_REFRESH_TOKEN)
   async refreshToken(@Payload() data: any) {
@@ -67,6 +80,18 @@ export class AuthMessageController {
       console.log('Current user:', user, data.body);
       await this.usecases.changePassword(user?.sub, data.body);
       return new IResponse(true, 'Password changed successfully');
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.AUTH_CHANGE_PASSWORD)
+  async verifyPhone(@Payload() data: { user: any; body: PhoneVerifyDto }) {
+    try {
+      const user = data.user; // decoded JWT
+      console.log('Current user:', user, data.body);
+      await this.usecases.verifyPhone(data.body.otp, data.body.phone);
+      return new IResponse(true, 'Phone Number is verified successfully');
     } catch (error) {
       handleCatch(error);
     }

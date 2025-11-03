@@ -35,7 +35,12 @@ export class BookingRepository {
   // booking.repository.ts (partial)
   private async notifyUser(
     userId: string,
-    notification: { type: NotificationType; title: string; message: string },
+    notification: {
+      type: NotificationType;
+      title: string;
+      message: string;
+      id: string;
+    },
     bookingId?: string, // optional
   ) {
     // Save to database
@@ -132,7 +137,7 @@ export class BookingRepository {
         },
       });
 
-      await tx.notification.create({
+      const notification = await tx.notification.create({
         data: {
           userId: booking.hostId,
           type: NotificationType.BOOKING,
@@ -142,20 +147,22 @@ export class BookingRepository {
         },
       });
 
+      await this.notifyUser(
+        booking.hostId,
+        {
+          id: notification.id,
+          type: NotificationType.BOOKING,
+          title: 'New Booking Request',
+          message: `You have a new booking request from a guest.`,
+        },
+        booking.id,
+      );
+
       // return booking from transaction
       return booking;
     });
 
     // 2️⃣ Notify user AFTER transaction success
-    await this.notifyUser(
-      booking.hostId,
-      {
-        type: NotificationType.BOOKING,
-        title: 'New Booking Request',
-        message: `You have a new booking request from a guest.`,
-      },
-      booking.id,
-    );
 
     return booking;
   }
@@ -302,8 +309,9 @@ export class BookingRepository {
         where: { id },
         data: { status: BookingStatus.CONFIRMED },
       });
+      console.log('111111111111111111:11');
 
-      await tx.notification.create({
+      const notification = await tx.notification.create({
         data: {
           userId: booking.guestId,
           type: NotificationType.BOOKING,
@@ -313,15 +321,21 @@ export class BookingRepository {
         },
       });
 
+      console.log('111111111111111111:12');
+
       await this.notifyUser(
         booking.guestId,
         {
+          id: notification.id,
           type: NotificationType.BOOKING,
           title: 'Booking Confirmed',
           message: `Your booking has been confirmed by the host.`,
         },
         booking.id,
       );
+
+      console.log('111111111111111111:13');
+
       // Optionally, notify the guest
       // await this.notificationService.notifyGuest(booking.guestId, {
       //   type: 'BOOKING_CONFIRMED',
@@ -349,7 +363,7 @@ export class BookingRepository {
           },
         });
 
-      await tx.notification.create({
+      const notification = await tx.notification.create({
         data: {
           userId: booking.guestId,
           type: NotificationType.BOOKING,
@@ -361,6 +375,7 @@ export class BookingRepository {
       await this.notifyUser(
         booking.guestId,
         {
+          id: notification.id,
           type: NotificationType.BOOKING,
           title: 'Booking Rejected',
           message: `Your booking request has been rejected by the host.`,
@@ -532,7 +547,7 @@ export class BookingRepository {
             '****************************************************************************************6',
           );
 
-          await tx.notification.create({
+          const notificationH = await tx.notification.create({
             data: {
               userId: booking.hostId,
               type: NotificationType.BOOKING,
@@ -545,7 +560,7 @@ export class BookingRepository {
             '****************************************************************************************7',
           );
 
-          await tx.notification.create({
+          const notificationG = await tx.notification.create({
             data: {
               userId: booking.guestId,
               type: NotificationType.BOOKING,
@@ -561,6 +576,7 @@ export class BookingRepository {
           await this.notifyUser(
             booking.guestId,
             {
+              id: notificationG.id,
               type: NotificationType.BOOKING,
               title: 'Booking Completed',
               message: `Your booking is now completed. Thank you for using our service!`,
@@ -574,6 +590,7 @@ export class BookingRepository {
           await this.notifyUser(
             booking.hostId,
             {
+              id: notificationG.id,
               type: NotificationType.BOOKING,
               title: 'Booking Completed',
               message: `Booking has been completed and your earnings have been released.`,

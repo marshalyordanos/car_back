@@ -64,6 +64,7 @@ export class BookingUseCasesImp {
 
   async getMyBookings(query: ListQueryDto, userId: any) {
     const User = await this.repo.findUserById(userId);
+    console.log('=========================================');
     if (!User) {
       throw new RpcException('User is not found!');
     }
@@ -89,8 +90,6 @@ export class BookingUseCasesImp {
           ? query.filter + `,hostId:${userId}`
           : `hostId:${userId}`;
       }
-    } else {
-      throw new RpcException('This User Have not permmission!');
     }
     const res = await this.repo.getMyBookings(query, userId);
     return {
@@ -100,6 +99,8 @@ export class BookingUseCasesImp {
   }
 
   async getAllBookings(query: ListQueryDto) {
+    console.log('=========================================1');
+
     const res = await this.repo.getAllBookings(query);
     return {
       models: res.models,

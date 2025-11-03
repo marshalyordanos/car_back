@@ -20,7 +20,6 @@
     "start:gateway": "node dist/gateway/main.gateway.js",
     "start:auth:dev": "nest start --watch --entryFile auth/main.auth",
     "start:message": "nest start --watch --entryFile notify-hub/main.notify-hub",
-
     "start:user:dev": "nest start --watch --entryFile operations/main.operations",
     "start:gateway:dev": "nest start --watch --entryFile gateway/main.gateway",
     "start:fulfillment:dev": "nest start --watch --entryFile fulfillment/main.fulfillment",
@@ -43,6 +42,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/websockets": "^11.1.6",
     "@prisma/client": "^6.15.0",
+    "axios": "^1.13.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",

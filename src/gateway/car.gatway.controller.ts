@@ -142,15 +142,15 @@ export class CarGatewayController {
     });
   }
 
-  @Get(':id')
-  getCar(@Param('id') id: string, @Query() query: CarDateDto, @Req() req) {
+  @Get('admin')
+  searchCarsAdmin(@Query() query: ListQueryDto, @Req() req) {
     const authHeader = req.headers['authorization'] || null;
 
-    return this.carClient.send(PATTERNS.CAR_FIND_BY_ID, {
+    console.log('carparams: ', query);
+
+    return this.carClient.send(PATTERNS.CAR_SEARCH_ADMIN, {
       headers: { authorization: authHeader },
-      carId: id,
-      startDate: query.startDate,
-      endDate: query.endDate,
+      query,
     });
   }
 
@@ -163,6 +163,17 @@ export class CarGatewayController {
     return this.carClient.send(PATTERNS.CAR_SEARCH, {
       headers: { authorization: authHeader },
       query,
+    });
+  }
+  @Get(':id')
+  getCar(@Param('id') id: string, @Query() query: CarDateDto, @Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.carClient.send(PATTERNS.CAR_FIND_BY_ID, {
+      headers: { authorization: authHeader },
+      carId: id,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
   }
 }

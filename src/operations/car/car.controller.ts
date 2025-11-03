@@ -39,6 +39,7 @@ export class CarMessageController {
       carId: string;
       hostId: string;
       carData: Partial<CarDto>;
+      user: any;
     },
   ) {
     try {
@@ -46,6 +47,7 @@ export class CarMessageController {
         payload.carId,
         payload.hostId,
         payload.carData,
+        payload.user?.sub,
       );
       return IResponse.success('Car updated successfully', car);
     } catch (error) {
@@ -54,9 +56,15 @@ export class CarMessageController {
   }
 
   @MessagePattern(PATTERNS.CAR_DELETE)
-  async deleteCar(@Payload() payload: { carId: string; hostId: string }) {
+  async deleteCar(
+    @Payload() payload: { carId: string; hostId: string; user: any },
+  ) {
     try {
-      const car = await this.usecases.deleteCar(payload.carId, payload.hostId);
+      const car = await this.usecases.deleteCar(
+        payload.carId,
+        payload.hostId,
+        payload.user?.sub,
+      );
       return IResponse.success('Car deleted successfully', car);
     } catch (error) {
       handleCatch(error);
@@ -91,6 +99,23 @@ export class CarMessageController {
   async searchCar(@Payload() payload: { query: ListQueryDto }) {
     try {
       const res = await this.usecases.searchCars(payload.query);
+      return IResponse.success(
+        'Car fetched successfully',
+        res.models,
+        res.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.CAR_SEARCH_ADMIN)
+  async searchCarAdmin(@Payload() payload: { user: any; query: ListQueryDto }) {
+    try {
+      const res = await this.usecases.searchCarsAdmin(
+        payload.query,
+        payload.user.sub,
+      );
       return IResponse.success(
         'Car fetched successfully',
         res.models,

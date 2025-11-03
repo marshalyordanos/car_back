@@ -61,9 +61,12 @@ export class DisputeMessageController {
 
   // Admin review → mark UNDER_REVIEW
   @MessagePattern(PATTERNS.DISPUTE_ADMIN_REVIEW)
-  async adminReview(@Payload() payload: { id: string }) {
+  async adminReview(@Payload() payload: { id: string; user: any }) {
     try {
-      const dispute = await this.usecases.markUnderReview(payload.id);
+      const dispute = await this.usecases.markUnderReview(
+        payload.id,
+        payload?.user.sub,
+      );
       return IResponse.success('Dispute marked under review', dispute);
     } catch (error) {
       handleCatch(error);
@@ -72,11 +75,14 @@ export class DisputeMessageController {
 
   // Admin resolves with optional refund
   @MessagePattern(PATTERNS.DISPUTE_RESOLVE)
-  async resolve(@Payload() payload: { id: string; data: DisputeResolveDto }) {
+  async resolve(
+    @Payload() payload: { id: string; data: DisputeResolveDto; user: any },
+  ) {
     try {
       const result = await this.usecases.resolveDispute(
         payload.id,
         payload.data,
+        payload?.user.sub,
       );
       return IResponse.success('Dispute resolved', result);
     } catch (error) {
