@@ -9,8 +9,10 @@ import {
   BookingChangeStatusDto,
   BookingInspectionDto,
   BookingInspectionUpdateDto,
+  CreateBookingDto,
 } from './booking.entity';
-import { ListQueryDto } from 'src/common/query/query.dto';
+import { ListQueryDto } from '../../common/query/query.dto';
+import { Public } from '../../common/decorator/public.decorator';
 
 @Controller()
 export class BookingMessageController {
@@ -19,7 +21,37 @@ export class BookingMessageController {
   @MessagePattern(PATTERNS.BOOKING_CREATE)
   async createBooking(@Payload() payload: any) {
     try {
-      const res = await this.usecases.createBooking(payload);
+      const res = await this.usecases.createBooking(
+        payload,
+        payload?.user?.sub,
+      );
+      return IResponse.success('Booking created successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.CHAPA_CALL_BACK)
+  async chapaCallBack(@Payload() payload: any) {
+    try {
+      const res = await this.usecases.chapaCallBack(payload);
+      return IResponse.success('Booking created successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.BOOKING_CREATE_GUEST)
+  async createBookingGUEST(
+    @Payload() payload: { body: CreateBookingDto; user: any },
+  ) {
+    try {
+      const res = await this.usecases.createBooking(
+        payload.body,
+        payload?.user?.sub,
+      );
       return IResponse.success('Booking created successfully', res);
     } catch (error) {
       handleCatch(error);
@@ -46,10 +78,22 @@ export class BookingMessageController {
     }
   }
 
+  @Public()
   @MessagePattern(PATTERNS.BOOKING_GET_BY_ID)
   async getBookingById(@Payload() payload: { id: string }) {
     try {
       const res = await this.usecases.getBookingById(payload.id);
+      return IResponse.success('Booking fetched successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.BOOKING_GET_BY_CODE)
+  async getBookingByCode(@Payload() payload: { code: string }) {
+    try {
+      const res = await this.usecases.getBookingByCode(payload.code);
       return IResponse.success('Booking fetched successfully', res);
     } catch (error) {
       handleCatch(error);

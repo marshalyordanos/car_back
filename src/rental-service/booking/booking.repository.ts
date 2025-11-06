@@ -24,6 +24,9 @@ import { ListQueryDto } from '../../common/query/query.dto';
 import { PrismaQueryFeature } from '../../common/query/prisma-query-feature';
 import { Redis } from 'ioredis';
 import { REDIS_CLIENT } from '../../notify-hub/redis/redis.constants';
+import { createId as cuid } from '@paralleldrive/cuid2';
+import axios from 'axios';
+import { sendSms } from '../../utils/sendSms';
 
 @Injectable()
 export class BookingRepository {
@@ -63,9 +66,38 @@ export class BookingRepository {
     totalPrice: number,
     platformFee: number,
     hostEarnings: number,
+    userId?: string,
+    files?: {
+      driverLicenseId?: string;
+      nationalId?: string;
+    },
   ) {
     // 1️⃣ Perform booking + payment creation in a transaction
-    const booking = await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
+      if (!userId) {
+        const { firstName, lastName, email, phone } = dto;
+
+        const role = await tx.role.findUnique({
+          where: { name: 'GUEST' },
+        });
+
+        const guest = await tx.user.create({
+          data: {
+            firstName: firstName!,
+            lastName: lastName!,
+            email: email!,
+            phone,
+            guestProfile: {
+              create: {
+                driverLicenseId: files?.driverLicenseId,
+                nationalId: files?.nationalId,
+              },
+            },
+            role: role?.id ? { connect: { id: role.id } } : undefined,
+          },
+        });
+        dto.guestId = guest.id;
+      }
       const year = new Date().getFullYear();
       const bookingCount = await tx.booking.count({
         where: {
@@ -101,7 +133,7 @@ export class BookingRepository {
       const booking = await tx.booking.create({
         data: {
           carId: dto.carId,
-          guestId: dto.guestId,
+          guestId: dto.guestId!,
           hostId: dto.hostId,
           startDate: dto.startDate,
           endDate: dto.endDate,
@@ -121,50 +153,240 @@ export class BookingRepository {
           amount: totalPrice,
           currency: 'ETB',
           method: null,
-          status: 'ON_HOLD',
+          status: 'PENDING',
           type: 'GUEST_TO_PLATFORM',
           platformFee,
           hostEarnings,
         },
       });
 
-      await tx.paymentTransaction.create({
-        data: {
-          paymentId: payment.id,
-          type: 'CAPTURE',
-          amount: payment.amount,
-          status: 'COMPLETED',
-        },
-      });
+      // 6️⃣ If payment method is CHAPA → initialize within same transaction
+      const txRef = cuid();
 
-      const notification = await tx.notification.create({
-        data: {
-          userId: booking.hostId,
-          type: NotificationType.BOOKING,
-          title: 'New Booking Request',
-          message: 'You have a new booking request from a guest.',
-          bookingId: booking.id, // associate if needed, but not shown in message
-        },
-      });
+      const chapaData = {
+        amount: payment.amount,
+        currency: 'ETB',
+        tx_ref: txRef,
+        callback_url: `https://newspaper-jewelry-goals-slim.trycloudflare.com/bookings/chapa-callback`,
+        'customization[title]': 'Car Rental Booking',
+        'customization[description]': 'Payment for car booking',
+        phone_number: dto.phone,
+        return_url: `http://192.168.43.111:3000/bookings/confirmation`,
+      };
 
-      await this.notifyUser(
-        booking.hostId,
-        {
-          id: notification.id,
-          type: NotificationType.BOOKING,
-          title: 'New Booking Request',
-          message: `You have a new booking request from a guest.`,
-        },
-        booking.id,
-      );
+      try {
+        const chapaResponse = await axios.post(
+          'https://api.chapa.co/v1/transaction/initialize',
+          chapaData,
+          {
+            headers: {
+              Authorization: `Bearer CHASECK_TEST-RPLx9ri3mFRbv8ZnU1KeBRRSLVgRGgK2`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+
+        const data = chapaResponse.data;
+
+        if (data?.status !== 'success') {
+          throw new RpcException('Chapa initialization failed');
+        }
+
+        console.log('=====================cahapa:', data);
+
+        // ddd;
+
+        // Update payment with tx_ref + checkout URL
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            transactionId: txRef,
+            status: 'PENDING',
+          },
+        });
+
+        await sendSms(`${trackingCode}`, '+251986680094');
+
+        // Return booking and Chapa checkout URL
+        return {
+          ...booking,
+          paymentMethod: 'CHAPA',
+          chapaCheckoutUrl: data?.data?.checkout_url,
+        };
+      } catch (err: any) {
+        console.error('Chapa error:', err.response?.data || err.message);
+        throw new RpcException('Failed to initialize Chapa payment');
+      }
+      // await tx.paymentTransaction.create({
+      //   data: {
+      //     paymentId: payment.id,
+      //     type: 'CAPTURE',
+      //     amount: payment.amount,
+      //     status: 'COMPLETED',
+      //   },
+      // });
+
+      // const notification = await tx.notification.create({
+      //   data: {
+      //     userId: booking.hostId,
+      //     type: NotificationType.BOOKING,
+      //     title: 'New Booking Request',
+      //     message: 'You have a new booking request from a guest.',
+      //     bookingId: booking.id, // associate if needed, but not shown in message
+      //   },
+      // });
+
+      // await this.notifyUser(
+      //   booking.hostId,
+      //   {
+      //     id: notification.id,
+      //     type: NotificationType.BOOKING,
+      //     title: 'New Booking Request',
+      //     message: `You have a new booking request from a guest.`,
+      //   },
+      //   booking.id,
+      // );
 
       // return booking from transaction
-      return booking;
     });
 
     // 2️⃣ Notify user AFTER transaction success
+  }
 
-    return booking;
+  async handleChapaCallback(data: any) {
+    // 1️⃣ Validate body
+    console.log(
+      '=========================================1:handleChapaCallback ',
+      data,
+    );
+    if (!data || !data.trx_ref || !data.status) {
+      throw new RpcException('Invalid Chapa payload');
+    }
+
+    // 2️⃣ Lookup payment record by trx_ref
+    const payment = await this.prisma.payment.findUnique({
+      where: { transactionId: data.trx_ref },
+      include: { booking: true },
+    });
+
+    if (!payment) {
+      throw new RpcException('Payment not found');
+    }
+
+    // 3️⃣ Optionally verify transaction with Chapa (security check)
+    const verifyUrl = `https://api.chapa.co/v1/transaction/verify/${data.trx_ref}`;
+    let verifiedStatus = data.status;
+
+    try {
+      const verifyResponse = await axios.get(verifyUrl, {
+        headers: {
+          Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (verifyResponse.data?.status === 'success') {
+        verifiedStatus = verifyResponse.data?.data?.status ?? data.status;
+      }
+    } catch (error) {
+      console.warn('⚠️ Chapa verification failed, fallback to callback data');
+    }
+
+    // 4️⃣ Update payment and booking within transaction
+    return this.prisma.$transaction(async (tx) => {
+      const updatedPayment = await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: verifiedStatus === 'success' ? 'COMPLETED' : 'FAILED',
+        },
+
+        include: { booking: true },
+      });
+
+      if (verifiedStatus === 'success') {
+        await tx.paymentTransaction.create({
+          data: {
+            paymentId: payment.id,
+            type: 'CAPTURE',
+            amount: payment.amount,
+            status: 'COMPLETED',
+          },
+        });
+
+        const notification = await tx.notification.create({
+          data: {
+            userId: updatedPayment?.booking!.hostId,
+            type: NotificationType.BOOKING,
+            title: 'New Booking Request',
+            message: 'You have a new booking request from a guest.',
+            bookingId: updatedPayment.booking!.id, // associate if needed, but not shown in message
+          },
+        });
+
+        await this.notifyUser(
+          updatedPayment.booking!.hostId,
+          {
+            id: notification.id,
+            type: NotificationType.BOOKING,
+            title: 'New Booking Request',
+            message: `You have a new booking request from a guest.`,
+          },
+          updatedPayment.booking!.id,
+        );
+
+        // await tx.booking.update({
+        //   where: { id: payment.bookingId },
+        //   data: { status: 'PAID' },
+        // });
+
+        // // Optional: send notifications here
+        // console.log(
+        //   `✅ Booking ${payment.booking.trackingCode} marked as paid via Chapa.`,
+        // );
+      }
+
+      return updatedPayment;
+    });
+  }
+
+  async verifyChapaTransaction(txRef: string) {
+    const chapaSecretKey = 'CHASECK_TEST-RPLx9ri3mFRbv8ZnU1KeBRRSLVgRGgK2';
+
+    const verifyUrl = `https://api.chapa.co/v1/transaction/verify/${txRef}`;
+
+    try {
+      const response = await axios.get(verifyUrl, {
+        headers: {
+          Authorization: `Bearer ${chapaSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = response.data;
+
+      if (!data || !data.status) {
+        throw new RpcException('Invalid Chapa verification response');
+      }
+
+      // ✅ Optional: handle success vs failure
+      if (data.status !== 'success') {
+        throw new RpcException(`Chapa verification failed: ${data.message}`);
+      }
+
+      return data; // Return verified data (matches Django’s Response(data, status=200))
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Network or API response error
+        const errMsg =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message;
+        throw new RpcException(`Chapa verify error: ${errMsg}`);
+      }
+
+      // Unexpected or JSON parsing error
+      throw new RpcException('Unexpected error verifying Chapa transaction');
+    }
   }
 
   async updateBooking(id: string, dto: UpdateBookingDto) {
@@ -203,6 +425,19 @@ export class BookingRepository {
   async getBookingById(id: string) {
     return this.prisma.booking.findUnique({
       where: { id },
+      include: {
+        car: { include: { make: true, model: true } },
+        guest: true,
+        host: true,
+        payment: true,
+        dispute: true,
+        inspections: true,
+      },
+    });
+  }
+  async getBookingByCode(code: string) {
+    return this.prisma.booking.findUnique({
+      where: { trackingCode: code },
       include: {
         car: { include: { make: true, model: true } },
         guest: true,
@@ -700,5 +935,31 @@ export class BookingRepository {
         return acc;
       }, {}),
     };
+  }
+
+  async createGust(data: CreateBookingDto) {
+    const { firstName, lastName, email, phone } = data;
+
+    const role = await this.prisma.role.findUnique({
+      where: { name: 'GUEST' },
+    });
+
+    return this.prisma.user.create({
+      data: {
+        firstName: firstName!,
+        lastName: lastName!,
+        email: email!,
+        phone,
+        roleId: role?.id,
+        // guestProfile: {
+        //   create: {
+        //     driverLicenseId: files?.driverLicenseId,
+        //     nationalId: files?.nationalId,
+        //   },
+        // },
+        // role: role ? { connect: { id: role } } : undefined,
+      },
+      include: { role: true, guestProfile: true },
+    });
   }
 }

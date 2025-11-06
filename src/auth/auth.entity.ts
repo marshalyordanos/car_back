@@ -82,6 +82,11 @@ export class PhoneVerifyDto {
   @IsString()
   phone: string;
 }
+export class PhoneVerifyResendDto {
+  @ApiProperty()
+  @IsString()
+  phone: string;
+}
 export class AuthResetPasswordDto {
   @ApiProperty()
   token: string;

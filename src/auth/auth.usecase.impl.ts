@@ -128,6 +128,16 @@ export class AuthUseCaseImpl {
       });
     }
 
+    if (!user.isVerified) {
+      const nums = generateOtp6();
+
+      await sendSms(nums, '+251986680094');
+      await this.authRepository.changeUserOtp(user.id, nums);
+      throw new RpcException({
+        statusCode: 400,
+        message: 'verify first',
+      });
+    }
     const tokens = await this.generateTokens(user);
 
     await this.authRepository.saveRefreshToken(user.id, tokens.refreshToken);
@@ -174,10 +184,7 @@ export class AuthUseCaseImpl {
     await this.authRepository.removeRefreshToken(userId, sessionId);
   }
 
-  async refreshToken(
-    userId: string,
-    refreshToken: string,
-  ): Promise<AuthTokens> {
+  async refreshToken(userId: string, refreshToken: string) {
     console.log('tokens: ', refreshToken);
     const session = await this.authRepository.findSessionByRefreshToken(
       userId,
@@ -198,7 +205,7 @@ export class AuthUseCaseImpl {
       session.id,
     );
 
-    return tokens;
+    return { user: user, tokens };
   }
 
   // ----------------- Password Management -----------------
@@ -261,7 +268,47 @@ export class AuthUseCaseImpl {
     await this.authRepository.sendVerificationEmail(user.id, email);
   }
 
-  async verifyPhone(otp: string, phone: string): Promise<void> {
+  async verifyPhone(otp: string, phone: string) {
+    const user = await this.authRepository.findByPhone(phone);
+
+    if (!user) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Please register again',
+      });
+    }
+
+    console.log('======================================1', user);
+
+    if (user.otp !== otp) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'invalid otp',
+      });
+    }
+
+    console.log('======================================3', user);
+
+    return this.authRepository.changeUserStatus(user.id);
+
+    // TODO: Integrate real email sending service
+    // console.log(`Send verification email to ${emaphoneil} for user ${userId}`);
+  }
+  async verifyPhoneResend(phone: string) {
+    const user = await this.authRepository.findByPhone(phone);
+
+    if (!user) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Please register again',
+      });
+    }
+
+    const nums = generateOtp6();
+    await sendSms(nums, '+251986680094');
+
+    return this.authRepository.changeUserOtp(user.id, nums);
+
     // TODO: Integrate real email sending service
     // console.log(`Send verification email to ${emaphoneil} for user ${userId}`);
   }
@@ -269,8 +316,8 @@ export class AuthUseCaseImpl {
   private async generateTokens(user: User): Promise<AuthTokens> {
     const payload = { sub: user.id, email: user.email };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1m' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '3m' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '30m' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '3y' });
 
     return { accessToken, refreshToken };
   }

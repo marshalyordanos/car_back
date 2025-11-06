@@ -78,7 +78,7 @@ model User {
   lastName        String
   email           String         @unique
   phone           String?        @unique
-  password        String
+  password        String?
   profilePhoto    String?
   isVerified      Boolean        @default(false)
   createdAt       DateTime       @default(now())

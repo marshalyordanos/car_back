@@ -16,7 +16,7 @@ import {
   CarMakeDto,
   CarMakeUpdateDto,
 } from '../operations/car-make/car-make.entity';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Car-Types')
 @ApiBearerAuth('access-token')
@@ -24,7 +24,11 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class CarTypeGatewayController {
   constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}
 
+  @ApiTags('Car Type')
   @Get()
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   async findAll(
     @Req() req,
 

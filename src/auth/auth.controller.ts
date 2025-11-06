@@ -7,6 +7,7 @@ import {
   AuthLoginDto,
   AuthChangePasswordDto,
   PhoneVerifyDto,
+  PhoneVerifyResendDto,
 } from './auth.entity';
 import { Public } from '../common/decorator/public.decorator';
 import { IResponse } from '../common/types';
@@ -85,13 +86,29 @@ export class AuthMessageController {
     }
   }
 
-  @MessagePattern(PATTERNS.AUTH_CHANGE_PASSWORD)
+  @Public()
+  @MessagePattern(PATTERNS.AUTH_PHONE_VERIFY)
   async verifyPhone(@Payload() data: { user: any; body: PhoneVerifyDto }) {
     try {
       const user = data.user; // decoded JWT
       console.log('Current user:', user, data.body);
       await this.usecases.verifyPhone(data.body.otp, data.body.phone);
       return new IResponse(true, 'Phone Number is verified successfully');
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.AUTH_PHONE_VERIFY_RESEND)
+  async verifyPhoneResend(
+    @Payload() data: { user: any; body: PhoneVerifyResendDto },
+  ) {
+    try {
+      const user = data.user; // decoded JWT
+      console.log('Current user:', user, data.body);
+      await this.usecases.verifyPhoneResend(data.body.phone);
+      return new IResponse(true, 'resned code is sent successfully');
     } catch (error) {
       handleCatch(error);
     }

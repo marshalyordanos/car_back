@@ -18,6 +18,8 @@ import {
   AuthChangePasswordDto,
   AuthLoginDto,
   AuthRegisterDto,
+  PhoneVerifyDto,
+  PhoneVerifyResendDto,
 } from '../auth/auth.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
@@ -92,6 +94,33 @@ export class AuthGatewayController {
     console.log('body: ', body);
 
     return this.authClient.send(PATTERNS.AUTH_CHANGE_PASSWORD, {
+      headers: { authorization: authHeader },
+
+      body,
+    });
+  }
+
+  @Post('verify-phone')
+  async verifyPhone(@Req() req: Request, @Body() body: PhoneVerifyDto) {
+    const authHeader = req.headers['authorization'] || null;
+    console.log('body: ', body);
+
+    return this.authClient.send(PATTERNS.AUTH_PHONE_VERIFY, {
+      headers: { authorization: authHeader },
+
+      body,
+    });
+  }
+
+  @Post('phone-resend')
+  async verifyPhoneResend(
+    @Req() req: Request,
+    @Body() body: PhoneVerifyResendDto,
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+    console.log('body: ', body);
+
+    return this.authClient.send(PATTERNS.AUTH_PHONE_VERIFY_RESEND, {
       headers: { authorization: authHeader },
 
       body,

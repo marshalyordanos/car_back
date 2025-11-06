@@ -5,6 +5,8 @@ export const PATTERNS = {
 
   AUTH_REFRESH_TOKEN: 'auth.refresh_token',
   AUTH_CHANGE_PASSWORD: 'auth.change_password',
+  AUTH_PHONE_VERIFY: 'auth.phone.verify',
+  AUTH_PHONE_VERIFY_RESEND: 'auth.phone.verify.resend',
 
   USER_CREATE: 'user.create',
   USER_FIND_BY_ID: 'user.findById',
@@ -95,8 +97,11 @@ export const PATTERNS = {
   BOOKING_UPDATE: 'booking.update',
   BOOKING_DELETE: 'booking.delete',
   BOOKING_GET_BY_ID: 'booking.getById',
+  BOOKING_GET_BY_CODE: 'booking.getByCode',
+
   BOOKING_GET_ALL: 'booking.getAll',
   BOOKING_GET_ALL_MY: 'booking.getAll.my',
+  BOOKING_CREATE_GUEST: 'booking.create.guest',
 
   BOOKING_CANCEL_BY_GUEST: 'booking.cancelByGuest',
   BOOKING_CONFIRM_BY_HOST: 'booking.confirmByHost',
@@ -151,4 +156,6 @@ export const PATTERNS = {
   MESSAGE_UNREAD_COUNT: 'message.unreadCount',
   MESSAGE_FIND_BY_ID: 'message.findById',
   MESSAGE_NEW_EVENT: 'message.new', // emitted event for PUSH
+
+  CHAPA_CALL_BACK: 'chapa.call.back',
 } as const;

@@ -25,7 +25,10 @@ export class AuthRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { role: true },
+    });
   }
 
   async findRoleById(id: string) {
@@ -227,6 +230,19 @@ export class AuthRepository {
           },
         },
       },
+    });
+  }
+
+  async changeUserStatus(id: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isVerified: true },
+    });
+  }
+  async changeUserOtp(id: string, otp: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { otp: otp },
     });
   }
 }

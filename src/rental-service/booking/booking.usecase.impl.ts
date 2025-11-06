@@ -13,6 +13,7 @@ import { BookingInspection, BookingStatus } from '@prisma/client';
 import { CarRepository } from '../../operations/car/car.repository';
 import { RpcException } from '@nestjs/microservices';
 import { ListQueryDto } from 'src/common/query/query.dto';
+import * as upload from '../../config/cloudinary/upload';
 
 @Injectable()
 export class BookingUseCasesImp {
@@ -21,7 +22,10 @@ export class BookingUseCasesImp {
     private readonly carRepo: CarRepository,
   ) {}
 
-  async createBooking(dto: CreateBookingDto) {
+  async createBooking(dto: CreateBookingDto, userId?: string) {
+    console.log('000000000:', dto, userId);
+    // return;
+
     const car = await this.carRepo.findById(dto.carId);
     if (!car) {
       throw new RpcException('Car is not found!');
@@ -47,7 +51,40 @@ export class BookingUseCasesImp {
     const tax = baseTotal * 0.15;
 
     const totalPrice = baseTotal + platformFee + tax;
-    return this.repo.createBooking(dto, totalPrice, platformFee, baseTotal);
+
+    const uploadedFiles: any = {};
+
+    if (!userId) {
+      try {
+        if (dto.driverLicenseFile) {
+          uploadedFiles.driverLicenseId = await upload.uploadToCloudinary(
+            dto.driverLicenseFile,
+            'users/driverLicenses',
+          );
+        }
+        if (dto.nationalIdFile) {
+          uploadedFiles.nationalId = await upload.uploadToCloudinary(
+            dto.nationalIdFile,
+            'users/nationalIds',
+          );
+        }
+      } catch (err) {
+        throw new RpcException('Error uploading files to Cloudinary');
+      }
+    }
+
+    return this.repo.createBooking(
+      dto,
+      totalPrice,
+      platformFee,
+      baseTotal,
+      userId,
+      uploadedFiles,
+    );
+  }
+
+  async chapaCallBack(data: any) {
+    return this.repo.handleChapaCallback(data);
   }
 
   async updateBooking(id: string, dto: UpdateBookingDto) {
@@ -60,6 +97,10 @@ export class BookingUseCasesImp {
 
   async getBookingById(id: string) {
     return this.repo.getBookingById(id);
+  }
+
+  async getBookingByCode(code: string) {
+    return this.repo.getBookingByCode(code);
   }
 
   async getMyBookings(query: ListQueryDto, userId: any) {

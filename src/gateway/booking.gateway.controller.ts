@@ -10,6 +10,9 @@ import {
   Req,
   Inject,
   Query,
+  UseInterceptors,
+  UploadedFiles,
+  All,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
@@ -22,6 +25,8 @@ import {
 } from '../rental-service/booking/booking.entity';
 import { ListQueryDto } from '..//common/query/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import multer from 'multer';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Bookings')
 @ApiBearerAuth('access-token')
@@ -148,6 +153,44 @@ export class BookingGatewayController {
     });
   }
 
+  @Post('guest')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'driverLicenseFile', maxCount: 1 },
+        { name: 'nationalIdFile', maxCount: 1 },
+      ],
+      { storage: multer.memoryStorage() }, // file stays in memory
+    ),
+  )
+  async createBookingGuest(
+    @UploadedFiles()
+    files: {
+      driverLicenseFile?: Express.Multer.File[];
+      nationalIdFile?: Express.Multer.File[];
+    },
+    @Req() req,
+    @Body() dto: CreateBookingDto,
+  ) {
+    dto.driverLicenseFile = files?.driverLicenseFile?.[0];
+    dto.nationalIdFile = files?.nationalIdFile?.[0];
+
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_CREATE_GUEST, {
+      headers: { authorization: authHeader },
+      body: dto,
+    });
+  }
+
+  @All('chapa-callback')
+  async chapaCallback(@Req() req, @Body() dto: any) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.CHAPA_CALL_BACK, {
+      headers: { authorization: authHeader },
+
+      ...dto,
+    });
+  }
   @Patch(':id')
   async updateBooking(
     @Req() req,
@@ -186,6 +229,15 @@ export class BookingGatewayController {
     return this.client.send(PATTERNS.BOOKING_GET_BY_ID, {
       headers: { authorization: authHeader },
       id,
+    });
+  }
+
+  @Get('/code/:code')
+  async getBookingByCode(@Req() req, @Param('code') code: string) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_GET_BY_CODE, {
+      headers: { authorization: authHeader },
+      code,
     });
   }
 

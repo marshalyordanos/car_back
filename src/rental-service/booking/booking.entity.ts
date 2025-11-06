@@ -7,21 +7,43 @@ import {
   IsOptional,
   IsEnum,
   IsArray,
+  IsEmail,
 } from 'class-validator';
 import { BookingStatus, PaymentMethod } from '@prisma/client';
 import { InspectionType } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateBookingDto {
+  @ApiProperty({ description: 'First Name' })
+  @IsOptional({ message: 'First Name is required' })
+  @IsString({ message: 'First Name must be a string' })
+  firstName?: string;
+
+  @ApiProperty({ description: 'Last Name' })
+  @IsOptional({ message: 'Last Name is required' })
+  @IsString({ message: 'Last Name must be a string' })
+  lastName?: string;
+
+  @ApiProperty({ description: 'Email' })
+  @IsOptional({ message: 'Email is required' })
+  @IsEmail({}, { message: 'Email must be valid' })
+  email?: string;
+
+  @ApiProperty({ description: 'Phone number' })
+  @IsOptional({ message: 'Phone is required' })
+  @IsString({ message: 'Phone must be a string' })
+  phone?: string;
+
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   carId: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  guestId: string;
+  guestId?: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -39,16 +61,19 @@ export class CreateBookingDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
+  @Type(() => Boolean) // 👈 auto-convert "true"/"false" to boolean
   withDriver?: boolean;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number) // 👈 convert "9.021" to number
   pickupLat: number;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number) // 👈 convert "9.021" to number
   pickupLng: number;
 
   @ApiProperty()
@@ -59,17 +84,27 @@ export class CreateBookingDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number) // 👈 convert "9.021" to number
   dropoffLat: number;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number) // 👈 convert "9.021" to number
   dropoffLng: number;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   dropoffName: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  driverLicenseFile?: Express.Multer.File;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  nationalIdFile?: Express.Multer.File;
 }
 
 export class UpdateBookingDto {
