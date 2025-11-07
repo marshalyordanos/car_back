@@ -1,6 +1,8 @@
 import {
   IsBoolean,
+  IsDate,
   IsEmail,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -132,6 +134,51 @@ export class HostProfileDto {
   earnings?: number;
 }
 
+export class DashboardSummaryDto {
+  @ApiPropertyOptional({
+    description: 'Type of summary data to fetch',
+    enum: [
+      'user',
+      'car',
+      'dispute',
+      'payment',
+      'booking',
+      'total',
+      'latestBookings',
+      'graph',
+    ],
+  })
+  @IsOptional()
+  @IsIn([
+    'user',
+    'car',
+    'dispute',
+    'payment',
+    'booking',
+    'total',
+    'latestBookings',
+    'graph',
+  ])
+  entity?:
+    | 'user'
+    | 'car'
+    | 'dispute'
+    | 'payment'
+    | 'booking'
+    | 'total'
+    | 'latestBookings'
+    | 'graph';
+
+  @ApiPropertyOptional({ description: 'Start date for filtering data' })
+  @IsOptional()
+  @IsDate()
+  startDate?: Date;
+
+  @ApiPropertyOptional({ description: 'End date for filtering data' })
+  @IsOptional()
+  @IsDate()
+  endDate?: Date;
+}
 export class HostVerifyDto {
   @ApiProperty()
   @IsBoolean()

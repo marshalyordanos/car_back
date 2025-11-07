@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import {
   CreateHostDto,
+  DashboardSummaryDto,
   HostProfileDto,
   UserCreteDto,
   UserDto,
@@ -214,7 +215,23 @@ export class UserUseCasesImp implements UserUsecase {
     }
   }
 
-  async getFullDashboard() {
-    return this.userRepo.getDashboardSummary();
+  async getFullDashboard(data: DashboardSummaryDto, userId: string) {
+    const role = await this.userRepo.findRoleByUserId(userId);
+
+    let id: any;
+    if (!role) {
+      throw new RpcException('RENTAL role is not found!');
+    }
+    if (role.name == 'HOST') {
+      id = userId;
+    } else {
+      id = null;
+    }
+    return this.userRepo.getDashboardSummary(
+      data.entity,
+      data.startDate,
+      data.endDate,
+      id,
+    );
   }
 }

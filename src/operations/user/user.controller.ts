@@ -4,6 +4,7 @@ import { PATTERNS } from '../../contracts';
 import { UserUseCasesImp } from './user.usecase.impl';
 import {
   ChangeRoleDto,
+  DashboardSummaryDto,
   HostProfileDto,
   HostVerifyDto,
   IsActiveDto,
@@ -23,9 +24,12 @@ export class UserMessageController {
   constructor(private readonly usecases: UserUseCasesImp) {}
 
   @MessagePattern(PATTERNS.DASHBOARD_SUMMARY)
-  async getSummary() {
+  async getSummary(@Payload() dto: { data: DashboardSummaryDto; user: any }) {
     try {
-      const summary = await this.usecases.getFullDashboard();
+      const summary = await this.usecases.getFullDashboard(
+        dto.data,
+        dto.user.sub,
+      );
       return IResponse.success('Dashboard summary fetched', summary);
     } catch (error) {
       handleCatch(error);
