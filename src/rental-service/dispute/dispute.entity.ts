@@ -40,10 +40,10 @@ export class CreateDisputeDto {
   @IsNotEmpty()
   reason: string;
 
-  @ApiPropertyOptional({ type: [String] })
-  @IsArray()
-  @IsOptional()
-  photos?: string[]; // URLs
+  // @ApiPropertyOptional({ type: [String] })
+  // @IsArray()
+  // @IsOptional()
+  // photos?: string[]; // URLs
 }
 
 export class DisputeResolveDto {

@@ -131,7 +131,7 @@ export class DisputeRepository {
 
       // 2) place payment on hold (if payment exists)
       if (payload.paymentId) {
-        await tx.payment.update({
+        const py = await tx.payment.update({
           where: { id: payload.paymentId },
           data: { status: 'ON_HOLD' }, // use PaymentStatus.ON_HOLD
         });
@@ -141,7 +141,7 @@ export class DisputeRepository {
           data: {
             paymentId: payload.paymentId,
             type: 'HOLD', // TransactionType.HOLD
-            amount: 0, // amount 0 for hold record (adjust if you want to store held amount)
+            amount: py.amount, // amount 0 for hold record (adjust if you want to store held amount)
             status: 'PENDING',
           },
         });
@@ -153,7 +153,7 @@ export class DisputeRepository {
           type: NotificationType.DISPUTE,
           title: 'Dispute Created',
           message: `Your dispute has been successfully submitted and is under review.`,
-          paymentId: dispute.id || null,
+          disputeId: dispute.id || null,
         },
       });
 
@@ -244,7 +244,7 @@ export class DisputeRepository {
             type: NotificationType.DISPUTE,
             title: 'Dispute Resolved',
             message: `Your dispute has been resolved by the admin.`,
-            paymentId: dispute.id || null,
+            disputeId: dispute.id || null,
           },
         });
 
@@ -312,7 +312,7 @@ export class DisputeRepository {
             type: NotificationType.DISPUTE,
             title: 'Dispute Rejected',
             message: `Your dispute has been rejected by the admin.`,
-            paymentId: dispute.id || null,
+            disputeId: dispute.id || null,
           },
         });
         await this.notifyUser(

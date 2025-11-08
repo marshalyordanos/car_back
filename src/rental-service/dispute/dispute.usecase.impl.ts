@@ -61,7 +61,7 @@ export class DisputeUseCasesImpl {
       paymentId: dto.paymentId ?? booking.payment?.id,
       userId: dto.userId,
       reason: dto.reason,
-      photos: dto.photos ?? [],
+      // photos: dto.photos ?? [],
       status: 'OPEN',
     };
 
