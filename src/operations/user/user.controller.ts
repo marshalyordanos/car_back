@@ -36,6 +36,7 @@ export class UserMessageController {
       handleCatch(error);
     }
   }
+
   @Public()
   @MessagePattern(PATTERNS.CREATE_HOST_USER)
   async creatHost(@Payload() dto: any) {
@@ -48,6 +49,7 @@ export class UserMessageController {
   }
 
   // @Public()
+
   @MessagePattern(PATTERNS.USER_FIND_BY_ID)
   async findById(@Payload() payload: { id: string }) {
     try {
@@ -59,6 +61,8 @@ export class UserMessageController {
   }
 
   // @Public()
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.READ)
   @MessagePattern(PATTERNS.USER_FIND_ALL)
   async findAll(@Payload() data: { query: ListQueryDto }) {
     try {
@@ -77,6 +81,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.READ)
   @MessagePattern(PATTERNS.CUSTOMER_FIND_ALL)
   async findAllCustomers(@Payload() data: { query: ListQueryDto }) {
     try {
@@ -95,6 +101,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.USER_CREATE)
   async create(@Payload() payload: { data: UserCreteDto }) {
     try {
@@ -105,6 +113,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.READ)
   @MessagePattern(PATTERNS.HOST_FIND_ALL)
   async findAllHosts(@Payload() data: { query: ListQueryDto }) {
     try {
@@ -123,6 +133,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.USER_UPDATE)
   async update(@Payload() payload: { id: string; data: Partial<UserDto> }) {
     try {
@@ -134,6 +146,7 @@ export class UserMessageController {
   }
 
   // @Public()
+
   @MessagePattern(PATTERNS.USER_FIND_ME_BY_ID)
   async findMeById(@Payload() payload: { id: string; user: any }) {
     try {
@@ -167,7 +180,7 @@ export class UserMessageController {
   }
 
   @UseGuards(permissionGuard.PermissionGuard)
-  @CheckPermission('HOST_PROFILE', PermissionActions.UPDATE)
+  @CheckPermission('USER', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.USER_UPDATE_HOST_PROFILE)
   async updateHostProfile(
     @Payload() payload: { id: string; data: HostProfileDto },
@@ -183,6 +196,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.USER_VERIFY_HOST_PROFILE)
   async verifyHostProfile(
     @Payload() payload: { id: string; data: HostVerifyDto },
@@ -198,6 +213,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ACTIVE_DISACTIVE_USER)
   async activeOrDiactiveUser(
     @Payload() payload: { id: string; data: IsActiveDto },
@@ -213,6 +230,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('USER', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.USER_DELETE)
   async deleteUser(@Payload() payload: { id: string }) {
     try {
@@ -278,6 +297,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('PAYOUT', PermissionActions.READ)
   @MessagePattern(PATTERNS.PAYOUT_FIND_BY_HOST)
   async findByHost(@Payload() data: { user: any; query: ListQueryDto }) {
     try {
@@ -295,6 +316,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('PAYOUT', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.PAYOUT_REQUEST_WITHDRAWAL)
   async requestWithdrawal(
     @Payload()
@@ -328,6 +351,8 @@ export class UserMessageController {
     }
   }
 
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('PAYOUT', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.PAYOUT_ADMIN_UPDATE_STATUS)
   async updateStatusForAdmin(
     @Payload()

@@ -8,6 +8,9 @@ import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { ListQueryDto } from 'src/common/query/query.dto';
 import { Public } from '../../common/decorator/public.decorator';
+import { PermissionGuard } from 'src/common/permission.guard';
+import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
+import { PermissionActions } from 'src/contracts/permission-actions.enum';
 
 @Controller()
 export class CarModelMessageController {
@@ -39,6 +42,8 @@ export class CarModelMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR MODEL', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.CAR_MODEL_CREATE)
   async create(@Payload() payload: { data: CarModelDto }) {
     try {
@@ -49,6 +54,8 @@ export class CarModelMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR MODEL', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CAR_MODEL_UPDATE)
   async update(@Payload() payload: { id: string; data: CarModelUpdateDto }) {
     try {
@@ -62,6 +69,8 @@ export class CarModelMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR MODEL', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.CAR_MODEL_DELETE)
   async delete(@Payload() payload: { id: string }) {
     try {

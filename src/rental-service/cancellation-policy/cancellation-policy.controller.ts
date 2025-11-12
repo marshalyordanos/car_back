@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CancellationPolicyUseCasesImp } from './cancellation-policy.usecase.impl';
 import {
@@ -10,11 +10,16 @@ import { IResponse } from '../../common/types';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { PATTERNS } from '../../contracts';
 import { Public } from '../../common/decorator/public.decorator';
+import { PermissionGuard } from 'src/common/permission.guard';
+import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
+import { PermissionActions } from 'src/contracts/permission-actions.enum';
 
 @Controller()
 export class CancellationPolicyMessageController {
   constructor(private readonly usecases: CancellationPolicyUseCasesImp) {}
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CANCELLATION POLICY', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_CREATE)
   async create(@Payload() payload: { data: CancellationPolicyDto }) {
     try {
@@ -27,14 +32,17 @@ export class CancellationPolicyMessageController {
 
   @Public()
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_FIND_ALL)
-  async findAll(@Payload() payload: {query:ListQueryDto}) {
+  async findAll(@Payload() payload: { query: ListQueryDto }) {
     try {
-      console.log("----------===========")
+      console.log('----------===========');
       const result = await this.usecases.getAllPolicies(payload.query);
-      return IResponse.success('Policies fetched',  result.models,
-        result.pagination,);
+      return IResponse.success(
+        'Policies fetched',
+        result.models,
+        result.pagination,
+      );
     } catch (error) {
-      console.log("--------------",error)
+      console.log('--------------', error);
       handleCatch(error);
     }
   }
@@ -49,6 +57,8 @@ export class CancellationPolicyMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CANCELLATION POLICY', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_UPDATE)
   async update(
     @Payload() payload: { id: string; data: CancellationPolicyUpdateDto },
@@ -61,6 +71,8 @@ export class CancellationPolicyMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CANCELLATION POLICY', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.CANCELLATION_POLICY_DELETE)
   async delete(@Payload() payload: { id: string }) {
     try {

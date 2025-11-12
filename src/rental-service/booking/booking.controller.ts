@@ -1,5 +1,5 @@
 // booking.message.controller.ts
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PATTERNS } from '../../contracts';
 import { BookingUseCasesImp } from './booking.usecase.impl';
@@ -13,11 +13,16 @@ import {
 } from './booking.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { Public } from '../../common/decorator/public.decorator';
+import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
+import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import { PermissionGuard } from 'src/common/permission.guard';
 
 @Controller()
 export class BookingMessageController {
   constructor(private readonly usecases: BookingUseCasesImp) {}
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('BOOKIGN', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.BOOKING_CREATE)
   async createBooking(@Payload() payload: any) {
     try {
@@ -58,6 +63,8 @@ export class BookingMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('BOOKIGN', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.BOOKING_UPDATE)
   async updateBooking(@Payload() payload: { id: string; data: any }) {
     try {
@@ -68,6 +75,8 @@ export class BookingMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('BOOKIGN', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.BOOKING_DELETE)
   async deleteBooking(@Payload() payload: { id: string }) {
     try {
@@ -184,6 +193,8 @@ export class BookingMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('BOOKIGN', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.BOOKING_CANCEL_BY_ADMIN)
   async cancelByAdmin(
     @Payload() payload: { id: string; dto: BookingChangeStatusDto },

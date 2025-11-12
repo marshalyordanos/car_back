@@ -23,7 +23,7 @@ export class AccessControlMessageController {
   // ----------- ROLES -----------
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('Role', PermissionActions.READ)
+  @CheckPermission('RBAC', PermissionActions.READ)
   @MessagePattern(PATTERNS.ROLE_FIND_BY_ID)
   async findRoleById(@Payload() payload: { id: string }) {
     try {
@@ -35,7 +35,7 @@ export class AccessControlMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('Role', PermissionActions.READ)
+  @CheckPermission('RBAC', PermissionActions.READ)
   @MessagePattern(PATTERNS.ROLE_FIND_ALL)
   async findAllRoles(@Payload() payload: any) {
     console.log(
@@ -55,7 +55,7 @@ export class AccessControlMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('Role', PermissionActions.CREATE)
+  @CheckPermission('RBAC', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.ROLE_CREATE)
   async createRole(@Payload() payload: { data: Partial<RoleDto> }) {
     try {
@@ -71,7 +71,7 @@ export class AccessControlMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('Role', PermissionActions.UPDATE)
+  @CheckPermission('RBAC', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ROLE_UPDATE)
   async updateRole(@Payload() payload: { id: string; data: Partial<RoleDto> }) {
     try {
@@ -83,7 +83,7 @@ export class AccessControlMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('Role', PermissionActions.DELETE)
+  @CheckPermission('RBAC', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.ROLE_DELETE)
   async deleteRole(@Payload() payload: { id: string }) {
     try {
@@ -96,6 +96,8 @@ export class AccessControlMessageController {
 
   // ----------- PERMISSIONS -----------
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.READ)
   @MessagePattern(PATTERNS.PERMISSION_FIND_BY_ID)
   async findPermissionById(@Payload() payload: { id: string }) {
     try {
@@ -106,6 +108,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.READ)
   @MessagePattern(PATTERNS.PERMISSION_FIND_ALL)
   async findAllPermissions(@Payload() payload: any) {
     try {
@@ -125,6 +129,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.PERMISSION_CREATE)
   async createPermission(@Payload() payload: { data: PermissionDto }) {
     try {
@@ -135,6 +141,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.PERMISSION_UPDATE)
   async updatePermission(
     @Payload() payload: { id: string; data: Partial<PermissionDto> },
@@ -150,6 +158,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.PERMISSION_DELETE)
   async deletePermission(@Payload() payload: { id: string }) {
     try {
@@ -162,6 +172,8 @@ export class AccessControlMessageController {
 
   // ----------- ROLE ↔ PERMISSION -----------
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.ROLE_ASSIGN_PERMISSIONS)
   async assignPermissionsToRole(
     @Payload() payload: { data: ChangeRolePermissionDto },
@@ -177,6 +189,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ROLE_UPDATE_PERMISSION)
   async updatePermissionFromRole(
     @Payload()
@@ -199,6 +213,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ROLE_REMOVE_PERMISSION)
   async removePermissionFromRole(
     @Payload()
@@ -221,6 +237,8 @@ export class AccessControlMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('RBAC', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.ROLE_ASSIGN_USER)
   async assignUserRole(@Payload() payload: { data: AssignUserRoleDto }) {
     try {

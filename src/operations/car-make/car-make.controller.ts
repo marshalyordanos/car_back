@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CarMakeUseCasesImp } from './car-make.usecase.impl';
 import { CarMakeDto, CarMakeUpdateDto } from './car-make.entity';
@@ -6,6 +6,9 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { Public } from '../../common/decorator/public.decorator';
+import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
+import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import { PermissionGuard } from 'src/common/permission.guard';
 
 @Controller()
 export class CarMakeMessageController {
@@ -40,6 +43,8 @@ export class CarMakeMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR BRAND', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.CAR_MAKE_CREATE)
   async create(@Payload() payload: { data: CarMakeDto }) {
     try {
@@ -50,6 +55,8 @@ export class CarMakeMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR BRAND', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CAR_MAKE_UPDATE)
   async update(@Payload() payload: { id: string; data: CarMakeUpdateDto }) {
     try {
@@ -60,6 +67,8 @@ export class CarMakeMessageController {
     }
   }
 
+  @UseGuards(PermissionGuard)
+  @CheckPermission('CAR BRAND', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.CAR_MAKE_DELETE)
   async delete(@Payload() payload: { id: string }) {
     try {

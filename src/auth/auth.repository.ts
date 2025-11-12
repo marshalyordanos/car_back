@@ -20,7 +20,11 @@ export class AuthRepository {
   async findByPhone(phone: string) {
     return this.prisma.user.findUnique({
       where: { phone },
-      include: { role: true, guestProfile: true, hostProfile: true },
+      include: {
+        role: { include: { rolePermissions: true } },
+        guestProfile: true,
+        hostProfile: true,
+      },
     });
   }
 
