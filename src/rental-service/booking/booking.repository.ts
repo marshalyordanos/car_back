@@ -180,7 +180,7 @@ export class BookingRepository {
           chapaData,
           {
             headers: {
-              Authorization: `Bearer CHASECK_TEST-RPLx9ri3mFRbv8ZnU1KeBRRSLVgRGgK2`,
+              Authorization: `Bearer CHASECK-8sPVz2pL6LMiq2S76nk2NRdOX5ZfpxcG`, //secret
               'Content-Type': 'application/json',
             },
           },
@@ -350,7 +350,7 @@ export class BookingRepository {
   }
 
   async verifyChapaTransaction(txRef: string) {
-    const chapaSecretKey = 'CHASECK_TEST-RPLx9ri3mFRbv8ZnU1KeBRRSLVgRGgK2';
+    const chapaSecretKey = 'CHASECK-8sPVz2pL6LMiq2S76nk2NRdOX5ZfpxcG';
 
     const verifyUrl = `https://api.chapa.co/v1/transaction/verify/${txRef}`;
 
