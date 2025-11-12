@@ -69,18 +69,24 @@ export class AccessControlUsecaseImpl {
   }
 
   async createPermission(data: Partial<PermissionDto>): Promise<Permission> {
-    return this.repo.createPermission(data);
+    throw new RpcException(`You can not perform this operation!`);
+
+    // return this.repo.createPermission(data);
   }
 
   async updatePermission(
     id: string,
     data: Partial<PermissionDto>,
   ): Promise<Permission> {
-    return this.repo.updatePermission(id, data);
+    throw new RpcException(`You can not perform this operation!`);
+
+    // return this.repo.updatePermission(id, data);
   }
 
   async deletePermission(id: string): Promise<Permission> {
-    return this.repo.deletePermission(id);
+    throw new RpcException(`You can not perform this operation!`);
+
+    // return this.repo.deletePermission(id);
   }
 
   // ---------- ROLE ↔ PERMISSION ----------
