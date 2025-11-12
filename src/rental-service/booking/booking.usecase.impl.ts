@@ -87,6 +87,13 @@ export class BookingUseCasesImp {
     return this.repo.handleChapaCallback(data);
   }
 
+  async pay(bookingId: string, phone: string) {
+    const booking = await this.repo.findBookingWithPayment(bookingId);
+    if (!booking || !booking.payment) {
+      throw new RpcException('Booking is not found!');
+    }
+    return this.repo.pay(phone, booking.payment);
+  }
   async updateBooking(id: string, dto: UpdateBookingDto) {
     return this.repo.updateBooking(id, dto);
   }

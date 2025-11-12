@@ -107,6 +107,7 @@ export const PATTERNS = {
   BOOKING_GET_ALL: 'booking.getAll',
   BOOKING_GET_ALL_MY: 'booking.getAll.my',
   BOOKING_CREATE_GUEST: 'booking.create.guest',
+  BOOKING_PAY: 'booking.pay',
 
   BOOKING_CANCEL_BY_GUEST: 'booking.cancelByGuest',
   BOOKING_CONFIRM_BY_HOST: 'booking.confirmByHost',

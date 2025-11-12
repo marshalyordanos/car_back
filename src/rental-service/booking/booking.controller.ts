@@ -35,6 +35,20 @@ export class BookingMessageController {
   }
 
   @Public()
+  @MessagePattern(PATTERNS.BOOKING_PAY)
+  async pay(@Payload() payload: any) {
+    try {
+      const res = await this.usecases.createBooking(
+        payload.bookingId,
+        payload.phone,
+      );
+      return IResponse.success('Booking created successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @Public()
   @MessagePattern(PATTERNS.CHAPA_CALL_BACK)
   async chapaCallBack(@Payload() payload: any) {
     try {

@@ -182,6 +182,15 @@ export class BookingGatewayController {
     });
   }
 
+  @Post('pay')
+  async pay(@Req() req, @Body() dto: { phone: string; bookingId: string }) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.client.send(PATTERNS.BOOKING_PAY, {
+      headers: { authorization: authHeader },
+      body: dto,
+    });
+  }
+
   @All('chapa-callback')
   async chapaCallback(@Req() req, @Body() dto: any) {
     const authHeader = req.headers['authorization'] || null;

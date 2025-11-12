@@ -10,10 +10,12 @@ import {
 } from './booking.entity';
 import {
   AdminAction,
+  Booking,
   BookingInspection,
   BookingStatus,
   HostPenalty,
   NotificationType,
+  Payment,
   PaymentStatus,
   PaymentTransaction,
   Prisma,
@@ -125,45 +127,52 @@ export class BookingRepository {
             { endDate: { gte: dto.startDate } },
           ],
         },
+        include: { payment: true },
       });
 
       console.log('000000000000000000000003:');
 
       if (conflict) {
+        if (conflict.payment?.status == 'PENDING') {
+        }
         throw new RpcException(
           'This car is already booked or pending in that period.',
         );
       }
 
-      const booking = await tx.booking.create({
-        data: {
-          carId: dto.carId,
-          guestId: dto.guestId!,
-          hostId: dto.hostId,
-          startDate: dto.startDate,
-          endDate: dto.endDate,
-          totalPrice,
-          withDriver: dto.withDriver ?? false,
-          pickupLocation,
-          dropoffLocation,
-          trackingCode,
-        },
-      });
+      let payment;
+      let booking;
+      if (!conflict) {
+        booking = await tx.booking.create({
+          data: {
+            carId: dto.carId,
+            guestId: dto.guestId!,
+            hostId: dto.hostId,
+            startDate: dto.startDate,
+            endDate: dto.endDate,
+            totalPrice,
+            withDriver: dto.withDriver ?? false,
+            pickupLocation,
+            dropoffLocation,
+            trackingCode,
+          },
+        });
 
-      const payment = await tx.payment.create({
-        data: {
-          bookingId: booking.id,
-          payerId: dto.guestId,
-          recipientId: dto.hostId,
-          amount: totalPrice,
-          currency: 'ETB',
-          method: null,
-          status: 'PENDING',
-          type: 'GUEST_TO_PLATFORM',
-          platformFee,
-          hostEarnings,
-        },
-      });
+        payment = await tx.payment.create({
+          data: {
+            bookingId: booking.id,
+            payerId: dto.guestId,
+            recipientId: dto.hostId,
+            amount: totalPrice,
+            currency: 'ETB',
+            method: null,
+            status: 'PENDING',
+            type: 'GUEST_TO_PLATFORM',
+            platformFee,
+            hostEarnings,
+          },
+        });
+      }
 
       // 6️⃣ If payment method is CHAPA → initialize within same transaction
       const txRef = cuid();
@@ -262,6 +271,62 @@ export class BookingRepository {
     // 2️⃣ Notify user AFTER transaction success
   }
 
+  async pay(phone: string, payment: Payment) {
+    // 1️⃣ Perform booking + payment creation in a transaction
+    return await this.prisma.$transaction(async (tx) => {
+      const chapaData = {
+        amount: payment.amount,
+        currency: 'ETB',
+        tx_ref: payment.transactionId,
+        callback_url: `https://newspaper-jewelry-goals-slim.trycloudflare.com/bookings/chapa-callback`,
+        'customization[title]': 'Car Rental Booking',
+        'customization[description]': 'Payment for car booking',
+        phone_number: phone,
+        return_url: `http://192.168.43.111:3000/bookings/confirmation`,
+      };
+
+      try {
+        const chapaResponse = await axios.post(
+          'https://api.chapa.co/v1/transaction/initialize',
+          chapaData,
+          {
+            headers: {
+              Authorization: `Bearer CHASECK-8sPVz2pL6LMiq2S76nk2NRdOX5ZfpxcG`, //secret
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+
+        console.log('000000000000000000000005:');
+
+        const data = chapaResponse.data;
+
+        if (data?.status !== 'success') {
+          throw new RpcException('Chapa initialization failed');
+        }
+
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            transactionId: payment.transactionId,
+            status: 'PENDING',
+          },
+        });
+
+        // await sendSms(`${trackingCode}`, '+251986680094');
+
+        return {
+          paymentMethod: 'CHAPA',
+          chapaCheckoutUrl: data?.data?.checkout_url,
+        };
+      } catch (err: any) {
+        console.error('Chapa error:', err.response?.data || err.message);
+        throw new RpcException('Failed to initialize Chapa payment');
+      }
+    });
+
+    // 2️⃣ Notify user AFTER transaction success
+  }
   async handleChapaCallback(data: any) {
     // 1️⃣ Validate body
     console.log(
