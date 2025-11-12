@@ -18,6 +18,7 @@ import * as permissionGuard from '../../common/permission.guard';
 import { CheckPermission } from '../../common/decorator/check-permission.decorator';
 import { PermissionActions } from '../../contracts/permission-actions.enum';
 import { ListQueryDto } from 'src/common/query/query.dto';
+import { BankType } from '@prisma/client';
 
 @Controller()
 export class UserMessageController {
@@ -272,6 +273,80 @@ export class UserMessageController {
     try {
       const res = await this.usecases.getWishlist(payload.user.sub);
       return IResponse.success(' wish list fetched successfully', res);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.PAYOUT_FIND_BY_HOST)
+  async findByHost(@Payload() data: { user: any; query: ListQueryDto }) {
+    try {
+      const res = await this.usecases.getPayoutsByHost(
+        data.user?.sub,
+        data.query,
+      );
+      return IResponse.success(
+        'Payouts fetched successfully',
+        res.models,
+        res.pagination,
+      );
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.PAYOUT_REQUEST_WITHDRAWAL)
+  async requestWithdrawal(
+    @Payload()
+    data: {
+      user: any;
+      amount: number;
+      accountNumber: string;
+      bankType: BankType;
+    },
+  ) {
+    try {
+      const payout = await this.usecases.requestWithdrawal(
+        data.user.sub,
+        data.amount,
+        data.accountNumber,
+        data.bankType,
+      );
+      return IResponse.success('Payout request submitted', payout);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.PAYOUT_CHECK_STATUS)
+  async checkStatus(@Payload() data: { payoutId: string }) {
+    try {
+      const payout = await this.usecases.checkStatusForAdmin(data.payoutId);
+      return IResponse.success('Payout status fetched', payout);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @MessagePattern(PATTERNS.PAYOUT_ADMIN_UPDATE_STATUS)
+  async updateStatusForAdmin(
+    @Payload()
+    data: {
+      user: any;
+      payoutId: string;
+      status: 'APPROVED' | 'REJECTED';
+      reason?: string;
+    },
+  ) {
+    try {
+      const result = await this.usecases.updateStatusForAdmin(
+        data.payoutId,
+        data.user.sub,
+        data.status,
+        data.reason,
+      );
+
+      return IResponse.success('Payout status updated successfully', result);
     } catch (error) {
       handleCatch(error);
     }

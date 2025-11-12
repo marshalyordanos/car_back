@@ -34,6 +34,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
 import { ListQueryDto } from '../common/query/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { BankType } from '@prisma/client';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -217,6 +218,53 @@ export class UserGatewayController {
       headers: { authorization: authHeader },
       id,
       data: dto,
+    });
+  }
+
+  @Get('host/payout')
+  async getHostPayouts(@Query() query: ListQueryDto, @Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.usersClient.send(PATTERNS.PAYOUT_FIND_BY_HOST, {
+      headers: { authorization: authHeader },
+      query,
+    });
+  }
+
+  @Post('host/withdraw')
+  async requestWithdrawal(
+    @Req() req,
+    @Body() body: { amount: number; accountNumber: string; bankType: BankType },
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.usersClient.send(PATTERNS.PAYOUT_REQUEST_WITHDRAWAL, {
+      headers: { authorization: authHeader },
+      amount: body.amount,
+      accountNumber: body.accountNumber,
+      bankType: body.bankType,
+    });
+  }
+
+  @Get('host/:payoutId/status')
+  async checkStatus(@Param('payoutId') payoutId: string, @Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+    return this.usersClient.send(PATTERNS.PAYOUT_CHECK_STATUS, {
+      headers: { authorization: authHeader },
+      payoutId,
+    });
+  }
+  @Patch('host/:payoutId/status')
+  async updateStatus(
+    @Param('payoutId') payoutId: string,
+    @Body() body: { status: 'APPROVED' | 'REJECTED'; reason?: string },
+    @Req() req,
+  ) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.PAYOUT_ADMIN_UPDATE_STATUS, {
+      headers: { authorization: authHeader },
+      payoutId,
+      status: body.status,
+      reason: body.reason,
     });
   }
 

@@ -113,6 +113,7 @@ model User {
   approvedInspections  BookingInspection[] @relation("ApprovedInspections")
 
   hostPenalties HostPenalty[] // back-relation for HostPenalty.host
+  payouts       Payout[]
 }
 
 model RefreshToken {
@@ -564,6 +565,53 @@ model HostPenalty {
   amount    Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Payout {
+  id            String   @id @default(cuid())
+  host          User     @relation(fields: [hostId], references: [id])
+  hostId        String
+  amount        Float
+  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  bankType      BankType
+  accountNumber String
+  reason        String?
+  transactionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum BankType {
+  TELEBIRR
+  ABYSSINIA
+  AWASH
+  COMMERCIAL_BANK_OF_ETHIOPIA
+  DASHEN
+  NIB
+  ZEMEN
+  ABAY
+  WEGAGEN
+  UNITED
+  ADDIS_INTERNATIONAL
+  BERHAN
+  COOPERATIVE_BANK_OF_OROMIA
+  ENAT
+  HIWOT
+  LION
+  BUNA
+  DEBUB_GLOBAL
+  OROMIA_INTERNATIONAL
+  AMHARA
+  HIJRA
+  SIINQEE
+  SHABELLE
+  GADA
+  GEBEYA
+  TSEDEY
+  RAYAN
+  TSEDAY
+  LILA_ABBISINIA
+  OTHER
 }
 
 enum InspectionType {

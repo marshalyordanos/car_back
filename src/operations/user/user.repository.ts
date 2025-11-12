@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HostProfileDto, UserCreteDto, UserUpdateDto } from './user.entity';
 import {
+  BankType,
   BookingStatus,
   HostProfile,
   PaymentStatus,
@@ -239,265 +240,6 @@ export class UserRepository {
 
     return user?.role || null;
   }
-
-  // async getDashboardSummary(
-  //   entity?:
-  //     | 'user'
-  //     | 'car'
-  //     | 'dispute'
-  //     | 'payment'
-  //     | 'booking'
-  //     | 'total'
-  //     | 'latestBookings'
-  //     | 'graph',
-
-  //   startDate?: Date,
-  //   endDate?: Date,
-  //   hostId?: string,
-  //   year?: number,
-
-  // ) {
-  //   const dateFilter: any = {};
-  //   if (startDate) dateFilter.gte = startDate;
-  //   if (endDate) dateFilter.lte = endDate;
-
-  //   const bookingWhere: any = {};
-  //   const paymentWhere: any = {};
-  //   const userWhere: any = {};
-  //   const carWhere: any = {};
-
-  //   if (startDate || endDate) {
-  //     bookingWhere.createdAt = dateFilter;
-  //     paymentWhere.createdAt = dateFilter;
-  //     carWhere.createdAt = dateFilter;
-  //   }
-
-  //   if (hostId) {
-  //     bookingWhere.hostId = hostId;
-  //     paymentWhere.recipientId = hostId;
-  //     carWhere.hostId = hostId;
-  //   }
-
-  //   // ---- TOTAL TYPE ----
-  //   if (entity === 'total') {
-  //     const [totalBookings, totalRevenue, totalUsers, activeHosts] =
-  //       await Promise.all([
-  //         this.prisma.booking.count({ where: bookingWhere }),
-  //         this.prisma.payment.aggregate({
-  //           _sum: { amount: true },
-  //           where: paymentWhere,
-  //         }),
-  //         this.prisma.user.count(),
-  //         this.prisma.user.count({ where: { role: { name: 'HOST' } } }),
-  //       ]);
-
-  //     return {
-  //       totalBookings: totalBookings || 0,
-  //       totalRevenue: totalRevenue._sum.amount || 0,
-  //       totalUsers: totalUsers || 0,
-  //       activeHosts: activeHosts || 0,
-  //     };
-  //   }
-
-  //   // ---- LATEST BOOKINGS TYPE ----
-  //   if (entity === 'latestBookings') {
-  //     const latestBookingList = await this.prisma.booking.findMany({
-  //       where: bookingWhere,
-  //       orderBy: { createdAt: 'desc' },
-  //       take: 10,
-  //       select: {
-  //         id: true,
-  //         guest: { select: { firstName: true, lastName: true, id: true } },
-  //         host: { select: { firstName: true, lastName: true, id: true } },
-
-  //         car: {
-  //           select: {
-  //             make: { select: { name: true } },
-  //             model: { select: { name: true } },
-  //           },
-  //         },
-  //         totalPrice: true,
-  //         startDate: true,
-  //         endDate: true,
-  //         status: true,
-  //       },
-  //     });
-
-  //     return latestBookingList;
-  //   }
-
-  //     // ---- GRAPH TYPE ----
-  //     if (entity === 'graph') {
-  //       // Determine the year: use `year` param or current year
-  //       const graphYear = year || new Date().getFullYear();
-  //       const yearStart = new Date(graphYear, 0, 1);
-  //       const yearEnd = new Date(graphYear, 11, 31, 23, 59, 59);
-
-  //       const graphWhere = {
-  //         ...paymentWhere,
-  //         createdAt: { gte: yearStart, lte: yearEnd },
-  //       };
-
-  //       // Get revenue grouped by createdAt
-  //       const revenueData = await this.prisma.payment.groupBy({
-  //         by: ['createdAt'],
-  //         where: graphWhere,
-  //         _sum: { amount: true },
-  //       });
-
-  //       // Initialize all months to 0
-  //       const monthlyRevenue: Record<string, number> = {};
-  //       for (let month = 0; month < 12; month++) {
-  //         const key = `${graphYear}-${(month + 1).toString().padStart(2, '0')}`;
-  //         monthlyRevenue[key] = 0;
-  //       }
-
-  //       // Populate with actual revenue
-  //       revenueData.forEach((r) => {
-  //         const date = new Date(r.createdAt);
-  //         const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1)
-  //           .toString()
-  //           .padStart(2, '0')}`;
-  //         monthlyRevenue[monthKey] += r._sum.amount || 0;
-  //       });
-
-  //       return monthlyRevenue;
-  //     }
-  //   // ---- OTHER ENTITIES ----
-  //   const summary: Record<string, any> = {};
-
-  //   // --- Booking summary ---
-  //   if (!entity || entity === 'booking') {
-  //     const bookingGroups = await this.prisma.booking.groupBy({
-  //       by: ['status'],
-  //       where: bookingWhere,
-  //       _count: { status: true },
-  //     });
-  //     summary.booking = {
-  //       totalBookings:
-  //         bookingGroups?.reduce((acc, b) => acc + b._count.status, 0) || 0,
-  //       pending:
-  //         bookingGroups?.find((b) => b.status === 'PENDING')?._count.status ||
-  //         0,
-  //       completed:
-  //         bookingGroups?.find((b) => b.status === 'COMPLETED')?._count.status ||
-  //         0,
-  //       cancelledByGuest:
-  //         bookingGroups?.find((b) => b.status === 'CANCELLED_BY_GUEST')?._count
-  //           .status || 0,
-  //       cancelledByHost:
-  //         bookingGroups?.find((b) => b.status === 'CANCELLED_BY_HOST')?._count
-  //           .status || 0,
-  //       cancelledByAdmin:
-  //         bookingGroups?.find((b) => b.status === 'CANCELLED_BY_ADMIN')?._count
-  //           .status || 0,
-  //     };
-  //   }
-
-  //   // --- Payment summary ---
-  //   if (!entity || entity === 'payment') {
-  //     const [paymentGroups, paymentTotals] = await Promise.all([
-  //       this.prisma.payment.groupBy({
-  //         by: ['status'],
-  //         where: paymentWhere,
-  //         _count: { status: true },
-  //       }),
-  //       this.prisma.payment.aggregate({
-  //         _sum: {
-  //           amount: true,
-  //           insuranceFee: true,
-  //           platformFee: true,
-  //           hostEarnings: true,
-  //         },
-  //         where: paymentWhere,
-  //       }),
-  //     ]);
-
-  //     summary.payment = {
-  //       totalPayments:
-  //         paymentGroups?.reduce((acc, p) => acc + p._count.status, 0) || 0,
-  //       pending:
-  //         paymentGroups?.find((p) => p.status === 'PENDING')?._count.status ||
-  //         0,
-  //       completed:
-  //         paymentGroups?.find((p) => p.status === 'COMPLETED')?._count.status ||
-  //         0,
-  //       failed:
-  //         paymentGroups?.find((p) => p.status === 'FAILED')?._count.status || 0,
-  //       refunded:
-  //         paymentGroups?.find((p) => p.status === 'REFUNDED')?._count.status ||
-  //         0,
-  //       totals: {
-  //         amount: paymentTotals._sum.amount || 0,
-  //         insuranceFee: paymentTotals._sum.insuranceFee || 0,
-  //         platformFee: paymentTotals._sum.platformFee || 0,
-  //         hostEarnings: paymentTotals._sum.hostEarnings || 0,
-  //       },
-  //     };
-  //   }
-
-  //   // --- Car summary ---
-  //   if (!entity || entity === 'car') {
-  //     const ecoGroups = await this.prisma.car.groupBy({
-  //       by: ['ecoFriendly'],
-  //       where: carWhere,
-  //       _count: { ecoFriendly: true },
-  //     });
-  //     const totalCars = await this.prisma.car.count({ where: carWhere });
-
-  //     summary.car = {
-  //       totalCars,
-  //       byEco: ecoGroups?.map((c) => ({
-  //         ecoFriendly: c.ecoFriendly,
-  //         count: c._count.ecoFriendly,
-  //       })),
-  //     };
-  //   }
-
-  //   // --- User summary ---
-  //   if (!entity || entity === 'user') {
-  //     const [totalUsers, guestCount, hostCount, adminCount] = await Promise.all(
-  //       [
-  //         this.prisma.user.count({ where: userWhere }),
-  //         this.prisma.user.count({ where: { role: { name: 'GUEST' } } }),
-  //         this.prisma.user.count({ where: { role: { name: 'HOST' } } }),
-  //         this.prisma.user.count({ where: { role: { name: 'ADMIN' } } }),
-  //       ],
-  //     );
-
-  //     summary.user = {
-  //       totalUsers,
-  //       totalGuests: guestCount,
-  //       totalHosts: hostCount,
-  //       totalAdmins: adminCount,
-  //     };
-  //   }
-
-  //   // --- Dispute summary ---
-  //   if (!entity || entity === 'dispute') {
-  //     const disputeGroups = await this.prisma.dispute.groupBy({
-  //       by: ['status'],
-  //       _count: { status: true },
-  //     });
-
-  //     const totalDisputes = disputeGroups.reduce(
-  //       (acc, d) => acc + d._count.status,
-  //       0,
-  //     );
-  //     summary.dispute = {
-  //       totalDisputes,
-  //       byStatus: disputeGroups.reduce(
-  //         (acc, d) => {
-  //           acc[d.status] = d._count.status;
-  //           return acc;
-  //         },
-  //         {} as Record<string, number>,
-  //       ),
-  //     };
-  //   }
-
-  //   return summary;
-  // }
 
   async getDashboardSummary(
     entity?:
@@ -762,6 +504,69 @@ export class UserRepository {
     }
 
     return summary;
+  }
+
+  async findByHost(hostId: string, query: queryDto.ListQueryDto) {
+    const feature = new PrismaQueryFeature({
+      search: query.search,
+      filter: query.filter,
+      sort: query.sort,
+      page: query.page,
+      pageSize: query.pageSize,
+      searchableFields: ['method', 'status', 'transactionId'],
+    });
+
+    const { where, skip, take, orderBy } = feature.getQuery();
+
+    const [models, total] = await Promise.all([
+      this.prisma.payout.findMany({
+        where: { ...where, hostId },
+        skip,
+        take,
+        orderBy,
+      }),
+      this.prisma.payout.count({ where: { ...where, hostId } }),
+    ]);
+
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
+  }
+
+  async create(
+    hostId: string,
+    amount: number,
+    accountNumber: string,
+    bankType: BankType,
+  ) {
+    return this.prisma.payout.create({
+      data: {
+        hostId,
+        amount,
+        accountNumber,
+        bankType: bankType,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  async findPayOutById(id: string) {
+    return this.prisma.payout.findUnique({ where: { id } });
+  }
+
+  async updateStatus(id: string, status: string, reason?: string) {
+    return this.prisma.payout.update({
+      where: { id },
+      data: { status, reason },
+    });
+  }
+
+  async updateHostEarnings(hostId: string, newEarnings: number) {
+    return this.prisma.hostProfile.update({
+      where: { userId: hostId },
+      data: { earnings: newEarnings },
+    });
   }
 }
 

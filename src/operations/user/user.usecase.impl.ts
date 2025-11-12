@@ -8,7 +8,7 @@ import {
   UserDto,
   UserUpdateDto,
 } from './user.entity';
-import { User } from '@prisma/client';
+import { BankType, User } from '@prisma/client';
 import { IPagination } from 'src/common/types';
 import { UserUsecase } from './user.usecase';
 import { RpcException } from '@nestjs/microservices';
@@ -233,5 +233,114 @@ export class UserUseCasesImp implements UserUsecase {
       data.endDate,
       id,
     );
+  }
+
+  async getPayoutsByHost(hostId: string, query: ListQueryDto) {
+    const user = await this.userRepo.findUserById(hostId);
+    if (!user || user.role?.name !== 'HOST') {
+      throw new RpcException('Invalid host ID or user is not a host');
+    }
+
+    return this.userRepo.findByHost(hostId, query);
+  }
+
+  async requestWithdrawal(
+    hostId: string,
+    amount: number,
+    accountNumber: string,
+    bankType: BankType,
+  ) {
+    // ✅ Verify host exists and has sufficient balance
+    const host = await this.userRepo.findUserById(hostId);
+    if (!host || !host.hostProfile?.isVerified) {
+      throw new RpcException('Host not found or not verified');
+    }
+
+    if (host.hostProfile.earnings < amount) {
+      throw new RpcException('Insufficient balance');
+    }
+
+    // ✅ Deduct temporarily (hold funds)
+    await this.userRepo.updateHostEarnings(
+      hostId,
+      host.hostProfile.earnings - amount,
+    );
+
+    // ✅ Create payout request
+    const payout = await this.userRepo.create(
+      hostId,
+      amount,
+      accountNumber,
+      bankType,
+    );
+
+    return payout;
+  }
+
+  async checkStatusForAdmin(payoutId: string) {
+    const payout = await this.userRepo.findPayOutById(payoutId);
+    if (!payout) throw new RpcException('Payout not found');
+    return payout;
+  }
+
+  // async updateStatusForAdmin(
+  //   payoutId: string,
+  //   status: string,
+  //   transactionId?: string,
+  // ) {
+  //   const payout = await this.userRepo.updateStatus(
+  //     payoutId,
+  //     status,
+  //     transactionId,
+  //   );
+  //   return payout;
+  // }
+  async updateStatusForAdmin(
+    payoutId: string,
+    adminId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reason?: string,
+  ) {
+    const payout = await this.userRepo.findPayOutById(payoutId);
+    if (!payout) throw new RpcException('Payout not found');
+
+    if (payout.status !== 'PENDING') {
+      throw new RpcException(
+        `Payout is already ${payout.status}, cannot update.`,
+      );
+    }
+
+    let updated: any;
+
+    if (status === 'APPROVED') {
+      updated = await this.userRepo.updateStatus(payoutId, 'APPROVED', reason);
+    } else if (status === 'REJECTED') {
+      const host = await this.userRepo.findUserById(payout.hostId);
+
+      await this.userRepo.updateHostEarnings(
+        payout.hostId,
+        (host?.hostProfile?.earnings! || 0) + payout.amount,
+      );
+      updated = await this.userRepo.updateStatus(payoutId, 'REJECTED');
+    }
+
+    // Log admin action
+    // await this.adminRepo.create(
+    //   adminId,
+    //   'UPDATE_PAYOUT_STATUS',
+    //   'Payout',
+    //   payoutId,
+    //   `Status changed to ${status}`,
+    // );
+
+    // Notify host
+    const message =
+      status === 'APPROVED'
+        ? `Your payout request of ${payout.amount} ETB has been approved.`
+        : `Your payout request of ${payout.amount} ETB has been rejected. Funds were returned to your balance.`;
+
+    // await this.notificationRepo.createPayoutNotification(payout.hostId, 'PAYMENT', 'Payout Update', message);
+
+    return updated;
   }
 }

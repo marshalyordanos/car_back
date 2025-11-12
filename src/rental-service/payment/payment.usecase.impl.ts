@@ -21,6 +21,15 @@ export class PaymentUseCasesImpl {
       throw new RpcException('Have not permission!');
     }
 
+    const payment = await this.repo.findByBooking(bookingId);
+    if (
+      payment?.status == 'REFUNDED' ||
+      payment?.status == 'FAILED' ||
+      payment?.status == 'PENDING'
+    ) {
+      throw new RpcException('can not release now!');
+    }
+
     return this.repo.releaseToHost(bookingId, hostId);
   }
 
@@ -40,6 +49,15 @@ export class PaymentUseCasesImpl {
     }
     if (user.role?.name == 'GUEST' || user.role?.name == 'HOST') {
       throw new RpcException('Have not permission!');
+    }
+
+    const payment = await this.repo.findByBooking(bookingId);
+    if (
+      payment?.status == 'REFUNDED' ||
+      payment?.status == 'FAILED' ||
+      payment?.status == 'PENDING'
+    ) {
+      throw new RpcException('can not refund now!');
     }
 
     return this.repo.refund(bookingId, refundAmount, reason);

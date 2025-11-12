@@ -26,6 +26,11 @@ export const PATTERNS = {
   USER_FIND_ME_BY_ID: 'user.find.me',
   USER_UPDATE_ME: 'user.update.me',
 
+  PAYOUT_FIND_BY_HOST: 'payout.findByHost', // get payout list for specific host
+  PAYOUT_REQUEST_WITHDRAWAL: 'payout.requestWithdrawal', // host requests payout
+  PAYOUT_CHECK_STATUS: 'payout.checkStatus', // check payout status (for admin or host)
+  PAYOUT_ADMIN_UPDATE_STATUS: 'payout.adminUpdateStatus', // admin approves/rejects payout
+
   GUEST_ADD_WISHLIST: 'guest.addWishlist',
   GUEST_REMOVE_WISHLIST: 'guest.removeWishlist',
   GUEST_GET_WISHLIST: 'guest.getWishlist',
