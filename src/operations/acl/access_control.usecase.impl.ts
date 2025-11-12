@@ -78,9 +78,9 @@ export class AccessControlUsecaseImpl {
     id: string,
     data: Partial<PermissionDto>,
   ): Promise<Permission> {
-    throw new RpcException(`You can not perform this operation!`);
+    // throw new RpcException(`You can not perform this operation!`);
 
-    // return this.repo.updatePermission(id, data);
+    return this.repo.updatePermission(id, data);
   }
 
   async deletePermission(id: string): Promise<Permission> {

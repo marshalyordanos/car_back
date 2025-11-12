@@ -74,6 +74,7 @@ export class BookingRepository {
   ) {
     // 1️⃣ Perform booking + payment creation in a transaction
     return await this.prisma.$transaction(async (tx) => {
+      console.log('000000000000000000000001:');
       if (!userId) {
         const { firstName, lastName, email, phone } = dto;
 
@@ -98,6 +99,8 @@ export class BookingRepository {
         });
         dto.guestId = guest.id;
       }
+      console.log('000000000000000000000002:');
+
       const year = new Date().getFullYear();
       const bookingCount = await tx.booking.count({
         where: {
@@ -123,6 +126,8 @@ export class BookingRepository {
           ],
         },
       });
+
+      console.log('000000000000000000000003:');
 
       if (conflict) {
         throw new RpcException(
@@ -163,6 +168,8 @@ export class BookingRepository {
       // 6️⃣ If payment method is CHAPA → initialize within same transaction
       const txRef = cuid();
 
+      console.log('000000000000000000000004:');
+
       const chapaData = {
         amount: payment.amount,
         currency: 'ETB',
@@ -185,6 +192,8 @@ export class BookingRepository {
             },
           },
         );
+
+        console.log('000000000000000000000005:');
 
         const data = chapaResponse.data;
 

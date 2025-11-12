@@ -21,8 +21,6 @@ import { PermissionGuard } from 'src/common/permission.guard';
 export class BookingMessageController {
   constructor(private readonly usecases: BookingUseCasesImp) {}
 
-  @UseGuards(PermissionGuard)
-  @CheckPermission('BOOKIGN', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.BOOKING_CREATE)
   async createBooking(@Payload() payload: any) {
     try {
@@ -64,7 +62,7 @@ export class BookingMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('BOOKIGN', PermissionActions.UPDATE)
+  @CheckPermission('BOOKING', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.BOOKING_UPDATE)
   async updateBooking(@Payload() payload: { id: string; data: any }) {
     try {
@@ -76,7 +74,7 @@ export class BookingMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('BOOKIGN', PermissionActions.DELETE)
+  @CheckPermission('BOOKING', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.BOOKING_DELETE)
   async deleteBooking(@Payload() payload: { id: string }) {
     try {
@@ -194,7 +192,7 @@ export class BookingMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('BOOKIGN', PermissionActions.UPDATE)
+  @CheckPermission('BOOKING', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.BOOKING_CANCEL_BY_ADMIN)
   async cancelByAdmin(
     @Payload() payload: { id: string; dto: BookingChangeStatusDto },
