@@ -38,7 +38,7 @@ export class BookingMessageController {
   @MessagePattern(PATTERNS.BOOKING_PAY)
   async pay(@Payload() payload: any) {
     try {
-      const res = await this.usecases.createBooking(
+      const res = await this.usecases.pay(
         payload.bookingId,
         payload.phone,
       );

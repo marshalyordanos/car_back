@@ -223,7 +223,7 @@ export class BookingRepository {
           },
         });
 
-        await sendSms(`${trackingCode}`, '+251986680094');
+        await sendSms(`${trackingCode}`, dto.phone!);
 
         // Return booking and Chapa checkout URL
         return {

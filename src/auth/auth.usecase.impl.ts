@@ -98,7 +98,7 @@ export class AuthUseCaseImpl {
       );
     }
 
-    await sendSms(nums, '+251986680094');
+    await sendSms(nums, data.phone);
 
     return user;
   }
@@ -131,7 +131,7 @@ export class AuthUseCaseImpl {
     if (!user.isVerified) {
       const nums = generateOtp6();
 
-      await sendSms(nums, '+251986680094');
+      await sendSms(nums, user.phone!);
       await this.authRepository.changeUserOtp(user.id, nums);
       throw new RpcException({
         statusCode: 400,
@@ -305,7 +305,7 @@ export class AuthUseCaseImpl {
     }
 
     const nums = generateOtp6();
-    await sendSms(nums, '+251986680094');
+    await sendSms(nums, phone);
 
     return this.authRepository.changeUserOtp(user.id, nums);
 

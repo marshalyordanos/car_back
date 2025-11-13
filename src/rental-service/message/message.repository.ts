@@ -113,7 +113,7 @@ export class MessageRepository {
     return this.prisma.message.count({ where });
   }
 
-  async getChatListForUser(userId: string, page = 1, pageSize = 3) {
+  async getChatListForUser(userId: string, page = 1, pageSize = 10) {
     const offset = (page - 1) * pageSize;
 
     const rows = await this.prisma.$queryRawUnsafe<any[]>(
