@@ -52,7 +52,11 @@ export class MessageMessageController {
         payload.userId,
         payload.query || {},
       );
-      return IResponse.success('Chat list fetched', result.items);
+      return IResponse.success('Chat list fetched', result.items, {
+        total: result.total,
+        page: payload.query?.page || 1,
+        pageSize: payload.query?.pageSize || 50,
+      });
     } catch (error) {
       handleCatch(error);
     }

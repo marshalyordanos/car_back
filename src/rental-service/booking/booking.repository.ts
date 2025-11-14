@@ -249,11 +249,11 @@ export class BookingRepository {
           amount: payment.amount,
           currency: 'ETB',
           tx_ref: txRef,
-          callback_url: `https://newspaper-jewelry-goals-slim.trycloudflare.com/bookings/chapa-callback`,
+          callback_url: `https://api.wheellol.com/chapa-callback`,
           'customization[title]': 'Car Rental Booking',
           'customization[description]': 'Payment for car booking',
           phone_number: dto.phone,
-          return_url: `http://192.168.43.111:3000/bookings/confirmation`,
+          return_url: `https://api.wheellol.com/bookings/confirmation`,
         };
 
         try {
@@ -350,11 +350,11 @@ export class BookingRepository {
         amount: payment.amount,
         currency: 'ETB',
         tx_ref: payment.transactionId,
-        callback_url: `https://newspaper-jewelry-goals-slim.trycloudflare.com/bookings/chapa-callback`,
+        callback_url: `https://api.wheellol.com/chapa-callback`,
         'customization[title]': 'Car Rental Booking',
         'customization[description]': 'Payment for car booking',
         phone_number: phone,
-        return_url: `http://192.168.43.111:3000/bookings/confirmation`,
+        return_url: `https://api.wheellol.com/bookings/confirmation`,
       };
 
       try {
