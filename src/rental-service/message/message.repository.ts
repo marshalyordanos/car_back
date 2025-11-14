@@ -84,7 +84,7 @@ export class MessageRepository {
     const [data, total] = await Promise.all([
       this.prisma.message.findMany({
         where: { bookingId },
-        orderBy: { createdAt: 'asc' }, // ascending so chat shows from start -> end
+        orderBy: { createdAt: 'desc' }, // ascending so chat shows from start -> end
         skip,
         take: pageSize,
       }),
