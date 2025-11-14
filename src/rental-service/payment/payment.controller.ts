@@ -4,10 +4,10 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { PaymentUseCasesImpl } from './payment.usecase.impl';
-import { ListQueryDto } from 'src/common/query/query.dto';
-import { PermissionGuard } from 'src/common/permission.guard';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import * as queryDto from '../../common/query/query.dto';
+import { PermissionGuard } from '../../common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
 
 @Controller()
 export class PaymentMessageController {
@@ -107,7 +107,7 @@ export class PaymentMessageController {
   @UseGuards(PermissionGuard)
   @CheckPermission('PAYMENT', PermissionActions.READ)
   @MessagePattern(PATTERNS.PAYMENT_GET_ALL)
-  async getAll(data: { query: ListQueryDto; user: any }) {
+  async getAll(data: { query: queryDto.ListQueryDto; user: any }) {
     try {
       const result = await this.usecases.getAllPayments(
         data.query,

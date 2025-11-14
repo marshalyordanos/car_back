@@ -6,9 +6,9 @@ import { PATTERNS } from '../../contracts';
 import { DisputeUseCasesImpl } from './dispute.usecase.impl';
 import { CreateDisputeDto, DisputeResolveDto } from './dispute.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionGuard } from 'src/common/permission.guard';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import * as checkPermissionDecorator from '../../common/decorator/check-permission.decorator';
+import { PermissionGuard } from '../../common/permission.guard';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
 
 @Controller()
 export class DisputeMessageController {
@@ -25,7 +25,7 @@ export class DisputeMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.READ)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.READ)
   @MessagePattern(PATTERNS.DISPUTE_GET_All2)
   async findAll(@Payload() payload: { query: ListQueryDto }) {
     try {
@@ -45,7 +45,7 @@ export class DisputeMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.READ)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.READ)
   @MessagePattern(PATTERNS.DISPUTE_GET_BY_ID)
   async getById(@Payload() payload: { id: string }) {
     try {
@@ -57,7 +57,7 @@ export class DisputeMessageController {
   }
 
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.READ)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.READ)
   @MessagePattern(PATTERNS.DISPUTE_GET_BY_USER)
   async getByUser(@Payload() payload: { userId: string }) {
     try {
@@ -70,7 +70,7 @@ export class DisputeMessageController {
 
   // Admin review → mark UNDER_REVIEW
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.UPDATE)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.DISPUTE_ADMIN_REVIEW)
   async adminReview(@Payload() payload: { id: string; user: any }) {
     try {
@@ -86,7 +86,7 @@ export class DisputeMessageController {
 
   // Admin resolves with optional refund
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.UPDATE)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.DISPUTE_RESOLVE)
   async resolve(
     @Payload() payload: { id: string; data: DisputeResolveDto; user: any },
@@ -105,7 +105,7 @@ export class DisputeMessageController {
 
   // Admin rejects dispute
   @UseGuards(PermissionGuard)
-  @CheckPermission('DISPUTE', PermissionActions.UPDATE)
+  @checkPermissionDecorator.CheckPermission('DISPUTE', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.DISPUTE_REJECT)
   async reject(@Payload() payload: { id: string; user: any }) {
     try {

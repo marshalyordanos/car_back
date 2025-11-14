@@ -6,11 +6,11 @@ import { CarModelDto, CarModelUpdateDto } from './car-model.entity';
 import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
-import { ListQueryDto } from 'src/common/query/query.dto';
+import { ListQueryDto } from '../../common/query/query.dto';
 import { Public } from '../../common/decorator/public.decorator';
-import { PermissionGuard } from 'src/common/permission.guard';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import { PermissionGuard } from '../../common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
 
 @Controller()
 export class CarModelMessageController {

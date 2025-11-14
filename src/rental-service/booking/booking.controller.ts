@@ -13,9 +13,9 @@ import {
 } from './booking.entity';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { Public } from '../../common/decorator/public.decorator';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
-import { PermissionGuard } from 'src/common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
+import { PermissionGuard } from '../../common/permission.guard';
 
 @Controller()
 export class BookingMessageController {
@@ -38,10 +38,7 @@ export class BookingMessageController {
   @MessagePattern(PATTERNS.BOOKING_PAY)
   async pay(@Payload() payload: any) {
     try {
-      const res = await this.usecases.pay(
-        payload.bookingId,
-        payload.phone,
-      );
+      const res = await this.usecases.pay(payload.bookingId, payload.phone);
       return IResponse.success('Booking created successfully', res);
     } catch (error) {
       handleCatch(error);

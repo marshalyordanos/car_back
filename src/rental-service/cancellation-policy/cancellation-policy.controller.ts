@@ -10,9 +10,9 @@ import { IResponse } from '../../common/types';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { PATTERNS } from '../../contracts';
 import { Public } from '../../common/decorator/public.decorator';
-import { PermissionGuard } from 'src/common/permission.guard';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
+import { PermissionGuard } from '../../common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
 
 @Controller()
 export class CancellationPolicyMessageController {

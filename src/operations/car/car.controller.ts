@@ -7,15 +7,15 @@ import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
 import { ListQueryDto } from '../../common/query/query.dto';
 import { Public } from '../../common/decorator/public.decorator';
-import { PermissionGuard } from 'src/common/permission.guard';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
+import * as permissionGuard from '../../common/permission.guard';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
 
 @Controller()
 export class CarMessageController {
   constructor(private readonly usecases: CarUseCasesImp) {}
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.CAR_CREATE)
   async createCar(
@@ -37,7 +37,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CAR_UPDATE)
   async updateCar(
@@ -62,7 +62,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.CAR_DELETE)
   async deleteCar(
@@ -118,7 +118,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.READ)
   @MessagePattern(PATTERNS.CAR_SEARCH_ADMIN)
   async searchCarAdmin(@Payload() payload: { user: any; query: ListQueryDto }) {
@@ -137,7 +137,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.CREATE)
   @MessagePattern(PATTERNS.CAR_INSURANCE_ADD)
   async addInsurance(@Payload() payload: { data: AddCarInsuranceDto }) {
@@ -149,7 +149,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CAR_INSURANCE_UPDATE)
   async updateInsurance(@Payload() payload: { id: string; data: any }) {
@@ -161,7 +161,7 @@ export class CarMessageController {
     }
   }
 
-  @UseGuards(PermissionGuard)
+  @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.DELETE)
   @MessagePattern(PATTERNS.CAR_INSURANCE_DELETE)
   async deleteInsurance(@Payload() payload: { id: string }) {

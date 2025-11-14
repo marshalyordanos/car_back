@@ -235,32 +235,76 @@ export class CarRepository {
         days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         where.AND = where.AND || [];
+        // where.AND.push({
+        //   bookings: {
+        //     none: {
+        //       AND: [
+        //         {
+        //           status: {
+        //             notIn: [
+        //               'CANCELLED_BY_GUEST',
+        //               'CANCELLED_BY_HOST',
+        //               'CANCELLED_BY_ADMIN',
+        //               'COMPLETED',
+        //               'REJECTED',
+        //             ],
+        //           },
+        //         },
+        //         {
+        //           OR: [
+        //             {
+        //               startDate: { lte: endDate },
+        //               endDate: { gte: startDate },
+        //             },
+        //           ],
+        //         },
+        //       ],
+
+        //     },
+        //   },
+        // });
+
         where.AND.push({
-          bookings: {
-            none: {
-              AND: [
-                {
-                  status: {
-                    notIn: [
-                      'CANCELLED_BY_GUEST',
-                      'CANCELLED_BY_HOST',
-                      'CANCELLED_BY_ADMIN',
-                      'COMPLETED',
-                      'REJECTED',
-                    ],
-                  },
-                },
-                {
-                  OR: [
+          OR: [
+            // 1️⃣ Cars with no conflicting bookings
+            {
+              bookings: {
+                none: {
+                  AND: [
+                    {
+                      status: {
+                        notIn: [
+                          'CANCELLED_BY_GUEST',
+                          'CANCELLED_BY_HOST',
+                          'CANCELLED_BY_ADMIN',
+                          'COMPLETED',
+                          'REJECTED',
+                        ],
+                      },
+                    },
                     {
                       startDate: { lte: endDate },
                       endDate: { gte: startDate },
                     },
                   ],
                 },
-              ],
+              },
             },
-          },
+
+            // 2️⃣ Cars with bookings in range but payment pending
+            {
+              bookings: {
+                some: {
+                  AND: [
+                    { status: 'PENDING' },
+                    { payment: { status: 'PENDING' } },
+                    { startDate: { lte: endDate } },
+                    { endDate: { gte: startDate } },
+                  ],
+                },
+              },
+            },
+          ],
         });
       }
     }

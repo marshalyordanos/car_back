@@ -219,7 +219,16 @@ export class BookingUseCasesImp {
       }
     }
 
-    return this.repo.createInspection(data, userId);
+    const booking = await this.repo.findBookingWithPayment(data.bookingId);
+
+    if (!booking) {
+      throw new RpcException({
+        statusCode: 404,
+        message: "can't find Booking",
+      });
+    }
+
+    return this.repo.createInspection(data, userId, !booking.isLoggedInUser);
   }
 
   async updateInspection(

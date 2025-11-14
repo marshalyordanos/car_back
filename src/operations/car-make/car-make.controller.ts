@@ -6,9 +6,9 @@ import { handleCatch } from '../../common/handleCatch';
 import { IResponse } from '../../common/types';
 import { PATTERNS } from '../../contracts';
 import { Public } from '../../common/decorator/public.decorator';
-import { CheckPermission } from 'src/common/decorator/check-permission.decorator';
-import { PermissionActions } from 'src/contracts/permission-actions.enum';
-import { PermissionGuard } from 'src/common/permission.guard';
+import { CheckPermission } from '../../common/decorator/check-permission.decorator';
+import { PermissionActions } from '../../contracts/permission-actions.enum';
+import { PermissionGuard } from '../../common/permission.guard';
 
 @Controller()
 export class CarMakeMessageController {
