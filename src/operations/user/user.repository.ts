@@ -541,7 +541,7 @@ export class UserRepository {
       sort: query.sort,
       page: query.page,
       pageSize: query.pageSize,
-      searchableFields: ['method', 'status', 'transactionId'],
+      searchableFields: ['accountNumber', 'host.firstName', 'host.lastName'],
     });
 
     const { where, skip, take, orderBy } = feature.getQuery();
