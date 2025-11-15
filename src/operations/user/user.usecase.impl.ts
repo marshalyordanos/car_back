@@ -237,11 +237,14 @@ export class UserUseCasesImp implements UserUsecase {
 
   async getPayoutsByHost(hostId: string, query: ListQueryDto) {
     const user = await this.userRepo.findUserById(hostId);
-    if (!user || user.role?.name !== 'HOST') {
+    if (!user) {
       throw new RpcException('Invalid host ID or user is not a host');
     }
+    if (user.role?.name === 'HOST') {
+      return this.userRepo.findByHost(hostId, query);
+    }
 
-    return this.userRepo.findByHost(hostId, query);
+    return this.userRepo.findPayouts(query);
   }
 
   async requestWithdrawal(

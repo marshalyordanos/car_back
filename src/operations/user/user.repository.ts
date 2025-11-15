@@ -534,6 +534,34 @@ export class UserRepository {
     };
   }
 
+  async findPayouts(query: queryDto.ListQueryDto) {
+    const feature = new PrismaQueryFeature({
+      search: query.search,
+      filter: query.filter,
+      sort: query.sort,
+      page: query.page,
+      pageSize: query.pageSize,
+      searchableFields: ['method', 'status', 'transactionId'],
+    });
+
+    const { where, skip, take, orderBy } = feature.getQuery();
+
+    const [models, total] = await Promise.all([
+      this.prisma.payout.findMany({
+        where: { ...where },
+        skip,
+        take,
+        orderBy,
+      }),
+      this.prisma.payout.count({ where: { ...where } }),
+    ]);
+
+    return {
+      models,
+      pagination: feature.getPagination(total),
+    };
+  }
+
   async create(
     hostId: string,
     amount: number,
