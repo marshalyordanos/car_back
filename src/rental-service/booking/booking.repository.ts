@@ -609,6 +609,7 @@ export class BookingRepository {
     const query = feature.getQuery();
     const where: any = { ...query.where };
     where.AND = where.AND || [];
+
     where.AND.push({
       NOT: [
         // Exclude bookings with status PENDING
@@ -622,6 +623,8 @@ export class BookingRepository {
       ],
     });
 
+    console.log('--------------------2222222222222222222', where);
+
     const results = await Promise.all([
       this.prisma.booking.findMany({
         ...query,
@@ -633,9 +636,9 @@ export class BookingRepository {
           dispute: true,
           inspections: true,
         },
-        where: query.where || {},
+        where: where || {},
       }),
-      this.prisma.booking.count({ where: query.where || {} }),
+      this.prisma.booking.count({ where: where || {} }),
     ]);
 
     const models = results[0] || [];

@@ -18,6 +18,8 @@ import {
   AuthChangePasswordDto,
   AuthLoginDto,
   AuthRegisterDto,
+  AuthRequestPasswordResetDto,
+  AuthResetPasswordDto,
   PhoneVerifyDto,
   PhoneVerifyResendDto,
 } from '../auth/auth.entity';
@@ -108,6 +110,21 @@ export class AuthGatewayController {
     return this.authClient.send(PATTERNS.AUTH_PHONE_VERIFY, {
       headers: { authorization: authHeader },
 
+      body,
+    });
+  }
+  @Post('request-password-reset')
+  async requestPasswordReset(@Body() body: AuthRequestPasswordResetDto) {
+    console.log('Requesting password reset for:', body.phoneNumber);
+    return this.authClient.send(PATTERNS.AUTH_REQUEST_PASSWORD_RESET, {
+      body,
+    });
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: AuthResetPasswordDto) {
+    console.log('Reset password request:', body);
+    return this.authClient.send(PATTERNS.AUTH_RESET_PASSWORD, {
       body,
     });
   }

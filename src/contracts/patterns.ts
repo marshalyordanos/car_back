@@ -7,7 +7,8 @@ export const PATTERNS = {
   AUTH_CHANGE_PASSWORD: 'auth.change_password',
   AUTH_PHONE_VERIFY: 'auth.phone.verify',
   AUTH_PHONE_VERIFY_RESEND: 'auth.phone.verify.resend',
-
+  AUTH_REQUEST_PASSWORD_RESET: 'AUTH_REQUEST_PASSWORD_RESET',
+  AUTH_RESET_PASSWORD: 'AUTH_RESET_PASSWORD',
   USER_CREATE: 'user.create',
   USER_FIND_BY_ID: 'user.findById',
   USER_FIND_ALL: 'user.findAll',

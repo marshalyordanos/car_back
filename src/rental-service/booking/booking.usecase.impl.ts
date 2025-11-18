@@ -47,10 +47,11 @@ export class BookingUseCasesImp {
     const baseTotal = car.rentalPricePerDay * days;
 
     const platformFee = baseTotal * 0.1;
+    const baseTotalWithPlatformFee = baseTotal + platformFee;
 
-    const tax = baseTotal * 0.15;
+    const tax = baseTotalWithPlatformFee * 0.15;
 
-    const totalPrice = baseTotal + platformFee + tax;
+    const totalPrice = baseTotalWithPlatformFee + tax;
 
     const uploadedFiles: any = {};
 

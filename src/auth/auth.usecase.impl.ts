@@ -13,6 +13,7 @@ import {
   AuthVerifyEmailDto,
   AuthMfaDto,
   AuthSession,
+  AuthRequestPasswordResetDto,
 } from './auth.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -180,6 +181,35 @@ export class AuthUseCaseImpl {
     return { user, tokens };
   }
 
+  async requestPasswordReset(data: AuthRequestPasswordResetDto) {
+    const user = await this.authRepository.findByPhone(data.phoneNumber);
+    if (!user)
+      throw new RpcException('This phone number does not match any account.');
+
+    const nums = generateOtp6();
+    await this.authRepository.changeUserOtp(user.id, nums);
+
+    await sendSms(nums, user.phone!);
+    return new IResponse(true, 'OTP sent successfully');
+  }
+
+  // Step 2: Verify OTP & reset password
+  async resetPassword(data: AuthResetPasswordDto) {
+    const user = await this.authRepository.findByPhone(data.phoneNumber);
+    if (!user) throw new RpcException('User not found');
+
+    if (user.otp !== data.otp) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'The OTP you entered is incorrect. Please try again.',
+      });
+    }
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+    await this.authRepository.updatePassword(user.id, hashedPassword);
+
+    return new IResponse(true, 'Password reset successfully');
+  }
+
   async logout(userId: string, sessionId?: string): Promise<void> {
     await this.authRepository.removeRefreshToken(userId, sessionId);
   }
@@ -230,28 +260,8 @@ export class AuthUseCaseImpl {
     // { message: 'Password changed successfully' }; // ✅ return success info
   }
 
-  // async forgotPassword(data: AuthForgotPasswordDto): Promise<void> {
-  //   const user = await this.authRepository.findByEmail(data.email);
-  //   if (!user) return; // silently ignore
-
-  //   // Generate password reset token
-  //   const resetToken = await this.authRepository.generateResetToken(user.id);
-
-  //   // Send email
-  //   await this.authRepository.sendResetPasswordEmail(user.email, resetToken);
-  // }
-
-  // async resetPassword(data: AuthResetPasswordDto): Promise<void> {
-  //   const userId = await this.authRepository.verifyResetToken(data.token);
-  //   if (!userId) throw new RpcException('Invalid or expired token');
-
-  //   const hashedPassword = await bcrypt.hash(data.newPassword, 10);
-  //   await this.authRepository.updatePassword(userId, hashedPassword);
-
-  //   await this.authRepository.invalidateResetToken(data.token);
-  // }
-
   // ----------------- Email Verification -----------------
+
   async verifyEmail(data: AuthVerifyEmailDto): Promise<void> {
     const userId = await this.authRepository.verifyEmailToken(data.token);
     if (!userId) throw new RpcException('Invalid verification token');
@@ -283,7 +293,7 @@ export class AuthUseCaseImpl {
     if (user.otp !== otp) {
       throw new RpcException({
         statusCode: 400,
-        message: 'invalid otp',
+        message: 'The OTP you entered is incorrect. Please try again.',
       });
     }
 

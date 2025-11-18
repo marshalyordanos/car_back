@@ -8,6 +8,8 @@ import {
   AuthChangePasswordDto,
   PhoneVerifyDto,
   PhoneVerifyResendDto,
+  AuthRequestPasswordResetDto,
+  AuthResetPasswordDto,
 } from './auth.entity';
 import { Public } from '../common/decorator/public.decorator';
 import { IResponse } from '../common/types';
@@ -84,6 +86,24 @@ export class AuthMessageController {
     } catch (error) {
       handleCatch(error);
     }
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.AUTH_REQUEST_PASSWORD_RESET)
+  async requestPasswordReset(
+    @Payload() data: { body: AuthRequestPasswordResetDto },
+  ) {
+    const res = await this.usecases.requestPasswordReset(data.body);
+
+    return new IResponse(true, 'OTP sent successfully');
+  }
+
+  @Public()
+  @MessagePattern(PATTERNS.AUTH_RESET_PASSWORD)
+  async resetPassword(@Payload() data: { body: AuthResetPasswordDto }) {
+    const res = await this.usecases.resetPassword(data.body);
+
+    return new IResponse(true, 'Password reset successfully');
   }
 
   @Public()

@@ -87,17 +87,10 @@ export class PhoneVerifyResendDto {
   @IsString()
   phone: string;
 }
-export class AuthResetPasswordDto {
-  @ApiProperty()
-  token: string;
-
-  @ApiProperty()
-  newPassword: string;
-}
 
 export class AuthForgotPasswordDto {
   @ApiProperty()
-  email: string;
+  phone: string;
 }
 
 export interface AuthVerifyEmailDto {
@@ -119,4 +112,25 @@ export interface AuthSession {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+}
+
+export class AuthRequestPasswordResetDto {
+  @ApiProperty()
+  @IsString()
+  phoneNumber: string;
+}
+
+// Step 2: Reset password with OTP
+export class AuthResetPasswordDto {
+  @ApiProperty()
+  @IsString()
+  phoneNumber: string;
+
+  @ApiProperty()
+  @IsString()
+  otp: string;
+
+  @ApiProperty()
+  @IsString()
+  newPassword: string;
 }
