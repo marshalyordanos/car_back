@@ -12,7 +12,7 @@ import { BankType, User } from '@prisma/client';
 import { IPagination } from 'src/common/types';
 import { UserUsecase } from './user.usecase';
 import { RpcException } from '@nestjs/microservices';
-import { uploadToCloudinary } from '../../config/cloudinary/upload';
+import { uploadToSpaces } from '../../config/cloudinary/upload';
 import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
@@ -118,20 +118,20 @@ export class UserUseCasesImp implements UserUsecase {
     try {
       if (data.profilePhotoFile) {
         console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToCloudinary(
+        uploadedFiles.profilePhoto = await uploadToSpaces(
           data.profilePhotoFile,
           'users/profilePhotos',
         );
         console.log('uploadedFiles: ', uploadedFiles);
       }
       if (data.driverLicenseFile && user.role?.name == 'GUEST') {
-        uploadedFiles.driverLicenseId = await uploadToCloudinary(
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
           data.driverLicenseFile,
           'users/driverLicenses',
         );
       }
       if (data.nationalIdFile && user.role?.name == 'GUEST') {
-        uploadedFiles.nationalId = await uploadToCloudinary(
+        uploadedFiles.nationalId = await uploadToSpaces(
           data.nationalIdFile,
           'users/nationalIds',
         );
@@ -201,7 +201,7 @@ export class UserUseCasesImp implements UserUsecase {
     try {
       if (data.profilePhotoFile) {
         console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToCloudinary(
+        uploadedFiles.profilePhoto = await uploadToSpaces(
           data.profilePhotoFile,
           'users/profilePhotos',
         );

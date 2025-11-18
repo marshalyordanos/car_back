@@ -74,6 +74,7 @@ export class BookingRepository {
       nationalId?: string;
     },
   ) {
+    console.log('process.env.DO_SPACES_KEY', process.env.DO_SPACES_KEY);
     // 1️⃣ Perform booking + payment creation in a transaction
     return await this.prisma.$transaction(
       async (tx) => {
@@ -262,7 +263,7 @@ export class BookingRepository {
             chapaData,
             {
               headers: {
-                Authorization: `Bearer CHASECK-8sPVz2pL6LMiq2S76nk2NRdOX5ZfpxcG`, //secret
+                Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`, //secret
                 'Content-Type': 'application/json',
               },
             },
@@ -363,7 +364,7 @@ export class BookingRepository {
           chapaData,
           {
             headers: {
-              Authorization: `Bearer CHASECK-8sPVz2pL6LMiq2S76nk2NRdOX5ZfpxcG`, //secret
+              Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
               'Content-Type': 'application/json',
             },
           },

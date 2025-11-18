@@ -8,7 +8,7 @@ import {
   CarSearchFilter,
   UpdateCarInsuranceDto,
 } from './car.entity';
-import { uploadToCloudinary } from '../../config/cloudinary/upload';
+import { uploadToSpaces } from '../../config/cloudinary/upload';
 import { RpcException } from '@nestjs/microservices';
 import { ListQueryDto } from 'src/common/query/query.dto';
 
@@ -26,12 +26,12 @@ export class CarUseCasesImp {
     try {
       if (carData.photos) {
         uploadedFiles = await Promise.all(
-          carData.photos.map((file) =>
-            uploadToCloudinary(file, 'users/profilePhotos'),
-          ),
+          carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
         );
       }
     } catch (err) {
+      console.log('space error: ', err);
+
       throw new RpcException('Error uploading files to Cloudinary');
     }
 
@@ -61,9 +61,7 @@ export class CarUseCasesImp {
     try {
       if (carData.photos) {
         uploadedFiles = await Promise.all(
-          carData.photos.map((file) =>
-            uploadToCloudinary(file, 'users/profilePhotos'),
-          ),
+          carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
         );
       }
     } catch (err) {

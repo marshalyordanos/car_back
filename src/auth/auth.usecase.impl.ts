@@ -19,8 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RpcException } from '@nestjs/microservices';
 import { IResponse } from '../common/types';
-import cloudinary from '../config/cloudinary/cloudinary.config';
-import { uploadToCloudinary } from '../config/cloudinary/upload';
+import { uploadToSpaces } from '../config/cloudinary/upload';
 import { sendSms } from '../utils/sendSms';
 import { randomInt } from 'crypto';
 
@@ -56,28 +55,30 @@ export class AuthUseCaseImpl {
 
     const uploadedFiles: any = {};
     try {
+      console.log('spacesssssssssssssssssssssss');
       if (data.profilePhotoFile) {
         console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToCloudinary(
+        uploadedFiles.profilePhoto = await uploadToSpaces(
           data.profilePhotoFile,
           'users/profilePhotos',
         );
         console.log('uploadedFiles: ', uploadedFiles);
       }
       if (data.driverLicenseFile && role.name == 'GUEST') {
-        uploadedFiles.driverLicenseId = await uploadToCloudinary(
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
           data.driverLicenseFile,
           'users/driverLicenses',
         );
       }
       if (data.nationalIdFile && role.name == 'GUEST') {
-        uploadedFiles.nationalId = await uploadToCloudinary(
+        uploadedFiles.nationalId = await uploadToSpaces(
           data.nationalIdFile,
           'users/nationalIds',
         );
       }
     } catch (err) {
-      throw new RpcException('Error uploading files to Cloudinary');
+      console.log('space error: ', err);
+      throw new RpcException('Error uploading files to space');
     }
     const nums = generateOtp6();
 

@@ -210,7 +210,13 @@ export class CarRepository {
       sort: filter.sort,
       page: filter.page,
       pageSize: filter.pageSize,
-      searchableFields: ['make.name', 'model.name', 'host.phone', 'host.email'],
+      searchableFields: [
+        'make.name',
+        'model.name',
+        'carType.name',
+        'host.phone',
+        'host.email',
+      ],
     });
     const query = feature.getQuery();
     const where: any = { ...query.where };

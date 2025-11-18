@@ -58,13 +58,13 @@ export class BookingUseCasesImp {
     if (!userId) {
       try {
         if (dto.driverLicenseFile) {
-          uploadedFiles.driverLicenseId = await upload.uploadToCloudinary(
+          uploadedFiles.driverLicenseId = await upload.uploadToSpaces(
             dto.driverLicenseFile,
             'users/driverLicenses',
           );
         }
         if (dto.nationalIdFile) {
-          uploadedFiles.nationalId = await upload.uploadToCloudinary(
+          uploadedFiles.nationalId = await upload.uploadToSpaces(
             dto.nationalIdFile,
             'users/nationalIds',
           );

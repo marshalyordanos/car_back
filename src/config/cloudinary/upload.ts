@@ -1,49 +1,34 @@
-// import cloudinary from './cloudinary.config';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { spacesClient } from './spaces.config';
+import { v4 as uuid } from 'uuid';
 
-// export async function uploadToCloudinary(
-//   file: Express.Multer.File,
-//   folder: string,
-// ): Promise<string> {
-//   try {
-//     // Recreate Node.js Buffer if necessary
-//     const buffer = Buffer.isBuffer(file.buffer)
-//       ? file.buffer
-//       : Buffer.from((file.buffer as any).data);
+const BUCKET = 'wheellol'; // CHANGE THIS
 
-//     const dataUri = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
-//     const result = await cloudinary.uploader.upload(dataUri, { folder });
-//     console.log('Cloudinary upload result:', result);
-//     return result.secure_url;
-//   } catch (err) {
-//     console.error('Cloudinary upload failed:', err);
-//     throw err;
-//   }
-// }
-
-import cloudinary from './cloudinary.config';
-
-export async function uploadToCloudinary(
+export async function uploadToSpaces(
   file: Express.Multer.File,
   folder: string,
 ): Promise<string> {
   try {
-    // Recreate Node.js Buffer if necessary
     const buffer = Buffer.isBuffer(file.buffer)
       ? file.buffer
       : Buffer.from((file.buffer as any).data);
 
-    const dataUri = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+    const fileName = `${folder}/${uuid()}-${file.originalname}`;
 
-    // Add timeout options
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder,
-      timeout: 300000, // 300000 ms = 5 minutes
-    });
+    await spacesClient.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: fileName,
+        Body: buffer,
+        ACL: 'public-read',
+        ContentType: file.mimetype,
+      }),
+    );
 
-    console.log('Cloudinary upload result:', result);
-    return result.secure_url;
+    // Public URL
+    return `https://${BUCKET}.sfo3.digitaloceanspaces.com/${fileName}`;
   } catch (err) {
-    console.error('Cloudinary upload failed:', err);
+    console.error('Spaces upload failed:', err);
     throw err;
   }
 }
