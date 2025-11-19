@@ -132,9 +132,8 @@ export class MessageRepository {
           ELSE b."hostId"
         END AS "withUserId"
       FROM "Booking" b
-      -- Join only completed payments
       LEFT JOIN "Payment" p 
-        ON p."bookingId" = b.id AND p."status" = 'COMPLETED'
+        ON p."bookingId" = b.id
       -- Last message
       LEFT JOIN LATERAL (
         SELECT *
@@ -153,9 +152,12 @@ export class MessageRepository {
       ) u ON true
       WHERE 
         (b."hostId" = $1 OR b."guestId" = $1)
-        AND b."status" != 'PENDING'
+        AND (
+          b."status" != 'PENDING'
+          OR (b."status" = 'PENDING' AND p."status" = 'COMPLETED')
+        )
       ORDER BY COALESCE(m."createdAt", b."createdAt") DESC
-      LIMIT $2 OFFSET $3  
+      LIMIT $2 OFFSET $3
       `,
       userId,
       pageSize,
@@ -197,10 +199,13 @@ export class MessageRepository {
       SELECT COUNT(*)::int AS count
       FROM "Booking" b
       LEFT JOIN "Payment" p 
-        ON p."bookingId" = b.id AND p."status" = 'COMPLETED'
+        ON p."bookingId" = b.id
       WHERE 
         (b."hostId" = $1 OR b."guestId" = $1)
-        AND b."status" != 'PENDING'
+        AND (
+          b."status" != 'PENDING'
+          OR (b."status" = 'PENDING' AND p."status" = 'COMPLETED')
+        )
       `,
       userId,
     );
