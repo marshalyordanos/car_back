@@ -250,7 +250,7 @@ export class BookingRepository {
           amount: payment.amount,
           currency: 'ETB',
           tx_ref: txRef,
-          callback_url: `https://api.wheellol.com/chapa-callback`,
+          callback_url: `https://api.wheellol.com/bookings/chapa-callback`,
           'customization[title]': 'Car Rental Booking',
           'customization[description]': 'Payment for car booking',
           phone_number: dto.phone,

@@ -100,7 +100,7 @@ model User {
   refreshTokens    RefreshToken[]
   disputes         Dispute[]
   cars             Car[]
-  isActive         Boolean        @default(false)
+  isActive         Boolean        @default(true)
   otp              String?
   guestBookings    Booking[]      @relation("GuestBookings")
   hostBookings     Booking[]      @relation("HostBookings")
@@ -263,6 +263,18 @@ model Car {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  technicalInspectionCertificateUrl String? // Technical Inspection Upload
+
+  // GPS Information
+  hasGPS                    Boolean   @default(false)
+  gpsDeviceBrand            String?
+  gpsImeiNumber             String?
+  gpsPlatformUrl            String?
+  gpsPlatformUsername       String?
+  gpsPlatformPassword       String?
+  gpsSubscriptionExpiryDate DateTime?
+  gpsInstallationReceiptUrl String? // optional upload
+
   // Relations
   photos         String[]
   reviews        Review[]
@@ -274,16 +286,26 @@ model Car {
   phoneVerified  Boolean        @default(false)
 }
 
+enum InsuranceType {
+  THIRD_PARTY // Third-Party Liability Insurance (Mandatory)
+  COMPREHENSIVE // Comprehensive Insurance
+}
+
 model CarInsurance {
-  id              String        @id @default(cuid())
-  car             Car           @relation(fields: [carId], references: [id])
-  carId           String
-  plan            InsurancePlan
-  provider        String
-  coverageDetails String
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id String @id @default(cuid())
+
+  car   Car    @relation(fields: [carId], references: [id])
+  carId String
+
+  insuranceCompany String // Insurance Company Name
+  policyNumber     String // Policy Number
+  expiryDate       DateTime // Expiry Date
+
+  insuranceType InsuranceType // NEW → Type of insurance
+  documentFile  String? // NEW → Insurance document file (optional)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 ///////////////////////////

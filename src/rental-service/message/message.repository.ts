@@ -132,6 +132,9 @@ export class MessageRepository {
           ELSE b."hostId"
         END AS "withUserId"
       FROM "Booking" b
+      -- JOIN PAYMENT (filter to completed payments only)
+      LEFT JOIN "Payment" p ON p."bookingId" = b.id
+      -- Last message
       LEFT JOIN LATERAL (
         SELECT *
         FROM "Message"
@@ -139,12 +142,18 @@ export class MessageRepository {
         ORDER BY "createdAt" DESC
         LIMIT 1
       ) m ON true
+      -- Unread count
       LEFT JOIN LATERAL (
         SELECT COUNT(*) AS unread_count
         FROM "Message"
-        WHERE "bookingId" = b.id AND "receiverId" = $1 AND "isRead" = false
+        WHERE "bookingId" = b.id 
+          AND "receiverId" = $1 
+          AND "isRead" = false
       ) u ON true
-      WHERE b."hostId" = $1 OR b."guestId" = $1
+      WHERE 
+        (b."hostId" = $1 OR b."guestId" = $1)
+        AND b."status" != 'PENDING'
+        AND p."status" = 'COMPLETED'
       ORDER BY COALESCE(m."createdAt", b."createdAt") DESC
       LIMIT $2 OFFSET $3  
       `,
@@ -160,13 +169,14 @@ export class MessageRepository {
       where: { id: { in: userIds } },
       select: { id: true, firstName: true, lastName: true, profilePhoto: true },
     });
+
     const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
 
     const items = rows.map((r) => {
       const u = userMap[r.withUserId];
       return {
         bookingId: r.bookingId,
-        bookingStatus: r.bookingStatus, // Include booking status
+        bookingStatus: r.bookingStatus,
         lastMessage: r.messageId
           ? { id: r.messageId, content: r.content, createdAt: r.lastMessageAt }
           : null,
@@ -181,59 +191,58 @@ export class MessageRepository {
       };
     });
 
+    // ---- COUNT QUERY WITH SAME CONDITIONS ----
     const [{ count }] = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
-      `SELECT COUNT(*)::int AS count FROM "Booking" WHERE "hostId" = $1 OR "guestId" = $1`,
+      `
+      SELECT COUNT(*)::int AS count
+      FROM "Booking" b
+      LEFT JOIN "Payment" p ON p."bookingId" = b.id
+      WHERE 
+        (b."hostId" = $1 OR b."guestId" = $1)
+        AND b."status" != 'PENDING'
+        AND p."status" = 'COMPLETED'
+      `,
       userId,
     );
 
     return { items, total: Number(count) };
   }
 
-  // async getChatListForUser(userId: string, page = 1, pageSize = 3) {
+  // async getChatListForUser(userId: string, page = 1, pageSize = 10) {
   //   const offset = (page - 1) * pageSize;
 
-  //   // STEP 1 — get conversations (booking + last message + unread count)
   //   const rows = await this.prisma.$queryRawUnsafe<any[]>(
   //     `
-  //     WITH user_bookings AS (
-  //       SELECT id
-  //       FROM "Booking"
-  //       WHERE "hostId" = $1 OR "guestId" = $1
-  //     ),
-  //     last_msg AS (
-  //       SELECT DISTINCT ON ("bookingId")
-  //         "bookingId",
-  //         id          AS "messageId",
-  //         content,
-  //         "createdAt",
-  //         "senderId",
-  //         "receiverId",
-  //         "isRead"
-  //       FROM "Message"
-  //       WHERE "bookingId" IN (SELECT id FROM user_bookings)
-  //       ORDER BY "bookingId", "createdAt" DESC
-  //     ),
-  //     unread AS (
-  //       SELECT "bookingId", COUNT(*) AS unread_count
-  //       FROM "Message"
-  //       WHERE "receiverId" = $1 AND "isRead" = false
-  //       GROUP BY "bookingId"
-  //     )
   //     SELECT
-  //       b.id            AS "bookingId",
+  //       b.id AS "bookingId",
   //       b."hostId",
   //       b."guestId",
-  //       l."messageId",
-  //       l.content,
-  //       l."createdAt"    AS "lastMessageAt",
-  //       COALESCE(u.unread_count,0) AS "unreadCount"
+  //       b."status" AS "bookingStatus",
+  //       m.id AS "messageId",
+  //       m.content,
+  //       m."createdAt" AS "lastMessageAt",
+  //       COALESCE(u.unread_count, 0) AS "unreadCount",
+  //       CASE
+  //         WHEN b."hostId" = $1 THEN b."guestId"
+  //         ELSE b."hostId"
+  //       END AS "withUserId"
   //     FROM "Booking" b
-  //     JOIN last_msg l ON l."bookingId" = b.id
-  //     LEFT JOIN unread u ON u."bookingId" = b.id
+  //     LEFT JOIN LATERAL (
+  //       SELECT *
+  //       FROM "Message"
+  //       WHERE "bookingId" = b.id
+  //       ORDER BY "createdAt" DESC
+  //       LIMIT 1
+  //     ) m ON true
+  //     LEFT JOIN LATERAL (
+  //       SELECT COUNT(*) AS unread_count
+  //       FROM "Message"
+  //       WHERE "bookingId" = b.id AND "receiverId" = $1 AND "isRead" = false
+  //     ) u ON true
   //     WHERE b."hostId" = $1 OR b."guestId" = $1
-  //     ORDER BY l."createdAt" DESC
+  //     ORDER BY COALESCE(m."createdAt", b."createdAt") DESC
   //     LIMIT $2 OFFSET $3
-  //   `,
+  //     `,
   //     userId,
   //     pageSize,
   //     offset,
@@ -241,30 +250,21 @@ export class MessageRepository {
 
   //   if (!rows.length) return { items: [], total: 0 };
 
-  //   // STEP 2 — fetch needed users in ONE query
-  //   const userIds = Array.from(
-  //     new Set(rows.flatMap((r) => [r.hostId, r.guestId])),
-  //   );
-
+  //   const userIds = Array.from(new Set(rows.map((r) => r.withUserId)));
   //   const users = await this.prisma.user.findMany({
   //     where: { id: { in: userIds } },
   //     select: { id: true, firstName: true, lastName: true, profilePhoto: true },
   //   });
-
   //   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
 
-  //   // STEP 3 — build response
   //   const items = rows.map((r) => {
-  //     const withUserId = r.hostId === userId ? r.guestId : r.hostId;
-  //     const u = userMap[withUserId];
-
+  //     const u = userMap[r.withUserId];
   //     return {
   //       bookingId: r.bookingId,
-  //       lastMessage: {
-  //         id: r.messageId,
-  //         content: r.content,
-  //         createdAt: r.lastMessageAt,
-  //       },
+  //       bookingStatus: r.bookingStatus, // Include booking status
+  //       lastMessage: r.messageId
+  //         ? { id: r.messageId, content: r.content, createdAt: r.lastMessageAt }
+  //         : null,
   //       unreadCount: Number(r.unreadCount),
   //       withUser: u
   //         ? {
@@ -276,20 +276,14 @@ export class MessageRepository {
   //     };
   //   });
 
-  //   // STEP 4 — total count of conversations
   //   const [{ count }] = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
-  //     `
-  //     SELECT COUNT(*)::int AS count
-  //     FROM "Booking"
-  //     WHERE "hostId" = $1 OR "guestId" = $1
-  //   `,
+  //     `SELECT COUNT(*)::int AS count FROM "Booking" WHERE "hostId" = $1 OR "guestId" = $1`,
   //     userId,
   //   );
 
   //   return { items, total: Number(count) };
   // }
 
-  // Utility: verify if user is part of booking (host or guest)
   async isUserPartOfBooking(
     userId: string,
     bookingId: string,

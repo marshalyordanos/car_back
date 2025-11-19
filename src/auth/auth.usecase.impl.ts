@@ -140,6 +140,13 @@ export class AuthUseCaseImpl {
         message: 'verify first',
       });
     }
+    if (!user.isActive) {
+      throw new RpcException({
+        statusCode: 400,
+        message:
+          'Your account is not active. Please contact wheellol support for assistance.',
+      });
+    }
     const tokens = await this.generateTokens(user);
 
     await this.authRepository.saveRefreshToken(user.id, tokens.refreshToken);
@@ -171,6 +178,13 @@ export class AuthUseCaseImpl {
       throw new RpcException({
         statusCode: 404,
         message: 'Invalid credentials',
+      });
+    }
+    if (!user.isActive) {
+      throw new RpcException({
+        statusCode: 400,
+        message:
+          'Your account is not active. Please contact wheellol support for assistance.',
       });
     }
 

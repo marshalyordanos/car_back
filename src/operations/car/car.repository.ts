@@ -14,13 +14,21 @@ export class CarRepository {
     hostId: string,
     data: CarDto,
     photos?: string[],
+    files?: {
+      gpsInstallationReceipt?: string;
+      technicalInspectionCertificate?: string;
+    },
   ): Promise<Car> {
     const host = await this.prisma.user.findUnique({
       where: { id: hostId },
     });
+
     if (!host) {
       throw new RpcException('Cannot create car: host does not exist');
     }
+    const gpsDate = data.gpsSubscriptionExpiryDate
+      ? new Date(data.gpsSubscriptionExpiryDate)
+      : undefined;
 
     return await this.prisma.car.create({
       data: {
@@ -54,6 +62,17 @@ export class CarRepository {
 
         // Arrays
         photos: photos ?? [],
+        technicalInspectionCertificateUrl:
+          files?.technicalInspectionCertificate,
+        gpsInstallationReceiptUrl: files?.gpsInstallationReceipt,
+
+        hasGPS: Boolean(data.hasGPS) ?? undefined,
+        gpsDeviceBrand: data.gpsDeviceBrand,
+        gpsImeiNumber: data.gpsImeiNumber,
+        gpsPlatformUrl: data.gpsPlatformUrl,
+        gpsPlatformUsername: data.gpsPlatformUsername,
+        gpsPlatformPassword: data.gpsPlatformPassword,
+        gpsSubscriptionExpiryDate: gpsDate,
 
         // // Nested relations
         // insurancePlans: insurancePlans
@@ -75,12 +94,16 @@ export class CarRepository {
     hostId: string,
     data: Partial<CarDto>,
     photos?: string[],
+    files?: {
+      gpsInstallationReceipt?: string;
+      technicalInspectionCertificate?: string;
+    },
   ): Promise<Car> {
     // Pick out only scalar fields that exist in the Car model
     const existingCar = await this.prisma.car.findUnique({
       where: { id: carId },
     });
-    console.log('Existing car:', existingCar);
+    console.log('Existing car:', data.hasGPS);
 
     console.log('-------------------', carId, data);
     const updatedCar = await this.prisma.car.update({
@@ -109,6 +132,18 @@ export class CarRepository {
         rejectionReason: data.rejectionReason ?? null,
 
         photos: photos ? (photos?.length > 1 ? photos : undefined) : undefined,
+        technicalInspectionCertificateUrl:
+          files?.technicalInspectionCertificate ?? null,
+        gpsInstallationReceiptUrl: files?.gpsInstallationReceipt ?? null,
+
+        hasGPS: Boolean(data.hasGPS) ?? undefined,
+
+        gpsDeviceBrand: data.gpsDeviceBrand ?? null,
+        gpsImeiNumber: data.gpsImeiNumber ?? null,
+        gpsPlatformUrl: data.gpsPlatformUrl ?? null,
+        gpsPlatformUsername: data.gpsPlatformUsername ?? null,
+        gpsPlatformPassword: data.gpsPlatformPassword ?? null,
+        gpsSubscriptionExpiryDate: data.gpsSubscriptionExpiryDate ?? null,
 
         // Relationsa
         // host: { connect: { id: hostId } },
@@ -458,7 +493,9 @@ export class CarRepository {
   }
 
   async addInsurance(data: any) {
-    return this.prisma.carInsurance.create({ data });
+    return this.prisma.carInsurance.create({
+      data,
+    });
   }
 
   async updateInsurance(id: string, data: any) {

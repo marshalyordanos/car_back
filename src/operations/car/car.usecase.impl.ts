@@ -22,11 +22,24 @@ export class CarUseCasesImp {
     }
 
     let uploadedFiles: string[] = [];
+    let uploadedFiles2: any = {};
 
     try {
       if (carData.photos) {
         uploadedFiles = await Promise.all(
           carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
+        );
+      }
+      if (carData.technicalInspectionCertificate) {
+        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+          carData.technicalInspectionCertificate,
+          'cars/technicalInspectionCertificate',
+        );
+      }
+      if (carData.gpsInstallationReceipt) {
+        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+          carData.gpsInstallationReceipt,
+          'cars/gpsInstallationReceipt',
         );
       }
     } catch (err) {
@@ -37,7 +50,7 @@ export class CarUseCasesImp {
 
     console.log({ uploadedFiles, carData, hostId });
 
-    return this.repo.createCar(hostId, carData, uploadedFiles);
+    return this.repo.createCar(hostId, carData, uploadedFiles, uploadedFiles2);
   }
 
   async updateCar(
@@ -48,15 +61,17 @@ export class CarUseCasesImp {
   ): Promise<Car> {
     const car = await this.repo.findById(carId);
 
-    if (car?.hostId == userId) {
+    console.log(car?.hostId, userId);
+    if (car?.hostId != userId) {
       throw new RpcException('You have not a permission to update this car.');
     }
 
-    if (Array.isArray(carData?.photos) && carData.photos.length < 2) {
-      throw new RpcException('You must upload at least 2 photos.');
+    if (Array.isArray(carData?.photos) && carData.photos.length < 6) {
+      throw new RpcException('You must upload at least 6 photos.');
     }
 
     let uploadedFiles: string[] = [];
+    let uploadedFiles2: any = {};
 
     try {
       if (carData.photos) {
@@ -64,12 +79,30 @@ export class CarUseCasesImp {
           carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
         );
       }
+      if (carData.technicalInspectionCertificate) {
+        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+          carData.technicalInspectionCertificate,
+          'cars/technicalInspectionCertificate',
+        );
+      }
+      if (carData.gpsInstallationReceipt) {
+        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+          carData.gpsInstallationReceipt,
+          'cars/gpsInstallationReceipt',
+        );
+      }
     } catch (err) {
       throw new RpcException('Error uploading files to Cloudinary');
     }
 
     console.log({ uploadedFiles, carData, hostId });
-    return this.repo.updateCar(carId, hostId, carData, uploadedFiles);
+    return this.repo.updateCar(
+      carId,
+      hostId,
+      carData,
+      uploadedFiles,
+      uploadedFiles2,
+    );
   }
 
   async deleteCar(
@@ -123,11 +156,49 @@ export class CarUseCasesImp {
   }
 
   async addInsurance(dto: AddCarInsuranceDto) {
-    return this.repo.addInsurance(dto);
+    const uploaded: any = {};
+
+    try {
+      if (dto.documentFile) {
+        uploaded.documentFile = await uploadToSpaces(
+          dto.documentFile,
+          'cars/insuranceDocs',
+        );
+      }
+    } catch (err) {
+      console.log('space error: ', err);
+      throw new RpcException('Error uploading document to space');
+    }
+
+    return this.repo.addInsurance({
+      carId: dto.carId,
+      insuranceCompany: dto.insuranceCompany,
+      policyNumber: dto.policyNumber,
+      expiryDate: new Date(dto.expiryDate),
+      insuranceType: dto.insuranceType,
+      documentFile: uploaded.documentFile || null,
+    });
   }
 
   async updateInsurance(id: string, dto: UpdateCarInsuranceDto) {
-    return this.repo.updateInsurance(id, dto);
+    const uploaded: any = {};
+
+    try {
+      if (dto.documentFile) {
+        uploaded.documentFile = await uploadToSpaces(
+          dto.documentFile,
+          'cars/insuranceDocs',
+        );
+      }
+    } catch (err) {
+      throw new RpcException('Error uploading document to space');
+    }
+
+    return this.repo.updateInsurance(id, {
+      ...dto,
+      ...(uploaded.documentFile && { documentFile: uploaded.documentFile }),
+      ...(dto.expiryDate && { expiryDate: new Date(dto.expiryDate) }),
+    });
   }
 
   async deleteInsurance(id: string) {

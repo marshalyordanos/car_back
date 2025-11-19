@@ -2,7 +2,12 @@ import { Controller, UseGuards } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CarUseCasesImp } from './car.usecase.impl';
 import { PATTERNS } from '../../contracts';
-import { CarSearchFilter, CarDto, AddCarInsuranceDto } from './car.entity';
+import {
+  CarSearchFilter,
+  CarDto,
+  AddCarInsuranceDto,
+  UpdateCarInsuranceDto,
+} from './car.entity';
 import { IResponse } from '../../common/types';
 import { handleCatch } from '../../common/handleCatch';
 import { ListQueryDto } from '../../common/query/query.dto';
@@ -152,7 +157,9 @@ export class CarMessageController {
   @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('CAR', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.CAR_INSURANCE_UPDATE)
-  async updateInsurance(@Payload() payload: { id: string; data: any }) {
+  async updateInsurance(
+    @Payload() payload: { id: string; data: UpdateCarInsuranceDto },
+  ) {
     try {
       const res = await this.usecases.updateInsurance(payload.id, payload.data);
       return IResponse.success('Car insurance updated successfully', res);

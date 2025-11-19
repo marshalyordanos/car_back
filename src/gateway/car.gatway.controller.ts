@@ -35,7 +35,18 @@ export class CarGatewayController {
   ) {}
 
   @Post('insurance')
-  async addInsurance(@Req() req, @Body() dto: AddCarInsuranceDto) {
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'documentFile', maxCount: 1 }], {
+      storage: multer.memoryStorage(),
+    }),
+  )
+  async addInsurance(
+    @Req() req,
+    @UploadedFiles() files: { documentFile?: Express.Multer.File[] },
+    @Body() dto: AddCarInsuranceDto,
+  ) {
+    dto.documentFile = files?.documentFile?.[0];
+
     const authHeader = req.headers['authorization'] || null;
     return this.carClient.send(PATTERNS.CAR_INSURANCE_ADD, {
       headers: { authorization: authHeader },
@@ -44,11 +55,19 @@ export class CarGatewayController {
   }
 
   @Patch('insurance/:id')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'documentFile', maxCount: 1 }], {
+      storage: multer.memoryStorage(),
+    }),
+  )
   async updateInsurance(
     @Req() req,
     @Param('id') id: string,
+    @UploadedFiles() files: { documentFile?: Express.Multer.File[] },
     @Body() dto: UpdateCarInsuranceDto,
   ) {
+    dto.documentFile = files?.documentFile?.[0];
+
     const authHeader = req.headers['authorization'] || null;
     return this.carClient.send(PATTERNS.CAR_INSURANCE_UPDATE, {
       headers: { authorization: authHeader },
@@ -78,13 +97,22 @@ export class CarGatewayController {
   @Post()
   @UseInterceptors(
     FileFieldsInterceptor(
-      [{ name: 'photos', maxCount: 7 }],
+      [
+        { name: 'photos', maxCount: 7 },
+        { name: 'technicalInspectionCertificate', maxCount: 1 },
+        { name: 'gpsInstallationReceipt', maxCount: 1 },
+      ],
       { storage: multer.memoryStorage() }, // file stays in memory
     ),
   )
   createCar(
     @Req() req,
-    @UploadedFiles() files: { photos?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      photos?: Express.Multer.File[];
+      technicalInspectionCertificate?: Express.Multer.File[];
+      gpsInstallationReceipt?: Express.Multer.File[];
+    },
 
     @Body() dto: CarDto,
   ) {
@@ -94,6 +122,11 @@ export class CarGatewayController {
     if (photos && photos.length > 0) {
       dto.photos = photos; // assign only if there are files
     }
+    if (files.technicalInspectionCertificate)
+      dto.technicalInspectionCertificate =
+        files.technicalInspectionCertificate[0];
+    if (files.gpsInstallationReceipt)
+      dto.gpsInstallationReceipt = files.gpsInstallationReceipt[0];
 
     return this.carClient.send(PATTERNS.CAR_CREATE, {
       headers: { authorization: authHeader },
@@ -101,28 +134,36 @@ export class CarGatewayController {
       hostId: dto.hostId,
     });
   }
-
   @Patch(':id')
   @UseInterceptors(
     FileFieldsInterceptor(
-      [{ name: 'photos', maxCount: 7 }],
-      { storage: multer.memoryStorage() }, // file stays in memory
+      [
+        { name: 'photos', maxCount: 7 },
+        { name: 'technicalInspectionCertificate', maxCount: 1 },
+        { name: 'gpsInstallationReceipt', maxCount: 1 },
+      ],
+      { storage: multer.memoryStorage() },
     ),
   )
   updateCar(
     @Req() req,
-    @UploadedFiles() files: { photos?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      photos?: Express.Multer.File[];
+      technicalInspectionCertificate?: Express.Multer.File[];
+      gpsInstallationReceipt?: Express.Multer.File[];
+    },
     @Param('id') id: string,
     @Body() dto: Partial<CarDto>,
   ) {
     const authHeader = req.headers['authorization'] || null;
-    const photos = files.photos; // get the array from the object
 
-    if (photos && photos.length > 0) {
-      dto.photos = photos; // assign only if there are files
-    }
-
-    console.log('--------------- car updated', id);
+    if (files.photos) dto.photos = files.photos;
+    if (files.technicalInspectionCertificate)
+      dto.technicalInspectionCertificate =
+        files.technicalInspectionCertificate[0];
+    if (files.gpsInstallationReceipt)
+      dto.gpsInstallationReceipt = files.gpsInstallationReceipt[0];
 
     return this.carClient.send(PATTERNS.CAR_UPDATE, {
       headers: { authorization: authHeader },

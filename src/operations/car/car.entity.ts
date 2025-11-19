@@ -8,11 +8,13 @@ import {
   ArrayMinSize,
   IsBoolean,
   IsNotEmpty,
+  IsDateString,
 } from 'class-validator';
 import {
   CarType,
   EcoFriendly,
   InsurancePlan,
+  InsuranceType,
   Transmission,
 } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
@@ -67,11 +69,6 @@ export class CarDto {
   @IsInt()
   mileage: number;
 
-  // @ApiProperty({ example: 50 })
-  // @Type(() => Number)
-  // @IsNumber()
-  // dailyRate: number;
-
   @ApiProperty({ example: 45 })
   @Type(() => Number)
   @IsNumber()
@@ -98,6 +95,7 @@ export class CarDto {
   @IsEnum(EcoFriendly)
   ecoFriendly: EcoFriendly;
 
+  // Arrays: features, safety, rules -----------------------------------
   @ApiPropertyOptional({ example: '["Bluetooth","Camera"]' })
   @Transform(({ value }) => {
     if (typeof value === 'string') {
@@ -153,15 +151,191 @@ export class CarDto {
   @IsString()
   rejectionReason?: string;
 
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'binary',
-    isArray: true,
-  })
+  @ApiPropertyOptional({ type: 'string', format: 'binary', isArray: true })
   @IsOptional()
   @IsArray()
-  photos: Express.Multer.File[];
+  photos?: Express.Multer.File[];
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  technicalInspectionCertificate?: Express.Multer.File;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  gpsInstallationReceipt?: Express.Multer.File;
+
+  @ApiProperty()
+  @Type(() => Boolean)
+  hasGPS: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsDeviceBrand?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsImeiNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsPlatformUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsPlatformUsername?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsPlatformPassword?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  gpsSubscriptionExpiryDate?: Date;
 }
+// export class CarDto {
+//   @ApiProperty()
+//   @IsString()
+//   hostId: string;
+
+//   @ApiProperty()
+//   @IsString()
+//   makeId: string;
+
+//   @ApiProperty()
+//   @IsString()
+//   modelId: string;
+
+//   @ApiProperty()
+//   @IsString()
+//   carType: string;
+
+//   @ApiProperty({ example: 2022 })
+//   @Type(() => Number)
+//   @IsInt()
+//   year: number;
+
+//   @ApiProperty()
+//   @IsString()
+//   color: string;
+
+//   @ApiProperty()
+//   @IsString()
+//   licensePlate: string;
+
+//   @ApiPropertyOptional()
+//   @IsOptional()
+//   @IsString()
+//   vin: string;
+
+//   @ApiPropertyOptional()
+//   @IsOptional()
+//   @IsString()
+//   location: string;
+
+//   @ApiProperty({ enum: Transmission })
+//   @IsEnum(Transmission)
+//   transmission: Transmission;
+
+//   @ApiProperty({ example: 35000 })
+//   @Type(() => Number)
+//   @IsInt()
+//   mileage: number;
+
+//   // @ApiProperty({ example: 50 })
+//   // @Type(() => Number)
+//   // @IsNumber()
+//   // dailyRate: number;
+
+//   @ApiProperty({ example: 45 })
+//   @Type(() => Number)
+//   @IsNumber()
+//   rentalPricePerDay: number;
+
+//   @ApiPropertyOptional({ example: 10 })
+//   @Type(() => Number)
+//   @IsOptional()
+//   @IsNumber()
+//   longTermDiscount?: number;
+
+//   @ApiProperty({ example: 5 })
+//   @Type(() => Number)
+//   @IsInt()
+//   seatingCapacity: number;
+
+//   @ApiPropertyOptional({ example: 200 })
+//   @Type(() => Number)
+//   @IsOptional()
+//   @IsInt()
+//   mileageLimit?: number;
+
+//   @ApiProperty({ enum: EcoFriendly })
+//   @IsEnum(EcoFriendly)
+//   ecoFriendly: EcoFriendly;
+
+//   @ApiPropertyOptional({ example: '["Bluetooth","Camera"]' })
+//   @Transform(({ value }) => {
+//     if (typeof value === 'string') {
+//       try {
+//         return JSON.parse(value);
+//       } catch {
+//         return [value];
+//       }
+//     }
+//     return value;
+//   })
+//   @IsOptional()
+//   @IsArray()
+//   features?: string[];
+
+//   @ApiPropertyOptional({ example: '["Airbags","ABS"]' })
+//   @Transform(({ value }) => {
+//     if (typeof value === 'string') {
+//       try {
+//         return JSON.parse(value);
+//       } catch {
+//         return [value];
+//       }
+//     }
+//     return value;
+//   })
+//   @IsOptional()
+//   @IsArray()
+//   safety?: string[];
+
+//   @ApiPropertyOptional({ example: '["No smoking","No pets"]' })
+//   @Transform(({ value }) => {
+//     if (typeof value === 'string') {
+//       try {
+//         return JSON.parse(value);
+//       } catch {
+//         return [value];
+//       }
+//     }
+//     return value;
+//   })
+//   @IsOptional()
+//   @IsArray()
+//   rules?: string[];
+
+//   @ApiPropertyOptional()
+//   @IsOptional()
+//   @IsString()
+//   description?: string;
+
+//   @ApiPropertyOptional()
+//   @IsOptional()
+//   @IsString()
+//   rejectionReason?: string;
+
+//   @ApiPropertyOptional({
+//     type: 'string',
+//     format: 'binary',
+//     isArray: true,
+//   })
+//   @IsOptional()
+//   @IsArray()
+//   photos: Express.Multer.File[];
+// }
 
 export class CarSearchFilter {
   @ApiPropertyOptional()
@@ -210,42 +384,55 @@ export class AddCarInsuranceDto {
   @IsString()
   carId: string;
 
-  @ApiProperty({ enum: InsurancePlan })
+  @ApiProperty({ enum: InsuranceType })
   @IsNotEmpty()
-  @IsEnum(InsurancePlan)
-  plan: InsurancePlan;
+  @IsEnum(InsuranceType)
+  insuranceType: InsuranceType;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  provider: string;
+  insuranceCompany: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  coverageDetails?: string;
+  policyNumber: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsDateString()
+  expiryDate: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  documentFile?: Express.Multer.File;
 }
 
 export class UpdateCarInsuranceDto {
-  @ApiPropertyOptional({ enum: InsurancePlan })
+  @ApiPropertyOptional({ enum: InsuranceType })
   @IsOptional()
-  @IsEnum(InsurancePlan)
-  plan?: InsurancePlan;
+  @IsEnum(InsuranceType)
+  insuranceType?: InsuranceType;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  provider?: string;
+  insuranceCompany?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  coverageDetails?: string;
+  policyNumber?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @IsDateString()
+  expiryDate?: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  documentFile?: Express.Multer.File;
 }
 
 export class CarDateDto {
