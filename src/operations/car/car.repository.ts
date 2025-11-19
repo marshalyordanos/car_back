@@ -253,15 +253,14 @@ export class CarRepository {
         'host.email',
       ],
     });
+
     const query = feature.getQuery();
     const where: any = { ...query.where };
 
-    // Declare with let at top
     let startDate: Date | null = null;
     let endDate: Date | null = null;
     let days = 0;
 
-    console.log(filter);
     if (filter.startDate && filter.endDate) {
       startDate = new Date(filter.startDate);
       endDate = new Date(filter.endDate);
@@ -272,87 +271,41 @@ export class CarRepository {
         startDate < endDate
       ) {
         const diffTime = endDate.getTime() - startDate.getTime();
-        console.log('==================: ', startDate, endDate);
         days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         where.AND = where.AND || [];
-        // where.AND.push({
-        //   bookings: {
-        //     none: {
-        //       AND: [
-        //         {
-        //           status: {
-        //             notIn: [
-        //               'CANCELLED_BY_GUEST',
-        //               'CANCELLED_BY_HOST',
-        //               'CANCELLED_BY_ADMIN',
-        //               'COMPLETED',
-        //               'REJECTED',
-        //             ],
-        //           },
-        //         },
-        //         {
-        //           OR: [
-        //             {
-        //               startDate: { lte: endDate },
-        //               endDate: { gte: startDate },
-        //             },
-        //           ],
-        //         },
-        //       ],
 
-        //     },
-        //   },
-        // });
-
+        // Exclude cars with bookings overlapping the period that are NOT available
         where.AND.push({
-          OR: [
-            // 1️⃣ Cars with no conflicting bookings
-            {
-              bookings: {
-                none: {
-                  AND: [
-                    {
-                      status: {
-                        notIn: [
-                          'CANCELLED_BY_GUEST',
-                          'CANCELLED_BY_HOST',
-                          'CANCELLED_BY_ADMIN',
-                          'COMPLETED',
-                          'REJECTED',
+          NOT: {
+            bookings: {
+              some: {
+                AND: [
+                  { startDate: { lte: endDate } },
+                  { endDate: { gte: startDate } },
+                  {
+                    OR: [
+                      { status: { not: 'PENDING' } }, // exclude confirmed/completed/rejected bookings
+                      {
+                        AND: [
+                          { status: 'PENDING' },
+                          { payment: { status: 'COMPLETED' } },
                         ],
-                      },
-                    },
-                    {
-                      startDate: { lte: endDate },
-                      endDate: { gte: startDate },
-                    },
-                  ],
-                },
+                      }, // exclude pending bookings with completed payment
+                    ],
+                  },
+                ],
               },
             },
-
-            // 2️⃣ Cars with bookings in range but payment pending
-            {
-              bookings: {
-                some: {
-                  AND: [
-                    { status: 'PENDING' },
-                    { payment: { status: 'PENDING' } },
-                    { startDate: { lte: endDate } },
-                    { endDate: { gte: startDate } },
-                  ],
-                },
-              },
-            },
-          ],
+          },
         });
       }
     }
 
     const results = await Promise.all([
       this.prisma.car.findMany({
-        ...{ ...query, where },
+        ...query,
+        where,
         include: {
           make: true,
           model: true,
@@ -365,25 +318,13 @@ export class CarRepository {
     const cars = results[0] || [];
     const total = results[1] || 0;
 
-    console.log('dayesss: ', days);
-    console.log('+===================================:', days);
-
     const carsWithPricing = cars.map((car) => {
       if (days > 0) {
         const carPrice = car.rentalPricePerDay * days;
-
         const platformFee = carPrice * 0.1;
         const baseTotal = carPrice + platformFee;
         const tax = baseTotal * 0.15;
         const totalPrice = baseTotal + tax;
-
-        console.log(
-          '+===================================:',
-          platformFee,
-          baseTotal,
-          tax,
-          totalPrice,
-        );
         return { ...car, baseTotal, totalPrice, days };
       }
       return { ...car, baseTotal: 0, totalPrice: 0, days: 0 };
