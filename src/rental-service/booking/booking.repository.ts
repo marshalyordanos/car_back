@@ -351,7 +351,7 @@ export class BookingRepository {
         amount: payment.amount,
         currency: 'ETB',
         tx_ref: payment.transactionId,
-        callback_url: `https://api.wheellol.com/chapa-callback`,
+        callback_url: `https://api.wheellol.com/bookings/chapa-callback`,
         'customization[title]': 'Car Rental Booking',
         'customization[description]': 'Payment for car booking',
         phone_number: phone,
@@ -608,21 +608,16 @@ export class BookingRepository {
     });
 
     const query = feature.getQuery();
-    const where: any = { ...query.where };
-    where.AND = where.AND || [];
-
-    where.AND.push({
-      NOT: [
-        // Exclude bookings with status PENDING
-        { status: 'PENDING' },
-        // Exclude bookings where payment exists and is pending
+    const where: any = {
+      AND: [...(query.where?.AND || [])],
+      OR: [
+        { status: { not: 'PENDING' } }, // normal bookings
         {
-          payment: {
-            status: 'PENDING',
-          },
+          status: 'PENDING',
+          payment: { status: 'COMPLETED' }, // pending bookings but payment is completed
         },
       ],
-    });
+    };
 
     console.log('--------------------2222222222222222222', where);
 

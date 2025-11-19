@@ -132,8 +132,9 @@ export class MessageRepository {
           ELSE b."hostId"
         END AS "withUserId"
       FROM "Booking" b
-      -- JOIN PAYMENT (filter to completed payments only)
-      LEFT JOIN "Payment" p ON p."bookingId" = b.id
+      -- Join only completed payments
+      LEFT JOIN "Payment" p 
+        ON p."bookingId" = b.id AND p."status" = 'COMPLETED'
       -- Last message
       LEFT JOIN LATERAL (
         SELECT *
@@ -153,7 +154,6 @@ export class MessageRepository {
       WHERE 
         (b."hostId" = $1 OR b."guestId" = $1)
         AND b."status" != 'PENDING'
-        AND p."status" = 'COMPLETED'
       ORDER BY COALESCE(m."createdAt", b."createdAt") DESC
       LIMIT $2 OFFSET $3  
       `,
@@ -191,16 +191,16 @@ export class MessageRepository {
       };
     });
 
-    // ---- COUNT QUERY WITH SAME CONDITIONS ----
+    // ---- COUNT QUERY ----
     const [{ count }] = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
       `
       SELECT COUNT(*)::int AS count
       FROM "Booking" b
-      LEFT JOIN "Payment" p ON p."bookingId" = b.id
+      LEFT JOIN "Payment" p 
+        ON p."bookingId" = b.id AND p."status" = 'COMPLETED'
       WHERE 
         (b."hostId" = $1 OR b."guestId" = $1)
         AND b."status" != 'PENDING'
-        AND p."status" = 'COMPLETED'
       `,
       userId,
     );
