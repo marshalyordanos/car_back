@@ -609,7 +609,7 @@ export class BookingRepository {
 
     const query = feature.getQuery();
     const where: any = {
-      AND: [...(query.where?.AND || []), { guestId: userId }],
+      AND: [query.where],
       OR: [
         { status: { not: 'PENDING' } }, // normal bookings
         {
@@ -619,7 +619,14 @@ export class BookingRepository {
       ],
     };
 
-    console.log('--------------------2222222222222222222', where);
+    console.log(
+      '--------------------2222222222222222222',
+      JSON.stringify(query),
+    );
+    console.log(
+      '--------------------2222222222222222222',
+      JSON.stringify(where),
+    );
 
     const results = await Promise.all([
       this.prisma.booking.findMany({
