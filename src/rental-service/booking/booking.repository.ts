@@ -609,7 +609,7 @@ export class BookingRepository {
 
     const query = feature.getQuery();
     const where: any = {
-      AND: [...(query.where?.AND || [])],
+      AND: [...(query.where?.AND || []), { guestId: userId }],
       OR: [
         { status: { not: 'PENDING' } }, // normal bookings
         {
