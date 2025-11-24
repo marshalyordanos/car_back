@@ -49,7 +49,7 @@ export class AuthUseCaseImpl {
     data.role = role.id;
     const exists = await this.authRepository.findByPhone(data.phone);
     if (exists) {
-      throw new RpcException('Phone already in use');
+      throw new RpcException('You are already registered. Please log in.');
     }
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -137,7 +137,7 @@ export class AuthUseCaseImpl {
       await this.authRepository.changeUserOtp(user.id, nums);
       throw new RpcException({
         statusCode: 400,
-        message: 'verify first',
+        message: 'verify first' + ` (${nums})`,
       });
     }
     if (!user.isActive) {

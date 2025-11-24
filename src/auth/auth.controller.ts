@@ -25,8 +25,9 @@ export class AuthMessageController {
   @MessagePattern(PATTERNS.AUTH_REGISTER)
   async register(@Payload() dto: any) {
     try {
+      console.log('=============================');
       const user = await this.usecases.register(dto);
-      return new IResponse(true, 'User is registered Succuessfuly', null);
+      return new IResponse(true, 'User is registered Succuessfuly', user);
     } catch (error) {
       handleCatch(error);
     }
