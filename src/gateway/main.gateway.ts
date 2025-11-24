@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { GatewayModule } from './gateway.module';
 import { AllExceptions } from '../common/error';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(GatewayModule);
@@ -31,6 +32,8 @@ async function bootstrap() {
       'access-token', // this is the name
     )
     .build();
+  app.use(express.json({ limit: '100mb' }));
+  app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

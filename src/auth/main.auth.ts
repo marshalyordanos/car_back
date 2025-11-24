@@ -19,8 +19,10 @@ async function bootstrap() {
     },
   );
   //
+
   const jwtService = app.get(JwtService);
   const reflector = app.get(Reflector);
+
   app.useGlobalGuards(new JwtAuthGuard(jwtService, reflector));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
