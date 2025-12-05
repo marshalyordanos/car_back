@@ -156,6 +156,9 @@ export class UserUseCasesImp implements UserUsecase {
   async deleteUser(id: string) {
     return this.userRepo.deleteUser(id);
   }
+  async deleteAcount(id: string) {
+    return this.userRepo.softDeleteAccount(id);
+  }
 
   async addToWishlist(guestId: string, carId: string) {
     const user = await this.userRepo.findUserById(guestId);

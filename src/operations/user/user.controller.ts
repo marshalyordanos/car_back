@@ -37,6 +37,15 @@ export class UserMessageController {
     }
   }
 
+  @MessagePattern(PATTERNS.DELETE_ACCOUNT)
+  async deleteAccount(@Payload() dto: { user: any }) {
+    try {
+      const summary = await this.usecases.deleteAcount(dto.user.sub);
+      return IResponse.success('Your Account is deleted', summary);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
   @Public()
   @MessagePattern(PATTERNS.CREATE_HOST_USER)
   async creatHost(@Payload() dto: any) {

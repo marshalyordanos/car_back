@@ -26,6 +26,7 @@ export const PATTERNS = {
   ACTIVE_DISACTIVE_USER: 'user.active.disactive',
   USER_FIND_ME_BY_ID: 'user.find.me',
   USER_UPDATE_ME: 'user.update.me',
+  DELETE_ACCOUNT: 'DELETE_ACCOUNT',
 
   PAYOUT_FIND_BY_HOST: 'payout.findByHost', // get payout list for specific host
   PAYOUT_REQUEST_WITHDRAWAL: 'payout.requestWithdrawal', // host requests payout

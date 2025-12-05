@@ -193,6 +193,30 @@ export class UserRepository {
     return this.prisma.user.delete({ where: { id: id } });
   }
 
+  async softDeleteAccount(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) throw new Error('User not found');
+
+    // Generate randomized values
+    const randomSuffix = Math.random().toString(36).substring(2, 10);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        isActive: false,
+        email: `deleted_${user.email}_${randomSuffix}`,
+        phone: user.phone ? `deleted_${user.phone}_${randomSuffix}` : null,
+        otp: null,
+        password: null,
+      },
+    });
+
+    return updatedUser;
+  }
+
   async findUserByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }

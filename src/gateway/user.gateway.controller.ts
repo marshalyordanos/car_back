@@ -268,6 +268,15 @@ export class UserGatewayController {
     });
   }
 
+  @Post('/delete')
+  async deleteAcount(@Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.DELETE_ACCOUNT, {
+      headers: { authorization: authHeader },
+    });
+  }
+
   @Patch(':id')
   @UseInterceptors(
     FileFieldsInterceptor(
