@@ -35,7 +35,7 @@ export async function sendSms(message: string, phone: string): Promise<void> {
   const body = {
     to: phone,
     message,
-    // sender: "Kelati", // Optional field — uncomment if needed
+    sender: 'afridatai', // Optional field — uncomment if needed
   };
 
   try {
