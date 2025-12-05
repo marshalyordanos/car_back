@@ -137,7 +137,7 @@ export class AuthUseCaseImpl {
       await this.authRepository.changeUserOtp(user.id, nums);
       throw new RpcException({
         statusCode: 400,
-        message: 'verify first' + ` (${nums})`,
+        message: 'verify first', //+ ` (${nums})`,
       });
     }
     if (!user.isActive) {

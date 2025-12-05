@@ -18,7 +18,7 @@ export async function sendSms(message: string, phone: string): Promise<void> {
   const baseUrl = 'https://api.afromessage.com/api/send';
   //   const token = process.env.AFRO_MESSAGE_API_KEY;
   const token =
-    'eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiQ3o5MzQ0VExCMXVvNDJVaUY4eFpNREdpS0NqQk1rQmoiLCJleHAiOjE5MTk5NTkyNjAsImlhdCI6MTc2MjE5Mjg2MCwianRpIjoiM2MyZTY4NDAtNTcwNC00ZTUwLWI5NmYtYjc1NTQwYmRkMzU0In0.0q-r_RZb0X09vgB0MX1orxmSiXQhTKATJfrRDB4UglI	';
+    'eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiNjR5YmVZUFBtc2UwUmhxT2p1b3d2TnNnZU42aVAycGoiLCJleHAiOjE5MjE2MDQ5MjIsImlhdCI6MTc2MzgzODUyMiwianRpIjoiYzUzODAzY2ItZDg4Mi00OTEyLTk3OTctOTgzNjMzOWUxMjljIn0.IW6JP9BJ2tYC_udqiInDb5VY5SMVuXBxGD1XdIA1wBA';
 
   if (!token) {
     console.error(
