@@ -180,6 +180,22 @@ export class AuthUseCaseImpl {
         message: 'Invalid credentials',
       });
     }
+
+    console.log(
+      'aksldkaskdaskdmlaksdk',
+      user,
+      !user?.isSuperAdmin && !user.isVerified,
+    );
+    if (!user?.isSuperAdmin && !user.isVerified) {
+      const nums = generateOtp6();
+
+      await sendSms(nums, user.phone!);
+      await this.authRepository.changeUserOtp(user.id, nums);
+      throw new RpcException({
+        statusCode: 400,
+        message: 'verify first', //+ ` (${nums})`,
+      });
+    }
     if (!user.isActive) {
       throw new RpcException({
         statusCode: 400,
