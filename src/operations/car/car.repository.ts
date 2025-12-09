@@ -217,9 +217,10 @@ export class CarRepository {
         days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         const carPrice = car.rentalPricePerDay * days;
+        const platformFeeRow = await this.prisma.platformFee.findFirst();
+        const platformFeePercent = platformFeeRow?.platformFee || 0;
 
-        const platformFee = carPrice * 0.1;
-        baseTotal = carPrice + platformFee;
+        baseTotal = carPrice + platformFeePercent;
         tax = baseTotal * 0.15;
         totalPrice = baseTotal + tax;
       }
@@ -317,12 +318,13 @@ export class CarRepository {
 
     const cars = results[0] || [];
     const total = results[1] || 0;
+    const platformFeeRow = await this.prisma.platformFee.findFirst();
+    const platformFeePercent = platformFeeRow?.platformFee || 0;
 
     const carsWithPricing = cars.map((car) => {
       if (days > 0) {
         const carPrice = car.rentalPricePerDay * days;
-        const platformFee = carPrice * 0.1;
-        const baseTotal = carPrice + platformFee;
+        const baseTotal = carPrice + platformFeePercent;
         const tax = baseTotal * 0.15;
         const totalPrice = baseTotal + tax;
         return { ...car, baseTotal, totalPrice, days };

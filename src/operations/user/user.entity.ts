@@ -28,7 +28,7 @@ export class UserDto {
   branchId?: string;
 
   @ApiPropertyOptional()
-  phone?: string;
+  phone: string;
 }
 
 export class UserUpdateDto {
@@ -81,6 +81,15 @@ export class UserCreteDto {
   @IsOptional()
   @IsString()
   roleId?: string;
+}
+export class PlatformFeeDto {
+  @ApiProperty()
+  @IsNumber()
+  platformFee: number;
+
+  @ApiProperty()
+  @IsNumber()
+  commissionRate: number;
 }
 
 export class CreateHostDto {

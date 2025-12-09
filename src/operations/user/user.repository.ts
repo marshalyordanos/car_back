@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { HostProfileDto, UserCreteDto, UserUpdateDto } from './user.entity';
+import {
+  HostProfileDto,
+  PlatformFeeDto,
+  UserCreteDto,
+  UserUpdateDto,
+} from './user.entity';
 import {
   BankType,
   BookingStatus,
@@ -208,7 +213,7 @@ export class UserRepository {
       data: {
         isActive: false,
         email: `deleted_${user.email}_${randomSuffix}`,
-        phone: user.phone ? `deleted_${user.phone}_${randomSuffix}` : null,
+        phone: user.phone && `deleted_${user.phone}_${randomSuffix}`,
         otp: null,
         password: null,
       },
@@ -619,6 +624,25 @@ export class UserRepository {
       where: { userId: hostId },
       data: { earnings: newEarnings },
     });
+  }
+
+  async createOrUpdate(data: PlatformFeeDto) {
+    const existing = await this.prisma.platformFee.findFirst();
+
+    if (!existing) {
+      return this.prisma.platformFee.create({
+        data,
+      });
+    }
+
+    return this.prisma.platformFee.update({
+      where: { id: existing.id },
+      data,
+    });
+  }
+
+  async getFee() {
+    return this.prisma.platformFee.findFirst();
   }
 }
 

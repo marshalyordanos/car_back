@@ -15,7 +15,8 @@ export const PATTERNS = {
   CUSTOMER_FIND_ALL: 'customer.findAll',
   HOST_FIND_ALL: 'host.findAll',
   DASHBOARD_SUMMARY: 'DASHBOARD_SUMMARY',
-
+  PLATFORM_FEE_CREATE_OR_UPDATE: 'PLATFORM_FEE_CREATE_OR_UPDATE',
+  PLATFORM_FEE_GET: 'PLATFORM_FEE_GET',
   USER_UPDATE: 'user.update',
   USER_DELETE: 'user.delete',
   USER_FIND_BY_EMAIL: 'user.findByEmail',

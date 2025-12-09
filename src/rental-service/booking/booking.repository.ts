@@ -290,9 +290,9 @@ export class BookingRepository {
             },
           });
 
-          if (!conflict) {
-            await sendSms(`${trackingCode}`, dto.phone!);
-          }
+          // if (!conflict) {
+          //   await sendSms(`${trackingCode}`, dto.phone!);
+          // }
 
           // Return booking and Chapa checkout URL
           return {
@@ -413,7 +413,7 @@ export class BookingRepository {
     // 2️⃣ Lookup payment record by trx_ref
     const payment = await this.prisma.payment.findUnique({
       where: { transactionId: data.trx_ref },
-      include: { booking: true },
+      include: { booking: true, payer: true },
     });
 
     if (!payment) {
@@ -479,6 +479,10 @@ export class BookingRepository {
             message: `You have a new booking request from a guest.`,
           },
           updatedPayment.booking!.id,
+        );
+        await sendSms(
+          `${payment.booking?.trackingCode}`,
+          payment.payer?.phone!,
         );
 
         // await tx.booking.update({
@@ -1128,5 +1132,8 @@ export class BookingRepository {
       },
       include: { role: true, guestProfile: true },
     });
+  }
+  async getFee() {
+    return this.prisma.platformFee.findFirst();
   }
 }

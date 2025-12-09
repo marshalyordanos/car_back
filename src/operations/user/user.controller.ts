@@ -8,6 +8,7 @@ import {
   HostProfileDto,
   HostVerifyDto,
   IsActiveDto,
+  PlatformFeeDto,
   UserCreteDto,
   UserDto,
 } from './user.entity';
@@ -257,6 +258,30 @@ export class UserMessageController {
   async findByEmail(@Payload() payload: { email: string }) {
     try {
       return this.usecases.findUserByEmail(payload.email);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('SETTINGS', PermissionActions.UPDATE)
+  @MessagePattern(PATTERNS.PLATFORM_FEE_CREATE_OR_UPDATE)
+  async createOrUpdate(@Payload() payload: { data: PlatformFeeDto }) {
+    try {
+      const result = await this.usecases.createOrUpdateFee(payload.data);
+      return IResponse.success('Platform fee saved successfully', result);
+    } catch (error) {
+      handleCatch(error);
+    }
+  }
+
+  @UseGuards(permissionGuard.PermissionGuard)
+  @CheckPermission('SETTINGS', PermissionActions.READ)
+  @MessagePattern(PATTERNS.PLATFORM_FEE_GET)
+  async getFee() {
+    try {
+      const result = await this.usecases.getFee();
+      return IResponse.success('Platform fee fetched successfully', result);
     } catch (error) {
       handleCatch(error);
     }

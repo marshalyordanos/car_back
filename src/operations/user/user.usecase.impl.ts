@@ -4,6 +4,7 @@ import {
   CreateHostDto,
   DashboardSummaryDto,
   HostProfileDto,
+  PlatformFeeDto,
   UserCreteDto,
   UserDto,
   UserUpdateDto,
@@ -348,5 +349,13 @@ export class UserUseCasesImp implements UserUsecase {
     // await this.notificationRepo.createPayoutNotification(payout.hostId, 'PAYMENT', 'Payout Update', message);
 
     return updated;
+  }
+
+  async createOrUpdateFee(data: PlatformFeeDto) {
+    return this.userRepo.createOrUpdate(data);
+  }
+
+  async getFee() {
+    return this.userRepo.getFee();
   }
 }

@@ -45,9 +45,13 @@ export class BookingUseCasesImp {
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     const baseTotal = car.rentalPricePerDay * days;
+    const pt = await this.repo.getFee();
+    const hostEaring =
+      baseTotal - baseTotal * ((pt?.commissionRate || 0) / 100);
 
-    const platformFee = baseTotal * 0.1;
-    const baseTotalWithPlatformFee = baseTotal + platformFee;
+    const platformFeePercent = pt?.platformFee || 0;
+    // const platformFee = baseTotal * 0.1;
+    const baseTotalWithPlatformFee = baseTotal + platformFeePercent;
 
     const tax = baseTotalWithPlatformFee * 0.15;
 
@@ -77,8 +81,8 @@ export class BookingUseCasesImp {
     return this.repo.createBooking(
       dto,
       totalPrice,
-      platformFee,
-      baseTotal,
+      platformFeePercent,
+      hostEaring,
       userId,
       uploadedFiles,
     );

@@ -24,6 +24,7 @@ import {
   HostProfileDto,
   HostVerifyDto,
   IsActiveDto,
+  PlatformFeeDto,
   RemoveFromWishlistDto,
   UserCreteDto,
   UserDto,
@@ -265,6 +266,24 @@ export class UserGatewayController {
       payoutId,
       status: body.status,
       reason: body.reason,
+    });
+  }
+  @Post('admin/setting')
+  async createOrUpdate(@Req() req, @Body() dto: PlatformFeeDto) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.PLATFORM_FEE_CREATE_OR_UPDATE, {
+      headers: { authorization: authHeader },
+      data: dto,
+    });
+  }
+
+  @Get('admin/setting')
+  async getFee(@Req() req) {
+    const authHeader = req.headers['authorization'] || null;
+
+    return this.usersClient.send(PATTERNS.PLATFORM_FEE_GET, {
+      headers: { authorization: authHeader },
     });
   }
 

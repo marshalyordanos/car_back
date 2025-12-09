@@ -31,7 +31,7 @@ export class RegisterStaffDto {
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone: string;
 }
 
 export class UpdateStaffDto {

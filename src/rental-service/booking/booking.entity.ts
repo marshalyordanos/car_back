@@ -31,9 +31,9 @@ export class CreateBookingDto {
   email?: string;
 
   @ApiProperty({ description: 'Phone number' })
-  @IsOptional({ message: 'Phone is required' })
+  // @IsOptional({ message: 'Phone is required' })
   @IsString({ message: 'Phone must be a string' })
-  phone?: string;
+  phone: string;
 
   @ApiProperty()
   @IsNotEmpty()
