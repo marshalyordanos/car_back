@@ -19,9 +19,9 @@ export class AuthRegisterDto {
   lastName: string;
 
   @ApiProperty({ description: 'Email' })
-  @IsNotEmpty({ message: 'Email is required' })
+  @IsOptional()
   @IsEmail({}, { message: 'Email must be valid' })
-  email: string;
+  email?: string;
 
   @ApiProperty({ description: 'Phone number' })
   @IsNotEmpty({ message: 'Phone is required' })

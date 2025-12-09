@@ -16,7 +16,8 @@ export class UserDto {
   name: string;
 
   @ApiProperty()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @ApiProperty()
   password: string;
@@ -70,8 +71,9 @@ export class UserCreteDto {
   lastName: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
-  email: string;
+  email?: string;
 
   @ApiProperty()
   @IsString()
@@ -104,9 +106,9 @@ export class CreateHostDto {
   lastName: string;
 
   @ApiProperty({ description: 'Email' })
-  @IsNotEmpty({ message: 'Email is required' })
+  @IsOptional()
   @IsEmail({}, { message: 'Email must be valid' })
-  email: string;
+  email?: string;
 
   @ApiProperty({ description: 'Phone' })
   @IsNotEmpty({ message: 'Phone is required' })
