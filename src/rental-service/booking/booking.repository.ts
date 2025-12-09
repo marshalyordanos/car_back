@@ -481,7 +481,7 @@ export class BookingRepository {
           updatedPayment.booking!.id,
         );
         await sendSms(
-          `${payment.booking?.trackingCode}`,
+          `Your tracking code is ${payment.booking?.trackingCode} Follow your car rental progress or updates using this code.`,
           payment.payer?.phone!,
         );
 

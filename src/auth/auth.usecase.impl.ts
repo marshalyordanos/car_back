@@ -100,7 +100,7 @@ export class AuthUseCaseImpl {
       );
     }
 
-    await sendSms(nums, data.phone);
+    await sendSms(`${nums} is your verification code`, data.phone);
 
     return user;
   }
@@ -133,7 +133,7 @@ export class AuthUseCaseImpl {
     if (!user.isVerified) {
       const nums = generateOtp6();
 
-      await sendSms(nums, user.phone!);
+      await sendSms(`${nums} is your verification code`, user.phone!);
       await this.authRepository.changeUserOtp(user.id, nums);
       throw new RpcException({
         statusCode: 400,
@@ -189,7 +189,7 @@ export class AuthUseCaseImpl {
     if (!user?.isSuperAdmin && !user.isVerified) {
       const nums = generateOtp6();
 
-      await sendSms(nums, user.phone!);
+      await sendSms(`${nums} is your verification code`, user.phone!);
       await this.authRepository.changeUserOtp(user.id, nums);
       throw new RpcException({
         statusCode: 400,
@@ -220,7 +220,7 @@ export class AuthUseCaseImpl {
     const nums = generateOtp6();
     await this.authRepository.changeUserOtp(user.id, nums);
 
-    await sendSms(nums, user.phone!);
+    await sendSms(`${nums} is your verification code`, user.phone!);
     return new IResponse(true, 'OTP sent successfully');
   }
 
@@ -346,7 +346,7 @@ export class AuthUseCaseImpl {
     }
 
     const nums = generateOtp6();
-    await sendSms(nums, phone);
+    await sendSms(`${nums} is your verification code`, phone);
 
     return this.authRepository.changeUserOtp(user.id, nums);
 
