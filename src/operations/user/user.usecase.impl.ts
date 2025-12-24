@@ -17,7 +17,7 @@ import { uploadToSpaces } from '../../config/cloudinary/upload';
 import { ListQueryDto } from 'src/common/query/query.dto';
 
 @Injectable()
-export class UserUseCasesImp implements UserUsecase {
+export class UserUseCasesImp {
   constructor(private readonly userRepo: UserRepository) {}
 
   findUserByEmail(email: string): Promise<User | null> {
@@ -104,6 +104,7 @@ export class UserUseCasesImp implements UserUsecase {
     data: Partial<UserUpdateDto>,
     isMe = false,
     userId = '',
+    uploadedFiles: any,
   ) {
     if (isMe) {
       if (userId != id) {
@@ -114,32 +115,32 @@ export class UserUseCasesImp implements UserUsecase {
     if (!user) {
       throw new RpcException(`User not found`);
     }
-    console.log('===========================: ', data);
-    const uploadedFiles: any = {};
-    try {
-      if (data.profilePhotoFile) {
-        console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToSpaces(
-          data.profilePhotoFile,
-          'users/profilePhotos',
-        );
-        console.log('uploadedFiles: ', uploadedFiles);
-      }
-      if (data.driverLicenseFile && user.role?.name == 'GUEST') {
-        uploadedFiles.driverLicenseId = await uploadToSpaces(
-          data.driverLicenseFile,
-          'users/driverLicenses',
-        );
-      }
-      if (data.nationalIdFile && user.role?.name == 'GUEST') {
-        uploadedFiles.nationalId = await uploadToSpaces(
-          data.nationalIdFile,
-          'users/nationalIds',
-        );
-      }
-    } catch (err) {
-      throw new RpcException('Error uploading files to Cloudinary');
-    }
+    // console.log('===========================: ', data);
+    // const uploadedFiles: any = {};
+    // try {
+    //   if (data.profilePhotoFile) {
+    //     console.log('profilePhotoFile: ', data.profilePhotoFile);
+    //     uploadedFiles.profilePhoto = await uploadToSpaces(
+    //       data.profilePhotoFile,
+    //       'users/profilePhotos',
+    //     );
+    //     console.log('uploadedFiles: ', uploadedFiles);
+    //   }
+    //   if (data.driverLicenseFile && user.role?.name == 'GUEST') {
+    //     uploadedFiles.driverLicenseId = await uploadToSpaces(
+    //       data.driverLicenseFile,
+    //       'users/driverLicenses',
+    //     );
+    //   }
+    //   if (data.nationalIdFile && user.role?.name == 'GUEST') {
+    //     uploadedFiles.nationalId = await uploadToSpaces(
+    //       data.nationalIdFile,
+    //       'users/nationalIds',
+    //     );
+    //   }
+    // } catch (err) {
+    //   throw new RpcException('Error uploading files to Cloudinary');
+    // }
     return this.userRepo.updateUser(id, data, uploadedFiles);
   }
 
@@ -195,25 +196,25 @@ export class UserUseCasesImp implements UserUsecase {
     return this.userRepo.createUser(data);
   }
 
-  async createHost(data: CreateHostDto): Promise<any> {
+  async createHost(data: CreateHostDto, uploadedFiles: any): Promise<any> {
     const role = await this.userRepo.findRoleByName('HOST');
     if (!role) {
       throw new RpcException('RENTAL role is not found!');
     }
 
-    const uploadedFiles: any = {};
-    try {
-      if (data.profilePhotoFile) {
-        console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToSpaces(
-          data.profilePhotoFile,
-          'users/profilePhotos',
-        );
-        console.log('uploadedFiles: ', uploadedFiles);
-      }
-    } catch (err) {
-      throw new RpcException('Error uploading files to Cloudinary');
-    }
+    // const uploadedFiles: any = {};
+    // try {
+    //   if (data.profilePhotoFile) {
+    //     console.log('profilePhotoFile: ', data.profilePhotoFile);
+    //     uploadedFiles.profilePhoto = await uploadToSpaces(
+    //       data.profilePhotoFile,
+    //       'users/profilePhotos',
+    //     );
+    //     console.log('uploadedFiles: ', uploadedFiles);
+    //   }
+    // } catch (err) {
+    //   throw new RpcException('Error uploading files to Cloudinary');
+    // }
     if (role.name == 'HOST') {
       return this.userRepo.createHostUser(data, role.id, uploadedFiles);
     }

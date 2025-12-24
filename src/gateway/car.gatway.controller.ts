@@ -10,8 +10,11 @@ import {
   Req,
   UseInterceptors,
   UploadedFiles,
+  Res,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Inject } from '@nestjs/common';
 import { PATTERNS } from '../contracts';
 import {
@@ -25,6 +28,7 @@ import multer from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ListQueryDto } from '../common/query/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { uploadToSpaces } from '../config/cloudinary/upload';
 
 @ApiTags('Cars')
 @ApiBearerAuth('access-token')
@@ -105,7 +109,7 @@ export class CarGatewayController {
       { storage: multer.memoryStorage() }, // file stays in memory
     ),
   )
-  createCar(
+  async createCar(
     @Req() req,
     @UploadedFiles()
     files: {
@@ -117,23 +121,63 @@ export class CarGatewayController {
     @Body() dto: CarDto,
   ) {
     const authHeader = req.headers['authorization'] || null;
-    const photos = files.photos; // get the array from the object
+    let uploadedFiles: string[] = [];
+    let uploadedFiles2: any = {};
 
-    if (photos && photos.length > 0) {
-      dto.photos = photos; // assign only if there are files
-    }
+    let photos: any[] = [];
+    let technicalInspectionCertificate;
+    let gpsInstallationReceipt;
+    if (files.photos) photos = files.photos;
     if (files.technicalInspectionCertificate)
-      dto.technicalInspectionCertificate =
-        files.technicalInspectionCertificate[0];
+      technicalInspectionCertificate = files.technicalInspectionCertificate[0];
     if (files.gpsInstallationReceipt)
-      dto.gpsInstallationReceipt = files.gpsInstallationReceipt[0];
+      gpsInstallationReceipt = files.gpsInstallationReceipt[0];
+    console.log('ppppppppppppppppppppppppppppppppppppppppppppp: ', photos);
+    if (files.photos?.length! < 6) {
+      // throw new RpcException(/
+      //   'At least 6 photos are required. Please upload more photos.',
+      // );
+      // throw new HttpException(
+      //   {
+      //     success: false,
+      //     message: 'At least 6 photos are required. Please upload more photos.',
+      //     data: null,
+      //   },
+      //   HttpStatus.BAD_REQUEST,
+      // );
+    }
+    try {
+      uploadedFiles = await Promise.all(
+        photos.map((file) => uploadToSpaces(file, 'cars')),
+      );
+      if (technicalInspectionCertificate) {
+        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+          technicalInspectionCertificate,
+          'cars/technicalInspectionCertificate',
+        );
+      }
+      if (gpsInstallationReceipt) {
+        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+          gpsInstallationReceipt,
+          'cars/gpsInstallationReceipt',
+        );
+      }
+    } catch (err) {
+      console.log('space error: ', err.message, err.statusCode, err);
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
 
     return this.carClient.send(PATTERNS.CAR_CREATE, {
       headers: { authorization: authHeader },
       carData: dto,
       hostId: dto.hostId,
+      photos: uploadedFiles,
+      otherFiles: uploadedFiles2,
     });
   }
+
   @Patch(':id')
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -145,7 +189,7 @@ export class CarGatewayController {
       { storage: multer.memoryStorage() },
     ),
   )
-  updateCar(
+  async updateCar(
     @Req() req,
     @UploadedFiles()
     files: {
@@ -158,18 +202,76 @@ export class CarGatewayController {
   ) {
     const authHeader = req.headers['authorization'] || null;
 
-    if (files.photos) dto.photos = files.photos;
-    if (files.technicalInspectionCertificate)
-      dto.technicalInspectionCertificate =
-        files.technicalInspectionCertificate[0];
-    if (files.gpsInstallationReceipt)
-      dto.gpsInstallationReceipt = files.gpsInstallationReceipt[0];
+    let uploadedFiles: string[] = [];
+    let uploadedFiles2: any = {};
 
+    let photos: any[] = [];
+    let technicalInspectionCertificate;
+    let gpsInstallationReceipt;
+    if (files.photos) photos = files.photos;
+    if (files.technicalInspectionCertificate)
+      technicalInspectionCertificate = files.technicalInspectionCertificate[0];
+    if (files.gpsInstallationReceipt)
+      gpsInstallationReceipt = files.gpsInstallationReceipt[0];
+    console.log('ppppppppppppppppppppppppppppppppppppppppppppp: ', photos);
+    if (files.photos?.length! < 6) {
+      // throw new RpcException(
+      //   'At least 6 photos are required. Please upload more photos.',
+      // );
+      // throw new HttpException(
+      //   {
+      //     success: false,
+      //     message: 'At least 6 photos are required. Please upload more photos.',
+      //     data: null,
+      //   },
+      //   HttpStatus.BAD_REQUEST,
+      // );
+    }
+    try {
+      uploadedFiles = await Promise.all(
+        photos.map((file) => uploadToSpaces(file, 'cars/')),
+      );
+      if (technicalInspectionCertificate) {
+        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+          technicalInspectionCertificate,
+          'cars/technicalInspectionCertificate',
+        );
+      }
+      if (gpsInstallationReceipt) {
+        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+          gpsInstallationReceipt,
+          'cars/gpsInstallationReceipt',
+        );
+      }
+    } catch (err) {
+      console.log('space error: ', err.message, err.statusCode, err);
+
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
+
+    console.log(
+      'ppppppppppppppppppppppppppppppppppppppppppppp: ',
+      uploadedFiles,
+    );
+
+    // throw new HttpException(
+    //   {
+    //     success: false,
+    //     message: 'test',
+    //     data: null,
+    //   },
+    //   HttpStatus.BAD_REQUEST,
+    // );
+    // return 'lksd';
     return this.carClient.send(PATTERNS.CAR_UPDATE, {
       headers: { authorization: authHeader },
       carId: id,
       carData: dto,
       hostId: dto.hostId,
+      photos: uploadedFiles,
+      otherFiles: uploadedFiles2,
     });
   }
 

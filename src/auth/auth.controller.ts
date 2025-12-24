@@ -23,10 +23,19 @@ export class AuthMessageController {
 
   @Public()
   @MessagePattern(PATTERNS.AUTH_REGISTER)
-  async register(@Payload() dto: any) {
+  async register(
+    @Payload()
+    payload: {
+      body: any;
+      uploadedFiles: any;
+    },
+  ) {
     try {
       console.log('=============================');
-      const user = await this.usecases.register(dto);
+      const user = await this.usecases.register(
+        payload.body,
+        payload.uploadedFiles,
+      );
       return new IResponse(true, 'User is registered Succuessfuly', user);
     } catch (error) {
       handleCatch(error);

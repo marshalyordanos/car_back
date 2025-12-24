@@ -9,7 +9,10 @@ dotenv.config();
       {
         name: 'AUTH_SERVICE',
         transport: Transport.TCP,
-        options: { host: '127.0.0.1', port: 4001 },
+        options: {
+          host: '127.0.0.1',
+          port: 4001,
+        },
       },
       {
         name: 'USER_SERVICE',

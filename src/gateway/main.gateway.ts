@@ -35,8 +35,8 @@ async function bootstrap() {
   app.use(express.json({ limit: '200mb' }));
   app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // const document = SwaggerModule.createDocument(app, config);
+  // SwaggerModule.setup('api', app, document);
   // ----------------------
 
   const port = Number(process.env.GATEWAY_PORT ?? 3000);

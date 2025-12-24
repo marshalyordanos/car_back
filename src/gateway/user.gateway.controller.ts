@@ -15,7 +15,7 @@ import {
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   AddToWishlistDto,
@@ -36,6 +36,7 @@ import multer from 'multer';
 import { ListQueryDto } from '../common/query/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BankType } from '@prisma/client';
+import { uploadToSpaces } from '../config/cloudinary/upload';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -112,9 +113,25 @@ export class UserGatewayController {
     },
     @Body() body: CreateHostDto,
   ) {
-    body.profilePhotoFile = files?.profilePhotoFile?.[0];
-
-    return this.usersClient.send(PATTERNS.CREATE_HOST_USER, body);
+    const profilePhotoFile = files?.profilePhotoFile?.[0];
+    const uploadedFiles: any = {};
+    try {
+      if (profilePhotoFile) {
+        uploadedFiles.profilePhoto = await uploadToSpaces(
+          profilePhotoFile,
+          'users/profilePhotos',
+        );
+        console.log('uploadedFiles: ', uploadedFiles);
+      }
+    } catch (err) {
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
+    return this.usersClient.send(PATTERNS.CREATE_HOST_USER, {
+      body,
+      uploadedFiles,
+    });
   }
 
   @Get('hosts')
@@ -212,13 +229,41 @@ export class UserGatewayController {
     @Body() dto: UserUpdateDto,
   ) {
     const authHeader = req.headers['authorization'] || null;
-    dto.profilePhotoFile = files?.profilePhotoFile?.[0];
-    dto.driverLicenseFile = files?.driverLicenseFile?.[0];
-    dto.nationalIdFile = files?.nationalIdFile?.[0];
+    const profilePhotoFile = files?.profilePhotoFile?.[0];
+    const driverLicenseFile = files?.driverLicenseFile?.[0];
+    const nationalIdFile = files?.nationalIdFile?.[0];
+    const uploadedFiles: any = {};
+    try {
+      if (profilePhotoFile) {
+        console.log('profilePhotoFile: ', profilePhotoFile);
+        uploadedFiles.profilePhoto = await uploadToSpaces(
+          profilePhotoFile,
+          'users/profilePhotos',
+        );
+        console.log('uploadedFiles: ', uploadedFiles);
+      }
+      if (driverLicenseFile) {
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
+          driverLicenseFile,
+          'users/driverLicenses',
+        );
+      }
+      if (nationalIdFile) {
+        uploadedFiles.nationalId = await uploadToSpaces(
+          nationalIdFile,
+          'users/nationalIds',
+        );
+      }
+    } catch (err) {
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
     return this.usersClient.send(PATTERNS.USER_UPDATE, {
       headers: { authorization: authHeader },
       id,
       data: dto,
+      uploadedFiles,
     });
   }
 
@@ -319,14 +364,41 @@ export class UserGatewayController {
     @Body() dto: UserUpdateDto,
   ) {
     const authHeader = req.headers['authorization'] || null;
-    dto.profilePhotoFile = files?.profilePhotoFile?.[0];
-    dto.driverLicenseFile = files?.driverLicenseFile?.[0];
-    dto.nationalIdFile = files?.nationalIdFile?.[0];
-
+    const profilePhotoFile = files?.profilePhotoFile?.[0];
+    const driverLicenseFile = files?.driverLicenseFile?.[0];
+    const nationalIdFile = files?.nationalIdFile?.[0];
+    const uploadedFiles: any = {};
+    try {
+      if (profilePhotoFile) {
+        console.log('profilePhotoFile: ', profilePhotoFile);
+        uploadedFiles.profilePhoto = await uploadToSpaces(
+          profilePhotoFile,
+          'users/profilePhotos',
+        );
+        console.log('uploadedFiles: ', uploadedFiles);
+      }
+      if (driverLicenseFile) {
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
+          driverLicenseFile,
+          'users/driverLicenses',
+        );
+      }
+      if (nationalIdFile) {
+        uploadedFiles.nationalId = await uploadToSpaces(
+          nationalIdFile,
+          'users/nationalIds',
+        );
+      }
+    } catch (err) {
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
     return this.usersClient.send(PATTERNS.USER_UPDATE, {
       headers: { authorization: authHeader },
       id,
       data: dto,
+      uploadedFiles,
     });
   }
 

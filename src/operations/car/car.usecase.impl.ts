@@ -16,93 +16,89 @@ import { ListQueryDto } from 'src/common/query/query.dto';
 export class CarUseCasesImp {
   constructor(private readonly repo: CarRepository) {}
 
-  async createCar(hostId: string, carData: CarDto): Promise<Car> {
-    if (!Array.isArray(carData?.photos) || carData.photos.length < 2) {
-      throw new RpcException('You must upload at least 4 photos.');
-    }
+  async createCar(
+    hostId: string,
+    carData: CarDto,
+    photos: string[],
+    otherFiles: any,
+  ): Promise<Car> {
+    // if (!Array.isArray(carData?.photos) || carData.photos.length < 2) {
+    //   throw new RpcException('You must upload at least 4 photos.');
+    // }
 
-    let uploadedFiles: string[] = [];
-    let uploadedFiles2: any = {};
+    // try {
+    //   if (carData.photos) {
+    //     uploadedFiles = await Promise.all(
+    //       carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
+    //     );
+    //   }
+    //   if (carData.technicalInspectionCertificate) {
+    //     uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+    //       carData.technicalInspectionCertificate,
+    //       'cars/technicalInspectionCertificate',
+    //     );
+    //   }
+    //   if (carData.gpsInstallationReceipt) {
+    //     uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+    //       carData.gpsInstallationReceipt,
+    //       'cars/gpsInstallationReceipt',
+    //     );
+    //   }
+    // } catch (err) {
+    //   console.log('space error: ', err);
 
-    try {
-      if (carData.photos) {
-        uploadedFiles = await Promise.all(
-          carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
-        );
-      }
-      if (carData.technicalInspectionCertificate) {
-        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
-          carData.technicalInspectionCertificate,
-          'cars/technicalInspectionCertificate',
-        );
-      }
-      if (carData.gpsInstallationReceipt) {
-        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
-          carData.gpsInstallationReceipt,
-          'cars/gpsInstallationReceipt',
-        );
-      }
-    } catch (err) {
-      console.log('space error: ', err);
+    //   throw new RpcException('Error uploading files to Cloudinary');
+    // }
 
-      throw new RpcException('Error uploading files to Cloudinary');
-    }
+    // console.log({ photos, carData, hostId });
 
-    console.log({ uploadedFiles, carData, hostId });
-
-    return this.repo.createCar(hostId, carData, uploadedFiles, uploadedFiles2);
+    return this.repo.createCar(hostId, carData, photos, otherFiles);
   }
-
   async updateCar(
     carId: string,
     hostId: string,
     carData: Partial<CarDto>,
     userId: string,
-  ): Promise<Car> {
+    photos: string[],
+    otherFiles: any,
+  ) {
     const car = await this.repo.findById(carId);
+    const user = await this.repo.findUserById(userId);
 
     console.log(car?.hostId, userId);
-    if (car?.hostId != userId) {
+    if (car?.hostId != userId && !user?.isSuperAdmin) {
       throw new RpcException('You have not a permission to update this car.');
     }
 
-    if (Array.isArray(carData?.photos) && carData.photos.length < 6) {
-      throw new RpcException('You must upload at least 6 photos.');
-    }
+    // if (Array.isArray(carData?.photos) && carData.photos.length < 6) {
+    //   throw new RpcException('You must upload at least 6 photos.');
+    // }
 
-    let uploadedFiles: string[] = [];
-    let uploadedFiles2: any = {};
+    console.log('000000000000000000000000000000: ', photos, otherFiles);
+    // try {
+    //   if (carData.photos) {
+    //     uploadedFiles = await Promise.all(
+    //       carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
+    //     );
+    //   }
+    //   if (carData.technicalInspectionCertificate) {
+    //     uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
+    //       carData.technicalInspectionCertificate,
+    //       'cars/technicalInspectionCertificate',
+    //     );
+    //   }
+    //   if (carData.gpsInstallationReceipt) {
+    //     uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
+    //       carData.gpsInstallationReceipt,
+    //       'cars/gpsInstallationReceipt',
+    //     );
+    //   }
+    // } catch (err) {
+    //   throw new RpcException('Error uploading files to Cloudinary');
+    // }
 
-    try {
-      if (carData.photos) {
-        uploadedFiles = await Promise.all(
-          carData.photos.map((file) => uploadToSpaces(file, 'cars/')),
-        );
-      }
-      if (carData.technicalInspectionCertificate) {
-        uploadedFiles2.technicalInspectionCertificate = await uploadToSpaces(
-          carData.technicalInspectionCertificate,
-          'cars/technicalInspectionCertificate',
-        );
-      }
-      if (carData.gpsInstallationReceipt) {
-        uploadedFiles2.gpsInstallationReceipt = await uploadToSpaces(
-          carData.gpsInstallationReceipt,
-          'cars/gpsInstallationReceipt',
-        );
-      }
-    } catch (err) {
-      throw new RpcException('Error uploading files to Cloudinary');
-    }
-
-    console.log({ uploadedFiles, carData, hostId });
-    return this.repo.updateCar(
-      carId,
-      hostId,
-      carData,
-      uploadedFiles,
-      uploadedFiles2,
-    );
+    console.log({ photos, carData, hostId });
+    return this.repo.updateCar(carId, hostId, carData, photos, otherFiles);
   }
 
   async deleteCar(

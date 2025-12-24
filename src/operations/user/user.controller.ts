@@ -49,9 +49,12 @@ export class UserMessageController {
   }
   @Public()
   @MessagePattern(PATTERNS.CREATE_HOST_USER)
-  async creatHost(@Payload() dto: any) {
+  async creatHost(@Payload() payload: { body: any; uploadedFiles: any }) {
     try {
-      const user = await this.usecases.createHost(dto);
+      const user = await this.usecases.createHost(
+        payload.body,
+        payload.uploadedFiles,
+      );
       return new IResponse(true, 'User is registered Succuessfuly', user);
     } catch (error) {
       handleCatch(error);
@@ -146,9 +149,22 @@ export class UserMessageController {
   @UseGuards(permissionGuard.PermissionGuard)
   @CheckPermission('USER', PermissionActions.UPDATE)
   @MessagePattern(PATTERNS.USER_UPDATE)
-  async update(@Payload() payload: { id: string; data: Partial<UserDto> }) {
+  async update(
+    @Payload()
+    payload: {
+      id: string;
+      data: Partial<UserDto>;
+      uploadedFiles: any;
+    },
+  ) {
     try {
-      const user = await this.usecases.updateUser(payload.id, payload.data);
+      const user = await this.usecases.updateUser(
+        payload.id,
+        payload.data,
+        false,
+        '',
+        payload.uploadedFiles,
+      );
       return IResponse.success(' user updated successfully', user);
     } catch (error) {
       handleCatch(error);
@@ -174,7 +190,13 @@ export class UserMessageController {
 
   @MessagePattern(PATTERNS.USER_UPDATE_ME)
   async updateMe(
-    @Payload() payload: { id: string; data: Partial<UserDto>; user: any },
+    @Payload()
+    payload: {
+      id: string;
+      data: Partial<UserDto>;
+      user: any;
+      uploadedFiles: any;
+    },
   ) {
     try {
       const user = await this.usecases.updateUser(
@@ -182,6 +204,7 @@ export class UserMessageController {
         payload.data,
         true,
         payload.user?.sub,
+        payload.uploadedFiles,
       );
       return IResponse.success(' user updated successfully', user);
     } catch (error) {

@@ -14,9 +14,14 @@ import { CancellationPolicyGatewayController } from './cancellation-policy.gatew
 import { MessageGatewayController } from './message.gateway.controller';
 import { PaymentGatewayController } from './payment.gateway.controller';
 import { CarTypeGatewayController } from './car-type.gateway.controller';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [MicroserviceClientsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+
+    MicroserviceClientsModule,
+  ],
   controllers: [
     AuthGatewayController,
     UserGatewayController,

@@ -18,7 +18,8 @@ export class CarRepository {
       gpsInstallationReceipt?: string;
       technicalInspectionCertificate?: string;
     },
-  ): Promise<Car> {
+  ) {
+    console.log('creteeeeeeeeeeee: ', { hostId, data, photos, files });
     const host = await this.prisma.user.findUnique({
       where: { id: hostId },
     });
@@ -30,7 +31,7 @@ export class CarRepository {
       ? new Date(data.gpsSubscriptionExpiryDate)
       : undefined;
 
-    return await this.prisma.car.create({
+    const somdata = await this.prisma.car.create({
       data: {
         // Relations
         host: { connect: { id: hostId } },
@@ -87,6 +88,9 @@ export class CarRepository {
         //   : undefined,
       },
     });
+    console.log('somedatadata: ', somdata);
+
+    return somdata;
   }
 
   async updateCar(
@@ -105,7 +109,11 @@ export class CarRepository {
     });
     console.log('Existing car:', data.hasGPS);
 
-    console.log('-------------------', carId, data);
+    console.log(
+      '-------------------abebe',
+      photos,
+      photos ? (photos?.length > 0 ? photos : undefined) : undefined,
+    );
     const updatedCar = await this.prisma.car.update({
       where: { id: carId },
       data: {
@@ -131,7 +139,7 @@ export class CarRepository {
         description: data.description ?? null,
         rejectionReason: data.rejectionReason ?? null,
 
-        photos: photos ? (photos?.length > 1 ? photos : undefined) : undefined,
+        photos: photos ? (photos?.length > 0 ? photos : undefined) : undefined,
         technicalInspectionCertificateUrl:
           files?.technicalInspectionCertificate ?? null,
         gpsInstallationReceiptUrl: files?.gpsInstallationReceipt ?? null,

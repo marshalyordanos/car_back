@@ -10,7 +10,7 @@ import {
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, throwError } from 'rxjs';
 import { PATTERNS } from '../contracts';
 import { MicroserviceClientsModule } from './clients.module';
@@ -26,6 +26,7 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { uploadToSpaces } from '../config/cloudinary/upload';
 
 @ApiTags('Auth')
 @ApiBearerAuth('access-token')
@@ -55,11 +56,41 @@ export class AuthGatewayController {
     },
     @Body() body: AuthRegisterDto,
   ) {
-    body.profilePhotoFile = files?.profilePhotoFile?.[0];
-    body.driverLicenseFile = files?.driverLicenseFile?.[0];
-    body.nationalIdFile = files?.nationalIdFile?.[0];
+    const uploadedFiles: any = {};
 
-    return this.authClient.send(PATTERNS.AUTH_REGISTER, body);
+    let profilePhotoFile = files?.profilePhotoFile?.[0];
+    let driverLicenseFile = files?.driverLicenseFile?.[0];
+    let nationalIdFile = files?.nationalIdFile?.[0];
+
+    try {
+      console.log('spacesssssssssssssssssssssss');
+      if (profilePhotoFile) {
+        uploadedFiles.profilePhoto = await uploadToSpaces(
+          profilePhotoFile,
+          'users/profilePhotos',
+        );
+        console.log('uploadedFiles: ', uploadedFiles);
+      }
+      if (driverLicenseFile) {
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
+          driverLicenseFile,
+          'users/driverLicenses',
+        );
+      }
+      if (nationalIdFile) {
+        uploadedFiles.nationalId = await uploadToSpaces(
+          nationalIdFile,
+          'users/nationalIds',
+        );
+      }
+    } catch (err) {
+      console.log('space error: ', err);
+      throw new RpcException('Error uploading files to space');
+    }
+    return this.authClient.send(PATTERNS.AUTH_REGISTER, {
+      body: body,
+      uploadedFiles,
+    });
   }
 
   @Post('login')

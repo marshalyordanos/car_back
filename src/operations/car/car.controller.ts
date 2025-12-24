@@ -28,15 +28,22 @@ export class CarMessageController {
     payload: {
       hostId: string;
       carData: CarDto;
-      photos?: string[];
+      photos: string[];
+      otherFiles: any;
     },
   ) {
     try {
       const car = await this.usecases.createCar(
         payload.hostId,
         payload.carData,
+        payload.photos,
+        payload.otherFiles,
       );
-      return IResponse.success('Car  added successfully', car);
+      console.log(
+        '8888888888888888888888888888888888888888888888888883333333333333333333: : ',
+        car,
+      );
+      return IResponse.success('Car added successfully', car);
     } catch (error) {
       handleCatch(error);
     }
@@ -52,6 +59,8 @@ export class CarMessageController {
       hostId: string;
       carData: Partial<CarDto>;
       user: any;
+      photos: string[];
+      otherFiles: any;
     },
   ) {
     try {
@@ -60,6 +69,8 @@ export class CarMessageController {
         payload.hostId,
         payload.carData,
         payload.user?.sub,
+        payload.photos,
+        payload.otherFiles,
       );
       return IResponse.success('Car updated successfully', car);
     } catch (error) {

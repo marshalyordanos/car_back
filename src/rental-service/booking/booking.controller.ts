@@ -59,12 +59,18 @@ export class BookingMessageController {
   @Public()
   @MessagePattern(PATTERNS.BOOKING_CREATE_GUEST)
   async createBookingGUEST(
-    @Payload() payload: { body: CreateBookingDto; user: any },
+    @Payload()
+    payload: {
+      body: CreateBookingDto;
+      uploadedFiles: any;
+      user: any;
+    },
   ) {
     try {
       const res = await this.usecases.createBooking(
         payload.body,
         payload?.user?.sub,
+        payload?.uploadedFiles,
       );
       return IResponse.success('Booking created successfully', res);
     } catch (error) {

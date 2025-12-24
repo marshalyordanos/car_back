@@ -37,7 +37,7 @@ export class AuthUseCaseImpl {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(data: AuthRegisterDto): Promise<any> {
+  async register(data: AuthRegisterDto, uploadedFiles: any): Promise<any> {
     const roleName = data.role;
     if (!roleName) {
       throw new RpcException(`Invalid role`);
@@ -53,33 +53,33 @@ export class AuthUseCaseImpl {
     }
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const uploadedFiles: any = {};
-    try {
-      console.log('spacesssssssssssssssssssssss');
-      if (data.profilePhotoFile) {
-        console.log('profilePhotoFile: ', data.profilePhotoFile);
-        uploadedFiles.profilePhoto = await uploadToSpaces(
-          data.profilePhotoFile,
-          'users/profilePhotos',
-        );
-        console.log('uploadedFiles: ', uploadedFiles);
-      }
-      if (data.driverLicenseFile && role.name == 'GUEST') {
-        uploadedFiles.driverLicenseId = await uploadToSpaces(
-          data.driverLicenseFile,
-          'users/driverLicenses',
-        );
-      }
-      if (data.nationalIdFile && role.name == 'GUEST') {
-        uploadedFiles.nationalId = await uploadToSpaces(
-          data.nationalIdFile,
-          'users/nationalIds',
-        );
-      }
-    } catch (err) {
-      console.log('space error: ', err);
-      throw new RpcException('Error uploading files to space');
-    }
+    // const uploadedFiles: any = {};
+    // try {
+    //   console.log('spacesssssssssssssssssssssss');
+    //   if (data.profilePhotoFile) {
+    //     console.log('profilePhotoFile: ', data.profilePhotoFile);
+    //     uploadedFiles.profilePhoto = await uploadToSpaces(
+    //       data.profilePhotoFile,
+    //       'users/profilePhotos',
+    //     );
+    //     console.log('uploadedFiles: ', uploadedFiles);
+    //   }
+    //   if (data.driverLicenseFile && role.name == 'GUEST') {
+    //     uploadedFiles.driverLicenseId = await uploadToSpaces(
+    //       data.driverLicenseFile,
+    //       'users/driverLicenses',
+    //     );
+    //   }
+    //   if (data.nationalIdFile && role.name == 'GUEST') {
+    //     uploadedFiles.nationalId = await uploadToSpaces(
+    //       data.nationalIdFile,
+    //       'users/nationalIds',
+    //     );
+    //   }
+    // } catch (err) {
+    //   console.log('space error: ', err);
+    //   throw new RpcException('Error uploading files to space');
+    // }
     const nums = generateOtp6();
 
     let user;

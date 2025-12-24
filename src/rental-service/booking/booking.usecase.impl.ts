@@ -22,7 +22,11 @@ export class BookingUseCasesImp {
     private readonly carRepo: CarRepository,
   ) {}
 
-  async createBooking(dto: CreateBookingDto, userId?: string) {
+  async createBooking(
+    dto: CreateBookingDto,
+    userId?: string,
+    uploadedFiles?: any,
+  ) {
     console.log('000000000:', dto, userId);
     // return;
 
@@ -57,26 +61,26 @@ export class BookingUseCasesImp {
 
     const totalPrice = baseTotalWithPlatformFee + tax;
 
-    const uploadedFiles: any = {};
+    // const uploadedFiles: any = {};
 
-    if (!userId) {
-      try {
-        if (dto.driverLicenseFile) {
-          uploadedFiles.driverLicenseId = await upload.uploadToSpaces(
-            dto.driverLicenseFile,
-            'users/driverLicenses',
-          );
-        }
-        if (dto.nationalIdFile) {
-          uploadedFiles.nationalId = await upload.uploadToSpaces(
-            dto.nationalIdFile,
-            'users/nationalIds',
-          );
-        }
-      } catch (err) {
-        throw new RpcException('Error uploading files to Cloudinary');
-      }
-    }
+    // if (!userId) {
+    //   try {
+    //     if (dto.driverLicenseFile) {
+    //       uploadedFiles.driverLicenseId = await upload.uploadToSpaces(
+    //         dto.driverLicenseFile,
+    //         'users/driverLicenses',
+    //       );
+    //     }
+    //     if (dto.nationalIdFile) {
+    //       uploadedFiles.nationalId = await upload.uploadToSpaces(
+    //         dto.nationalIdFile,
+    //         'users/nationalIds',
+    //       );
+    //     }
+    //   } catch (err) {
+    //     throw new RpcException('Error uploading files to Cloudinary');
+    //   }
+    // }
 
     return this.repo.createBooking(
       dto,

@@ -14,7 +14,7 @@ import {
   UploadedFiles,
   All,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PATTERNS } from '../contracts';
 import {
   BookingChangeStatusDto,
@@ -27,6 +27,7 @@ import { ListQueryDto } from '..//common/query/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import multer from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { uploadToSpaces } from '../config/cloudinary/upload';
 
 @ApiTags('Bookings')
 @ApiBearerAuth('access-token')
@@ -172,13 +173,33 @@ export class BookingGatewayController {
     @Req() req,
     @Body() dto: CreateBookingDto,
   ) {
-    dto.driverLicenseFile = files?.driverLicenseFile?.[0];
-    dto.nationalIdFile = files?.nationalIdFile?.[0];
+    let driverLicenseFile = files?.driverLicenseFile?.[0];
+    let nationalIdFile = files?.nationalIdFile?.[0];
+    const uploadedFiles: any = {};
 
+    try {
+      if (driverLicenseFile) {
+        uploadedFiles.driverLicenseId = await uploadToSpaces(
+          driverLicenseFile,
+          'users/driverLicenses',
+        );
+      }
+      if (nationalIdFile) {
+        uploadedFiles.nationalId = await uploadToSpaces(
+          nationalIdFile,
+          'users/nationalIds',
+        );
+      }
+    } catch (err) {
+      throw new RpcException(
+        err.message || 'Error uploading files to Cloudinary',
+      );
+    }
     const authHeader = req.headers['authorization'] || null;
     return this.client.send(PATTERNS.BOOKING_CREATE_GUEST, {
       headers: { authorization: authHeader },
       body: dto,
+      uploadedFiles,
     });
   }
 
